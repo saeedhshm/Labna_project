@@ -8,6 +8,7 @@ struct HomeView: View {
 
     private struct BannerPlaybackID: Hashable {
         let bannerIDs: [String]
+        let selectedIndex: Int
         let reduceMotion: Bool
         let isActive: Bool
     }
@@ -20,6 +21,7 @@ struct HomeView: View {
     @State private var quickAddProduct: Product?
     @State private var addedProductName: String?
     @State private var selectedBannerIndex = 0
+    @State private var isSearchExpanded = false
 
     var body: some View {
         CatalogStateView(store: container.catalog) { snapshot in
@@ -44,17 +46,67 @@ struct HomeView: View {
 
     private var language: AppLanguage { container.settings.language }
 
+    @ViewBuilder
+    private var homeHeader: some View {
+        if isSearchExpanded {
+            HStack(spacing: LabnaSpacing.small) {
+                LabnaSearchField(text: $searchText, focusesOnAppear: true)
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        searchText = ""
+                        isSearchExpanded = false
+                    }
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.headline)
+                        .foregroundStyle(Color.labnaInk)
+                        .frame(width: 44, height: 44)
+                        .background(Color.white, in: Circle())
+                        .overlay {
+                            Circle().stroke(Color.labnaBorder, lineWidth: 1)
+                        }
+                }
+                .accessibilityLabel("action.close")
+            }
+            .transition(.opacity.combined(with: .move(edge: .top)))
+        } else {
+            HStack(spacing: LabnaSpacing.medium) {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isSearchExpanded = true
+                    }
+                } label: {
+                    Image(systemName: "magnifyingglass")
+                        .font(.headline)
+                        .foregroundStyle(Color.labnaInk)
+                        .frame(width: 44, height: 44)
+                        .background(Color.white, in: Circle())
+                        .overlay {
+                            Circle().stroke(Color.labnaBorder, lineWidth: 1)
+                        }
+                }
+                .accessibilityLabel("search.prompt")
+                .accessibilityIdentifier("home.search.open")
+
+                LabnaLogo()
+                Spacer(minLength: 0)
+            }
+            .transition(.opacity.combined(with: .move(edge: .top)))
+        }
+    }
+
     private func content(_ snapshot: CatalogSnapshot) -> some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: LabnaSpacing.extraLarge) {
-                LabnaLogo()
-                LabnaSearchField(text: $searchText)
+                homeHeader
+                    .padding(.horizontal, LabnaSpacing.large)
 
                 if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     if !snapshot.banners.isEmpty {
                         bannerCarousel(snapshot.banners, snapshot: snapshot)
                     }
                     categoriesSection(snapshot.categories)
+                        .padding(.horizontal, LabnaSpacing.large)
                     productsSection(
                         title: "home.featured",
                         products: CatalogQuery.products(
@@ -65,6 +117,7 @@ struct HomeView: View {
                             language: language
                         )
                     )
+                    .padding(.horizontal, LabnaSpacing.large)
                 } else {
                     let results = CatalogQuery.products(
                         from: snapshot.products,
@@ -82,12 +135,13 @@ struct HomeView: View {
                             action: { searchText = "" }
                         )
                         .frame(minHeight: 330)
+                        .padding(.horizontal, LabnaSpacing.large)
                     } else {
                         productsSection(title: "search.results", products: results)
+                            .padding(.horizontal, LabnaSpacing.large)
                     }
                 }
             }
-            .padding(.horizontal, LabnaSpacing.large)
             .padding(.top, LabnaSpacing.medium)
             .padding(.bottom, LabnaSpacing.extraLarge)
         }
@@ -96,35 +150,33 @@ struct HomeView: View {
 
     private func bannerCarousel(_ banners: [Banner], snapshot: CatalogSnapshot) -> some View {
         TabView(selection: $selectedBannerIndex) {
-            ForEach(Array(banners.enumerated()), id: \.element.id) { index, banner in
-                bannerView(banner, snapshot: snapshot)
+            ForEach(Array(banners.enumerated()), id: \.offset) { index, banner in
+                bannerView(banner, index: index, snapshot: snapshot)
                     .tag(index)
             }
         }
         .tabViewStyle(.page(indexDisplayMode: banners.count > 1 ? .always : .never))
         .aspectRatio(1.65, contentMode: .fit)
-        .clipShape(RoundedRectangle(cornerRadius: LabnaRadius.large))
         .task(id: BannerPlaybackID(
             bannerIDs: banners.map(\.id),
+            selectedIndex: selectedBannerIndex,
             reduceMotion: reduceMotion,
             isActive: scenePhase == .active
         )) {
             selectedBannerIndex = min(selectedBannerIndex, banners.count - 1)
             guard banners.count > 1, !reduceMotion, scenePhase == .active else { return }
-            while !Task.isCancelled {
-                do {
-                    try await Task.sleep(for: .seconds(5))
-                } catch {
-                    return
-                }
-                withAnimation(.easeInOut(duration: 0.45)) {
-                    selectedBannerIndex = (selectedBannerIndex + 1) % banners.count
-                }
+            do {
+                try await Task.sleep(for: .seconds(5))
+            } catch {
+                return
+            }
+            withAnimation(.easeInOut(duration: 0.45)) {
+                selectedBannerIndex = (selectedBannerIndex + 1) % banners.count
             }
         }
     }
 
-    private func bannerView(_ banner: Banner, snapshot: CatalogSnapshot) -> some View {
+    private func bannerView(_ banner: Banner, index: Int, snapshot: CatalogSnapshot) -> some View {
         Button {
             switch banner.destination.kind {
             case .product:
@@ -153,11 +205,10 @@ struct HomeView: View {
                         .padding(.bottom, LabnaSpacing.medium)
                     }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: LabnaRadius.large))
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(banner.title.value(for: language)), \(banner.subtitle.value(for: language))")
-        .accessibilityIdentifier("banner.\(banner.id)")
+        .accessibilityIdentifier("banner.\(index).\(banner.id)")
     }
 
     private func categoriesSection(_ categories: [Category]) -> some View {

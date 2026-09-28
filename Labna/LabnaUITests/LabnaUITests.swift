@@ -104,9 +104,27 @@ final class LabnaUITests: XCTestCase {
         app.launchArguments = ["-selectedLanguage", "en", "-resetCart"]
         app.launch()
 
-        let firstBanner = app.buttons["banner.fresh-start"]
+        let firstBanner = app.buttons["banner.0.fresh-start"]
         XCTAssertTrue(firstBanner.waitForExistence(timeout: 10))
-        XCTAssertTrue(app.buttons["banner.meet-labneh"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.buttons["banner.1.meet-labneh"].waitForExistence(timeout: 8))
+    }
+
+    @MainActor
+    func testHomeSearchExpandsFromAppBar() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart"]
+        app.launch()
+
+        let openSearch = app.buttons["home.search.open"]
+        XCTAssertTrue(openSearch.waitForExistence(timeout: 10))
+        XCTAssertFalse(app.textFields["catalog.search.input"].exists)
+        openSearch.tap()
+
+        let searchField = app.textFields["catalog.search.input"]
+        XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+        searchField.tap()
+        searchField.typeText("yogurt")
+        XCTAssertTrue(app.buttons["product.yogurt-greek"].waitForExistence(timeout: 5))
     }
 
     @MainActor

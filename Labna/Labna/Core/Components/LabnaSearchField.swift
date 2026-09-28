@@ -3,6 +3,7 @@ import SwiftUI
 struct LabnaSearchField: View {
     @Binding var text: String
     var prompt: LocalizedStringKey = "search.prompt"
+    var focusesOnAppear = false
     @FocusState private var isFocused: Bool
 
     var body: some View {
@@ -15,6 +16,7 @@ struct LabnaSearchField: View {
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .submitLabel(.search)
+                .accessibilityIdentifier("catalog.search.input")
             if !text.isEmpty {
                 Button {
                     text = ""
@@ -34,6 +36,12 @@ struct LabnaSearchField: View {
             RoundedRectangle(cornerRadius: LabnaRadius.medium)
                 .stroke(isFocused ? Color.labnaGreen : Color.labnaBorder, lineWidth: isFocused ? 1.5 : 1)
         }
+        .onAppear {
+            if focusesOnAppear {
+                isFocused = true
+            }
+        }
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("catalog.search")
     }
 }
