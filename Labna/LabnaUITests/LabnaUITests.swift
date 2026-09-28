@@ -1,0 +1,201 @@
+//
+//  LabnaUITests.swift
+//  LabnaUITests
+//
+//  Created by DEV-SAEEDHASHIM on 27/09/2026.
+//
+
+import XCTest
+
+final class LabnaUITests: XCTestCase {
+
+    override func setUpWithError() throws {
+        // Put setup code here. This method is called before the invocation of each test method in the class.
+
+        // In UI tests it is usually best to stop immediately when a failure occurs.
+        continueAfterFailure = false
+
+        // In UI tests it’s important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
+    }
+
+    override func tearDownWithError() throws {
+        // Put teardown code here. This method is called after the invocation of each test method in the class.
+    }
+
+    @MainActor
+    func testExample() throws {
+        // UI tests must launch the application that they test.
+        let app = XCUIApplication()
+        app.launch()
+
+        // Use XCTAssert and related functions to verify your tests produce the correct results.
+    }
+
+    @MainActor
+    func testLanguageSwitchNavigationAndPersistence() throws {
+        let app = XCUIApplication()
+        // UserDefaults launch arguments give this test a deterministic starting language.
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart"]
+        app.launch()
+
+        let tabs = app.tabBars.firstMatch
+        XCTAssertTrue(tabs.buttons["Home"].waitForExistence(timeout: 10))
+        tabs.buttons["Products"].tap()
+        XCTAssertTrue(app.navigationBars["Products"].exists)
+        tabs.buttons["Cart"].tap()
+        XCTAssertTrue(app.navigationBars["Cart"].exists)
+        tabs.buttons["More"].tap()
+        app.segmentedControls.buttons["Arabic"].tap()
+
+        XCTAssertTrue(tabs.buttons["الرئيسية"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["المزيد"].exists)
+        XCTAssertGreaterThan(tabs.buttons["الرئيسية"].frame.midX, tabs.buttons["المزيد"].frame.midX)
+        tabs.buttons["المنتجات"].tap()
+        XCTAssertTrue(app.navigationBars["المنتجات"].exists)
+        tabs.buttons["السلة"].tap()
+        XCTAssertTrue(app.navigationBars["السلة"].exists)
+
+        app.terminate()
+        app.launchArguments = []
+        app.launch()
+        XCTAssertTrue(tabs.buttons["الرئيسية"].waitForExistence(timeout: 10))
+        tabs.buttons["المزيد"].tap()
+        app.segmentedControls.buttons["الإنجليزية"].tap()
+        XCTAssertTrue(tabs.buttons["Home"].waitForExistence(timeout: 5))
+        XCTAssertLessThan(tabs.buttons["Home"].frame.midX, tabs.buttons["More"].frame.midX)
+    }
+
+    @MainActor
+    func testMoreInformationAndDemoBranches() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart"]
+        app.launch()
+
+        let moreTab = app.tabBars.buttons["More"]
+        XCTAssertTrue(moreTab.waitForExistence(timeout: 10))
+        moreTab.tap()
+        XCTAssertTrue(app.staticTexts["more.demoNotice"].exists)
+        XCTAssertTrue(app.staticTexts["Version"].exists)
+
+        app.buttons["more.about"].tap()
+        XCTAssertTrue(app.navigationBars["About Labna"].waitForExistence(timeout: 5))
+        app.navigationBars.buttons.firstMatch.tap()
+
+        app.buttons["more.contact"].tap()
+        XCTAssertTrue(app.staticTexts["contact.demoNotice"].waitForExistence(timeout: 5))
+        app.navigationBars.buttons.firstMatch.tap()
+
+        app.buttons["more.branches"].tap()
+        XCTAssertTrue(app.navigationBars["Branches"].waitForExistence(timeout: 5))
+        let cairo = app.buttons["branch.demo-cairo"]
+        XCTAssertTrue(cairo.waitForExistence(timeout: 10))
+        cairo.tap()
+        XCTAssertTrue(app.navigationBars["Cairo — Demo Branch"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["branch.demoNotice"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["branch.map"].exists)
+        XCTAssertTrue(app.buttons["branch.directions"].exists)
+        XCTAssertFalse(app.buttons["branch.call"].exists)
+        XCTAssertTrue(app.staticTexts["No real phone number is available in the demo version."].exists)
+    }
+
+    @MainActor
+    func testOfflineAndImageFailureStates() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-simulateCatalogOffline"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Unable to load data"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Check your internet connection and try again."].exists)
+        XCTAssertTrue(app.buttons["Try again"].isHittable)
+
+        app.terminate()
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-simulateImageFailure"]
+        app.launch()
+        let products = app.buttons["Products"].firstMatch
+        XCTAssertTrue(products.waitForExistence(timeout: 10))
+        products.tap()
+        let milk = app.buttons["product.milk-full"]
+        XCTAssertTrue(milk.waitForExistence(timeout: 10))
+        milk.tap()
+        let imageRetry = app.buttons["image.retry"].firstMatch
+        XCTAssertTrue(imageRetry.waitForExistence(timeout: 5))
+        XCTAssertEqual(imageRetry.label, "Try again")
+    }
+
+    @MainActor
+    func testAccessibilityLabelsAtLargestTextSize() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-selectedLanguage", "en",
+            "-resetCart",
+            "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityExtraExtraExtraLarge"
+        ]
+        app.launch()
+        let products = app.buttons["Products"].firstMatch
+        XCTAssertTrue(products.waitForExistence(timeout: 10))
+        products.tap()
+
+        let milk = app.buttons["product.milk-full"]
+        XCTAssertTrue(milk.waitForExistence(timeout: 10))
+        XCTAssertTrue(milk.label.contains("Full Cream Milk"))
+        let quickAdd = app.buttons["quickAdd.milk-full"]
+        XCTAssertEqual(quickAdd.label, "Add")
+        milk.tap()
+        XCTAssertTrue(app.buttons["Increase quantity"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Decrease quantity"].exists)
+        XCTAssertTrue(app.buttons["productDetails.add"].exists)
+    }
+
+    @MainActor
+    func testBrowseProductAndQuickAdd() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart"]
+        app.launch()
+
+        let productsTab = app.tabBars.buttons["Products"]
+        XCTAssertTrue(productsTab.waitForExistence(timeout: 10))
+        productsTab.tap()
+        let product = app.buttons["product.milk-full"]
+        XCTAssertTrue(product.waitForExistence(timeout: 10))
+        product.tap()
+        XCTAssertTrue(app.navigationBars["Full Cream Milk"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["variant.milk-full-1000"].exists)
+        XCTAssertFalse(app.buttons["variant.milk-full-1000"].isSelected)
+        app.buttons["productDetails.add"].tap()
+        XCTAssertTrue(app.staticTexts["Full Cream Milk added to cart"].waitForExistence(timeout: 3))
+
+        app.navigationBars.buttons.firstMatch.tap()
+        app.buttons["quickAdd.milk-full"].tap()
+        XCTAssertTrue(app.buttons["quickAdd.confirm"].waitForExistence(timeout: 5))
+        app.buttons["quickAdd.confirm"].tap()
+        XCTAssertTrue(app.staticTexts["Full Cream Milk added to cart"].waitForExistence(timeout: 3))
+
+        app.tabBars.buttons["Cart"].tap()
+        XCTAssertTrue(app.staticTexts["cart.product.milk-full"].waitForExistence(timeout: 5))
+        app.terminate()
+        app.launchArguments = ["-selectedLanguage", "en"]
+        app.launch()
+        app.tabBars.buttons["Cart"].tap()
+        XCTAssertTrue(app.staticTexts["cart.product.milk-full"].waitForExistence(timeout: 10))
+        app.buttons["cart.checkout"].tap()
+        XCTAssertTrue(app.navigationBars["Review order"].waitForExistence(timeout: 5))
+        let notes = app.textViews["checkout.notes"]
+        notes.tap()
+        notes.typeText("Demo note")
+        app.buttons["checkout.confirm"].tap()
+        XCTAssertTrue(app.staticTexts["checkout.success"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["success.reference"].label.contains("DEMO-"))
+        XCTAssertTrue(app.staticTexts["success.disclaimer"].exists)
+        app.buttons["success.products"].tap()
+        XCTAssertTrue(app.tabBars.buttons["Products"].isSelected)
+        app.tabBars.buttons["Cart"].tap()
+        XCTAssertTrue(app.staticTexts["Your cart is empty"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    func testLaunchPerformance() throws {
+        // This measures how long it takes to launch your application.
+        measure(metrics: [XCTApplicationLaunchMetric()]) {
+            XCUIApplication().launch()
+        }
+    }
+}

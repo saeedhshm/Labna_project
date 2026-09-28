@@ -1,0 +1,197 @@
+[
+  {
+    "id":"milk-full","categoryID":"milk",
+    "name":{"ar":"حليب كامل الدسم","en":"Full Cream Milk"},
+    "description":{"ar":"حليب بطعم غني لفطورك ومشروباتك اليومية.","en":"Rich milk for breakfast and everyday drinks."},
+    "imageURLs":["https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=800&q=80"],
+    "ingredients":{"ar":"حليب بقري مبستر. يحتوي على الحليب.","en":"Pasteurized cow milk. Contains milk."},
+    "storageInstructions":{"ar":"يحفظ مبردًا وفق تعليمات العبوة.","en":"Keep refrigerated as directed on the pack."},
+    "isFeatured":true,"isDemo":true,
+    "variants":[
+      {"id":"milk-full-250","label":{"ar":"250 مل","en":"250 ml"},"quantity":250,"unit":"ml","priceMinor":1800,"currencyCode":"EGP","isAvailable":true},
+      {"id":"milk-full-500","label":{"ar":"500 مل","en":"500 ml"},"quantity":500,"unit":"ml","priceMinor":3000,"currencyCode":"EGP","isAvailable":true},
+      {"id":"milk-full-1000","label":{"ar":"1 لتر","en":"1 litre"},"quantity":1000,"unit":"ml","priceMinor":5500,"currencyCode":"EGP","isAvailable":true}
+    ]
+  },
+  {
+    "id":"milk-low-fat","categoryID":"milk",
+    "name":{"ar":"حليب قليل الدسم","en":"Low Fat Milk"},
+    "description":{"ar":"اختيار خفيف للحبوب والقهوة.","en":"A lighter choice for cereal and coffee."},
+    "imageURLs":["https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=800&q=80"],
+    "ingredients":{"ar":"حليب بقري مبستر قليل الدسم. يحتوي على الحليب.","en":"Pasteurized low fat cow milk. Contains milk."},
+    "storageInstructions":{"ar":"يحفظ مبردًا وفق تعليمات العبوة.","en":"Keep refrigerated as directed on the pack."},
+    "isFeatured":false,"isDemo":true,
+    "variants":[
+      {"id":"milk-low-fat-500","label":{"ar":"500 مل","en":"500 ml"},"quantity":500,"unit":"ml","priceMinor":3200,"currencyCode":"EGP","isAvailable":true},
+      {"id":"milk-low-fat-1000","label":{"ar":"1 لتر","en":"1 litre"},"quantity":1000,"unit":"ml","priceMinor":5800,"currencyCode":"EGP","isAvailable":true}
+    ]
+  },
+  {
+    "id":"milk-buffalo","categoryID":"milk",
+    "name":{"ar":"حليب جاموسي","en":"Buffalo Milk"},
+    "description":{"ar":"حليب كريمي للمشروبات والوصفات المنزلية.","en":"Creamy milk for drinks and home recipes."},
+    "imageURLs":["https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=800&q=80"],
+    "ingredients":{"ar":"حليب جاموسي مبستر. يحتوي على الحليب.","en":"Pasteurized buffalo milk. Contains milk."},
+    "storageInstructions":{"ar":"يحفظ مبردًا وفق تعليمات العبوة.","en":"Keep refrigerated as directed on the pack."},
+    "isFeatured":true,"isDemo":true,
+    "variants":[
+      {"id":"milk-buffalo-500","label":{"ar":"500 مل","en":"500 ml"},"quantity":500,"unit":"ml","priceMinor":4000,"currencyCode":"EGP","isAvailable":true},
+      {"id":"milk-buffalo-1000","label":{"ar":"1 لتر","en":"1 litre"},"quantity":1000,"unit":"ml","priceMinor":7500,"currencyCode":"EGP","isAvailable":false}
+    ]
+  },
+  {
+    "id":"yogurt-natural","categoryID":"yogurt",
+    "name":{"ar":"زبادي طبيعي","en":"Natural Yogurt"},
+    "description":{"ar":"زبادي سادة للفطور أو مع الفاكهة.","en":"Plain yogurt for breakfast or with fruit."},
+    "imageURLs":["https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=800&q=80"],
+    "ingredients":{"ar":"حليب مبستر وبادئ زبادي. يحتوي على الحليب.","en":"Pasteurized milk and yogurt cultures. Contains milk."},
+    "storageInstructions":{"ar":"يحفظ مبردًا وفق تعليمات العبوة.","en":"Keep refrigerated as directed on the pack."},
+    "isFeatured":true,"isDemo":true,
+    "variants":[
+      {"id":"yogurt-natural-100","label":{"ar":"100 جم","en":"100 g"},"quantity":100,"unit":"g","priceMinor":1000,"currencyCode":"EGP","isAvailable":true},
+      {"id":"yogurt-natural-170","label":{"ar":"170 جم","en":"170 g"},"quantity":170,"unit":"g","priceMinor":1600,"currencyCode":"EGP","isAvailable":true},
+      {"id":"yogurt-natural-500","label":{"ar":"500 جم","en":"500 g"},"quantity":500,"unit":"g","priceMinor":4000,"currencyCode":"EGP","isAvailable":true}
+    ]
+  },
+  {
+    "id":"yogurt-greek","categoryID":"yogurt",
+    "name":{"ar":"زبادي يوناني","en":"Greek Yogurt"},
+    "description":{"ar":"قوام كثيف يناسب الفاكهة والشوفان.","en":"Thick yogurt to pair with fruit and oats."},
+    "imageURLs":["https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=800&q=80"],
+    "ingredients":{"ar":"حليب مبستر وبادئ زبادي. يحتوي على الحليب.","en":"Pasteurized milk and yogurt cultures. Contains milk."},
+    "storageInstructions":{"ar":"يحفظ مبردًا وفق تعليمات العبوة.","en":"Keep refrigerated as directed on the pack."},
+    "isFeatured":false,"isDemo":true,
+    "variants":[
+      {"id":"yogurt-greek-170","label":{"ar":"170 جم","en":"170 g"},"quantity":170,"unit":"g","priceMinor":2800,"currencyCode":"EGP","isAvailable":true},
+      {"id":"yogurt-greek-500","label":{"ar":"500 جم","en":"500 g"},"quantity":500,"unit":"g","priceMinor":7500,"currencyCode":"EGP","isAvailable":true}
+    ]
+  },
+  {
+    "id":"yogurt-strawberry","categoryID":"yogurt",
+    "name":{"ar":"زبادي بالفراولة","en":"Strawberry Yogurt"},
+    "description":{"ar":"زبادي بالفراولة لوجبة خفيفة.","en":"Strawberry yogurt for a quick snack."},
+    "imageURLs":["https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=800&q=80"],
+    "ingredients":{"ar":"حليب مبستر وفراولة وسكر وبادئ زبادي. يحتوي على الحليب.","en":"Pasteurized milk, strawberries, sugar and yogurt cultures. Contains milk."},
+    "storageInstructions":{"ar":"يحفظ مبردًا وفق تعليمات العبوة.","en":"Keep refrigerated as directed on the pack."},
+    "isFeatured":false,"isDemo":true,
+    "variants":[{"id":"yogurt-strawberry-170","label":{"ar":"170 جم","en":"170 g"},"quantity":170,"unit":"g","priceMinor":2200,"currencyCode":"EGP","isAvailable":true}]
+  },
+  {
+    "id":"cheese-white","categoryID":"cheese",
+    "name":{"ar":"جبنة بيضاء","en":"White Cheese"},
+    "description":{"ar":"جبنة بيضاء للفطور والسلطات.","en":"White cheese for breakfast and salads."},
+    "imageURLs":["https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?auto=format&fit=crop&w=800&q=80"],
+    "ingredients":{"ar":"حليب مبستر وملح ومنفحة. يحتوي على الحليب.","en":"Pasteurized milk, salt and rennet. Contains milk."},
+    "storageInstructions":{"ar":"تحفظ مبردة وفق تعليمات العبوة.","en":"Keep refrigerated as directed on the pack."},
+    "isFeatured":true,"isDemo":true,
+    "variants":[
+      {"id":"cheese-white-250","label":{"ar":"250 جم","en":"250 g"},"quantity":250,"unit":"g","priceMinor":4500,"currencyCode":"EGP","isAvailable":true},
+      {"id":"cheese-white-500","label":{"ar":"500 جم","en":"500 g"},"quantity":500,"unit":"g","priceMinor":8500,"currencyCode":"EGP","isAvailable":true},
+      {"id":"cheese-white-1000","label":{"ar":"1 كجم","en":"1 kg"},"quantity":1000,"unit":"g","priceMinor":16000,"currencyCode":"EGP","isAvailable":true}
+    ]
+  },
+  {
+    "id":"cheese-labneh","categoryID":"cheese",
+    "name":{"ar":"لبنة كريمية","en":"Creamy Labneh"},
+    "description":{"ar":"لبنة ناعمة للتقديم مع الخبز وزيت الزيتون.","en":"Smooth labneh to serve with bread and olive oil."},
+    "imageURLs":["https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?auto=format&fit=crop&w=800&q=80"],
+    "ingredients":{"ar":"حليب مبستر وبادئ لبني وملح. يحتوي على الحليب.","en":"Pasteurized milk, cultures and salt. Contains milk."},
+    "storageInstructions":{"ar":"تحفظ مبردة وفق تعليمات العبوة.","en":"Keep refrigerated as directed on the pack."},
+    "isFeatured":true,"isDemo":true,
+    "variants":[
+      {"id":"cheese-labneh-250","label":{"ar":"250 جم","en":"250 g"},"quantity":250,"unit":"g","priceMinor":5500,"currencyCode":"EGP","isAvailable":true},
+      {"id":"cheese-labneh-500","label":{"ar":"500 جم","en":"500 g"},"quantity":500,"unit":"g","priceMinor":10000,"currencyCode":"EGP","isAvailable":true}
+    ]
+  },
+  {
+    "id":"cheese-roumy","categoryID":"cheese",
+    "name":{"ar":"جبنة رومي","en":"Roumy Cheese"},
+    "description":{"ar":"جبنة بطعم مميز للسندويتشات.","en":"Distinctively flavored cheese for sandwiches."},
+    "imageURLs":["https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?auto=format&fit=crop&w=800&q=80"],
+    "ingredients":{"ar":"حليب مبستر وملح ومنفحة وبادئ لبني. يحتوي على الحليب.","en":"Pasteurized milk, salt, rennet and cultures. Contains milk."},
+    "storageInstructions":{"ar":"تحفظ مبردة وفق تعليمات العبوة.","en":"Keep refrigerated as directed on the pack."},
+    "isFeatured":false,"isDemo":true,
+    "variants":[
+      {"id":"cheese-roumy-250","label":{"ar":"250 جم","en":"250 g"},"quantity":250,"unit":"g","priceMinor":9000,"currencyCode":"EGP","isAvailable":false},
+      {"id":"cheese-roumy-500","label":{"ar":"500 جم","en":"500 g"},"quantity":500,"unit":"g","priceMinor":17500,"currencyCode":"EGP","isAvailable":false}
+    ]
+  },
+  {
+    "id":"cream-fresh","categoryID":"cream",
+    "name":{"ar":"قشطة طازجة","en":"Fresh Cream"},
+    "description":{"ar":"قشطة كريمية للتقديم مع العسل والخبز.","en":"Cream to enjoy with honey and bread."},
+    "imageURLs":["https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=800&q=80"],
+    "ingredients":{"ar":"قشطة حليب مبسترة. تحتوي على الحليب.","en":"Pasteurized milk cream. Contains milk."},
+    "storageInstructions":{"ar":"تحفظ مبردة وفق تعليمات العبوة.","en":"Keep refrigerated as directed on the pack."},
+    "isFeatured":true,"isDemo":true,
+    "variants":[
+      {"id":"cream-fresh-125","label":{"ar":"125 جم","en":"125 g"},"quantity":125,"unit":"g","priceMinor":3500,"currencyCode":"EGP","isAvailable":true},
+      {"id":"cream-fresh-250","label":{"ar":"250 جم","en":"250 g"},"quantity":250,"unit":"g","priceMinor":6500,"currencyCode":"EGP","isAvailable":true},
+      {"id":"cream-fresh-500","label":{"ar":"500 جم","en":"500 g"},"quantity":500,"unit":"g","priceMinor":12000,"currencyCode":"EGP","isAvailable":true}
+    ]
+  },
+  {
+    "id":"cream-cooking","categoryID":"cream",
+    "name":{"ar":"كريمة طهي","en":"Cooking Cream"},
+    "description":{"ar":"كريمة للصلصات والشوربة.","en":"Cream for sauces and soups."},
+    "imageURLs":["https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=800&q=80"],
+    "ingredients":{"ar":"قشطة وحليب مبستران. تحتوي على الحليب.","en":"Pasteurized cream and milk. Contains milk."},
+    "storageInstructions":{"ar":"تحفظ مبردة وفق تعليمات العبوة.","en":"Keep refrigerated as directed on the pack."},
+    "isFeatured":false,"isDemo":true,
+    "variants":[
+      {"id":"cream-cooking-250","label":{"ar":"250 مل","en":"250 ml"},"quantity":250,"unit":"ml","priceMinor":6000,"currencyCode":"EGP","isAvailable":true},
+      {"id":"cream-cooking-500","label":{"ar":"500 مل","en":"500 ml"},"quantity":500,"unit":"ml","priceMinor":11000,"currencyCode":"EGP","isAvailable":true}
+    ]
+  },
+  {
+    "id":"cream-whipping","categoryID":"cream",
+    "name":{"ar":"كريمة خفق","en":"Whipping Cream"},
+    "description":{"ar":"كريمة لتحضير وتزيين الحلويات.","en":"Cream for making and decorating desserts."},
+    "imageURLs":["https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=800&q=80"],
+    "ingredients":{"ar":"قشطة حليب مبسترة. تحتوي على الحليب.","en":"Pasteurized milk cream. Contains milk."},
+    "storageInstructions":{"ar":"تحفظ مبردة وفق تعليمات العبوة.","en":"Keep refrigerated as directed on the pack."},
+    "isFeatured":false,"isDemo":true,
+    "variants":[{"id":"cream-whipping-500","label":{"ar":"500 مل","en":"500 ml"},"quantity":500,"unit":"ml","priceMinor":12500,"currencyCode":"EGP","isAvailable":true}]
+  },
+  {
+    "id":"butter-unsalted","categoryID":"butter-ghee",
+    "name":{"ar":"زبدة غير مملحة","en":"Unsalted Butter"},
+    "description":{"ar":"زبدة للمخبوزات والطهي اليومي.","en":"Butter for baking and everyday cooking."},
+    "imageURLs":["https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?auto=format&fit=crop&w=800&q=80"],
+    "ingredients":{"ar":"قشطة حليب مبسترة. تحتوي على الحليب.","en":"Pasteurized milk cream. Contains milk."},
+    "storageInstructions":{"ar":"تحفظ مبردة وفق تعليمات العبوة.","en":"Keep refrigerated as directed on the pack."},
+    "isFeatured":false,"isDemo":true,
+    "variants":[
+      {"id":"butter-unsalted-100","label":{"ar":"100 جم","en":"100 g"},"quantity":100,"unit":"g","priceMinor":4000,"currencyCode":"EGP","isAvailable":true},
+      {"id":"butter-unsalted-250","label":{"ar":"250 جم","en":"250 g"},"quantity":250,"unit":"g","priceMinor":9500,"currencyCode":"EGP","isAvailable":true},
+      {"id":"butter-unsalted-500","label":{"ar":"500 جم","en":"500 g"},"quantity":500,"unit":"g","priceMinor":18000,"currencyCode":"EGP","isAvailable":true}
+    ]
+  },
+  {
+    "id":"butter-salted","categoryID":"butter-ghee",
+    "name":{"ar":"زبدة مملحة","en":"Salted Butter"},
+    "description":{"ar":"زبدة مملحة للتوست والفطور.","en":"Salted butter for toast and breakfast."},
+    "imageURLs":["https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?auto=format&fit=crop&w=800&q=80"],
+    "ingredients":{"ar":"قشطة حليب مبسترة وملح. تحتوي على الحليب.","en":"Pasteurized milk cream and salt. Contains milk."},
+    "storageInstructions":{"ar":"تحفظ مبردة وفق تعليمات العبوة.","en":"Keep refrigerated as directed on the pack."},
+    "isFeatured":false,"isDemo":true,
+    "variants":[
+      {"id":"butter-salted-100","label":{"ar":"100 جم","en":"100 g"},"quantity":100,"unit":"g","priceMinor":4200,"currencyCode":"EGP","isAvailable":true},
+      {"id":"butter-salted-250","label":{"ar":"250 جم","en":"250 g"},"quantity":250,"unit":"g","priceMinor":9800,"currencyCode":"EGP","isAvailable":true}
+    ]
+  },
+  {
+    "id":"ghee-traditional","categoryID":"butter-ghee",
+    "name":{"ar":"سمنة بلدي","en":"Traditional Ghee"},
+    "description":{"ar":"سمنة بطعم غني للأطباق المنزلية.","en":"Rich ghee for home-cooked dishes."},
+    "imageURLs":["https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?auto=format&fit=crop&w=800&q=80"],
+    "ingredients":{"ar":"دهن حليب مصفى. يحتوي على الحليب.","en":"Clarified milk fat. Contains milk."},
+    "storageInstructions":{"ar":"تحفظ في مكان بارد وجاف وفق تعليمات العبوة.","en":"Store in a cool, dry place as directed on the pack."},
+    "isFeatured":false,"isDemo":true,
+    "variants":[
+      {"id":"ghee-traditional-250","label":{"ar":"250 جم","en":"250 g"},"quantity":250,"unit":"g","priceMinor":11000,"currencyCode":"EGP","isAvailable":true},
+      {"id":"ghee-traditional-500","label":{"ar":"500 جم","en":"500 g"},"quantity":500,"unit":"g","priceMinor":21000,"currencyCode":"EGP","isAvailable":true},
+      {"id":"ghee-traditional-1000","label":{"ar":"1 كجم","en":"1 kg"},"quantity":1000,"unit":"g","priceMinor":40000,"currencyCode":"EGP","isAvailable":true}
+    ]
+  }
+]
