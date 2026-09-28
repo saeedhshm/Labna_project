@@ -30,7 +30,10 @@
     "id":"milk-buffalo","categoryID":"milk",
     "name":{"ar":"حليب جاموسي","en":"Buffalo Milk"},
     "description":{"ar":"حليب كريمي للمشروبات والوصفات المنزلية.","en":"Creamy milk for drinks and home recipes."},
-    "imageURLs":["https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=800&q=80"],
+    "imageURLs":[
+        "https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=800&q=80"],
     "ingredients":{"ar":"حليب جاموسي مبستر. يحتوي على الحليب.","en":"Pasteurized buffalo milk. Contains milk."},
     "storageInstructions":{"ar":"يحفظ مبردًا وفق تعليمات العبوة.","en":"Keep refrigerated as directed on the pack."},
     "isFeatured":true,"isDemo":true,

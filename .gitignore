@@ -1,0 +1,29 @@
+# macOS
+.DS_Store
+
+# Xcode user state and personal workspace data
+*.xcuserstate
+xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+
+# Xcode build output
+build/
+DerivedData/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+# Package.resolved stays tracked to pin dependency versions.
+.build/
+.swiftpm/
+Packages/
+
+# CocoaPods / Carthage (unused, kept for future dependencies)
+Pods/
+Carthage/Build/
