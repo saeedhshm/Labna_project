@@ -6,11 +6,20 @@ struct HomeView: View {
         case category(String)
     }
 
+    private struct BannerPlaybackID: Hashable {
+        let bannerIDs: [String]
+        let reduceMotion: Bool
+        let isActive: Bool
+    }
+
     @Environment(AppContainer.self) private var container
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
     @State private var searchText = ""
     @State private var destination: Destination?
     @State private var quickAddProduct: Product?
     @State private var addedProductName: String?
+    @State private var selectedBannerIndex = 0
 
     var body: some View {
         CatalogStateView(store: container.catalog) { snapshot in
@@ -42,8 +51,8 @@ struct HomeView: View {
                 LabnaSearchField(text: $searchText)
 
                 if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    if let banner = snapshot.banners.first {
-                        bannerView(banner, snapshot: snapshot)
+                    if !snapshot.banners.isEmpty {
+                        bannerCarousel(snapshot.banners, snapshot: snapshot)
                     }
                     categoriesSection(snapshot.categories)
                     productsSection(
@@ -85,6 +94,36 @@ struct HomeView: View {
         .background(Color.labnaCream.opacity(0.25))
     }
 
+    private func bannerCarousel(_ banners: [Banner], snapshot: CatalogSnapshot) -> some View {
+        TabView(selection: $selectedBannerIndex) {
+            ForEach(Array(banners.enumerated()), id: \.element.id) { index, banner in
+                bannerView(banner, snapshot: snapshot)
+                    .tag(index)
+            }
+        }
+        .tabViewStyle(.page(indexDisplayMode: banners.count > 1 ? .always : .never))
+        .aspectRatio(1.65, contentMode: .fit)
+        .clipShape(RoundedRectangle(cornerRadius: LabnaRadius.large))
+        .task(id: BannerPlaybackID(
+            bannerIDs: banners.map(\.id),
+            reduceMotion: reduceMotion,
+            isActive: scenePhase == .active
+        )) {
+            selectedBannerIndex = min(selectedBannerIndex, banners.count - 1)
+            guard banners.count > 1, !reduceMotion, scenePhase == .active else { return }
+            while !Task.isCancelled {
+                do {
+                    try await Task.sleep(for: .seconds(5))
+                } catch {
+                    return
+                }
+                withAnimation(.easeInOut(duration: 0.45)) {
+                    selectedBannerIndex = (selectedBannerIndex + 1) % banners.count
+                }
+            }
+        }
+    }
+
     private func bannerView(_ banner: Banner, snapshot: CatalogSnapshot) -> some View {
         Button {
             switch banner.destination.kind {
@@ -111,12 +150,14 @@ struct HomeView: View {
                         .foregroundStyle(Color.white)
                         .multilineTextAlignment(.leading)
                         .padding(LabnaSpacing.large)
+                        .padding(.bottom, LabnaSpacing.medium)
                     }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: LabnaRadius.large))
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(banner.title.value(for: language)), \(banner.subtitle.value(for: language))")
+        .accessibilityIdentifier("banner.\(banner.id)")
     }
 
     private func categoriesSection(_ categories: [Category]) -> some View {

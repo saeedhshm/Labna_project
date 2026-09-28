@@ -99,6 +99,17 @@ final class LabnaUITests: XCTestCase {
     }
 
     @MainActor
+    func testHomeBannerCarouselShowsMultipleBanners() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart"]
+        app.launch()
+
+        let firstBanner = app.buttons["banner.fresh-start"]
+        XCTAssertTrue(firstBanner.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["banner.meet-labneh"].waitForExistence(timeout: 8))
+    }
+
+    @MainActor
     func testOfflineAndImageFailureStates() throws {
         let app = XCUIApplication()
         app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-simulateCatalogOffline"]
