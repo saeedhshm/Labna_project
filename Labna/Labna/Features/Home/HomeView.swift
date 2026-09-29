@@ -62,6 +62,9 @@ struct HomeView: View {
             .transition(.opacity.combined(with: .move(edge: .top)))
         } else {
             HStack(spacing: LabnaSpacing.medium) {
+                LabnaLogo()
+                Spacer(minLength: 0)
+
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         isSearchExpanded = true
@@ -78,9 +81,6 @@ struct HomeView: View {
                 }
                 .accessibilityLabel("search.prompt")
                 .accessibilityIdentifier("home.search.open")
-
-                LabnaLogo()
-                Spacer(minLength: 0)
             }
             .transition(.opacity.combined(with: .move(edge: .top)))
         }
