@@ -8,16 +8,18 @@ struct MainTabView: View {
         @Bindable var router = container.router
 
         TabView(selection: $router.selectedTab) {
-            NavigationStack {
+            NavigationStack(path: $router.homePath) {
                 HomeView()
+                    .navigationDestination(for: AppDestination.self, destination: destinationView)
             }
             .tabItem {
                 Label("tab.home", systemImage: "house")
             }
             .tag(AppTab.home)
 
-            NavigationStack {
+            NavigationStack(path: $router.catalogPath) {
                 CatalogView()
+                    .navigationDestination(for: AppDestination.self, destination: destinationView)
             }
             .tabItem {
                 Label("tab.products", systemImage: "square.grid.2x2")
@@ -26,6 +28,7 @@ struct MainTabView: View {
 
             NavigationStack(path: $router.cartPath) {
                 CartView()
+                    .navigationDestination(for: AppDestination.self, destination: destinationView)
             }
             .id(router.cartNavigationID)
             .tabItem {
@@ -34,8 +37,9 @@ struct MainTabView: View {
             .badge(container.cart.totalQuantity)
             .tag(AppTab.cart)
 
-            NavigationStack {
+            NavigationStack(path: $router.morePath) {
                 MoreView()
+                    .navigationDestination(for: AppDestination.self, destination: destinationView)
             }
             .tabItem {
                 Label("tab.more", systemImage: "ellipsis")
@@ -47,6 +51,30 @@ struct MainTabView: View {
         .toolbarBackground(.white, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
     }
+
+    /// Single mapping from a router destination to an existing screen. Deep
+    /// links and in-app navigation therefore land on identical views.
+    @ViewBuilder
+    private func destinationView(_ destination: AppDestination) -> some View {
+        switch destination {
+        case .product(let product):
+            ProductDetailsView(product: product, language: language)
+        case .category(let id):
+            CatalogView(initialCategoryID: id)
+        case .favorites:
+            FavoritesView()
+        case .recentlyViewed:
+            RecentlyViewedView()
+        case .branches:
+            BranchListView()
+        case .about:
+            AboutLabnaView()
+        case .contact:
+            ContactView()
+        }
+    }
+
+    private var language: AppLanguage { container.settings.language }
 }
 
 #Preview {

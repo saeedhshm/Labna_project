@@ -2,7 +2,6 @@ import SwiftUI
 
 struct RecentlyViewedView: View {
     @Environment(AppContainer.self) private var container
-    @State private var selectedProduct: Product?
     @State private var quickAddProduct: Product?
     @State private var addedProductName: String?
 
@@ -12,9 +11,6 @@ struct RecentlyViewedView: View {
         }
         .navigationTitle("recentlyViewed.title")
         .navigationBarTitleDisplayMode(.large)
-        .navigationDestination(item: $selectedProduct) { product in
-            ProductDetailsView(product: product, language: language)
-        }
         .sheet(item: $quickAddProduct) { product in
             QuickAddSheet(product: product, language: language) { name in
                 addedProductName = name
@@ -42,7 +38,7 @@ struct RecentlyViewedView: View {
                     ProductGrid(
                         products: products,
                         language: language,
-                        onOpen: { selectedProduct = $0 },
+                        onOpen: { container.router.append(.product($0), on: .more) },
                         onQuickAdd: { quickAddProduct = $0 }
                     )
                     .padding(LabnaSpacing.large)

@@ -1,12 +1,6 @@
 import SwiftUI
 
 struct HomeView: View {
-    private enum Destination: Hashable {
-        case product(Product)
-        case category(String)
-        case recentlyViewed
-    }
-
     private struct BannerPlaybackID: Hashable {
         let bannerIDs: [String]
         let selectedIndex: Int
@@ -18,7 +12,6 @@ struct HomeView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     @State private var searchText = ""
-    @State private var destination: Destination?
     @State private var quickAddProduct: Product?
     @State private var addedProductName: String?
     @State private var selectedBannerIndex = 0
@@ -29,16 +22,6 @@ struct HomeView: View {
             content(snapshot)
         }
         .navigationBarHidden(true)
-        .navigationDestination(item: $destination) { destination in
-            switch destination {
-            case .product(let product):
-                ProductDetailsView(product: product, language: language)
-            case .category(let categoryID):
-                CatalogView(initialCategoryID: categoryID)
-            case .recentlyViewed:
-                RecentlyViewedView()
-            }
-        }
         .sheet(item: $quickAddProduct) { product in
             QuickAddSheet(product: product, language: language) { name in
                 addedProductName = name
@@ -48,6 +31,11 @@ struct HomeView: View {
     }
 
     private var language: AppLanguage { container.settings.language }
+    private var router: AppRouter { container.router }
+
+    private func open(_ destination: AppDestination) {
+        router.append(destination, on: .home)
+    }
 
     @ViewBuilder
     private var homeHeader: some View {
@@ -185,10 +173,10 @@ struct HomeView: View {
             switch banner.destination.kind {
             case .product:
                 if let product = snapshot.products.first(where: { $0.id == banner.destination.id }) {
-                    destination = .product(product)
+                    open(.product(product))
                 }
             case .category:
-                destination = .category(banner.destination.id)
+                open(.category(id: banner.destination.id))
             }
         } label: {
             ProductImage(url: banner.imageURL, aspectRatio: 1.65, allowsRetry: false)
@@ -222,7 +210,7 @@ struct HomeView: View {
                 HStack(spacing: LabnaSpacing.medium) {
                     ForEach(categories) { category in
                         CategoryCard(category: category, language: language) {
-                            destination = .category(category.id)
+                            open(.category(id: category.id))
                         }
                         .frame(width: 150)
                     }
@@ -241,7 +229,7 @@ struct HomeView: View {
                     sectionTitle("recentlyViewed.title")
                     Spacer()
                     Button("recentlyViewed.viewAll") {
-                        destination = .recentlyViewed
+                        open(.recentlyViewed)
                     }
                     .font(LabnaTypography.headline)
                     .foregroundStyle(Color.labnaGreen)
@@ -255,7 +243,7 @@ struct HomeView: View {
                             ProductCard(
                                 product: product,
                                 language: language,
-                                openDetails: { destination = .product(product) },
+                                openDetails: { open(.product(product)) },
                                 addToCart: { quickAddProduct = product }
                             )
                             .frame(width: 170)
@@ -275,7 +263,7 @@ struct HomeView: View {
             ProductGrid(
                 products: products,
                 language: language,
-                onOpen: { destination = .product($0) },
+                onOpen: { open(.product($0)) },
                 onQuickAdd: { quickAddProduct = $0 }
             )
         }

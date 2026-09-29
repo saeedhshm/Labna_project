@@ -5,7 +5,6 @@ struct CatalogView: View {
     @State private var searchText = ""
     @State private var selectedCategoryID: String?
     @State private var sort: ProductSortOption = .featured
-    @State private var selectedProduct: Product?
     @State private var quickAddProduct: Product?
     @State private var addedProductName: String?
 
@@ -19,9 +18,6 @@ struct CatalogView: View {
         }
         .navigationTitle("catalog.title")
         .navigationBarTitleDisplayMode(.large)
-        .navigationDestination(item: $selectedProduct) { product in
-            ProductDetailsView(product: product, language: language)
-        }
         .sheet(item: $quickAddProduct) { product in
             QuickAddSheet(product: product, language: language) { name in
                 addedProductName = name
@@ -31,6 +27,10 @@ struct CatalogView: View {
     }
 
     private var language: AppLanguage { container.settings.language }
+
+    private func open(_ product: Product) {
+        container.router.append(.product(product), on: .catalog)
+    }
 
     private func catalog(_ snapshot: CatalogSnapshot) -> some View {
         let products = CatalogQuery.products(
@@ -77,7 +77,7 @@ struct CatalogView: View {
                     ProductGrid(
                         products: products,
                         language: language,
-                        onOpen: { selectedProduct = $0 },
+                        onOpen: { open($0) },
                         onQuickAdd: { quickAddProduct = $0 }
                     )
                 }

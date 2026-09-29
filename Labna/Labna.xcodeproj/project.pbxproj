@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		A10000000000000000000001 /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000003 /* NukeUI */; };
+		B10000000000000000000010 /* LabnaWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B10000000000000000000002 /* LabnaWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -25,12 +26,23 @@
 			remoteGlobalIDString = 557234EF3069A1A600E87A1A;
 			remoteInfo = Labna;
 		};
+		B1000000000000000000000D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 557234E83069A1A600E87A1A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B10000000000000000000005 /* LabnaWidget */;
+			remoteInfo = LabnaWidget;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		557234F03069A1A600E87A1A /* Labna.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Labna.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		557234FF3069A1A700E87A1A /* LabnaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LabnaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		557235093069A1A700E87A1A /* LabnaUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LabnaUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B10000000000000000000001 /* Labna.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Labna.entitlements; sourceTree = "<group>"; };
+		B10000000000000000000011 /* LabnaWidget-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = LabnaWidget-Info.plist; sourceTree = "<group>"; };
+		B10000000000000000000012 /* LabnaWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LabnaWidget.entitlements; sourceTree = "<group>"; };
+		B10000000000000000000002 /* LabnaWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LabnaWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -47,6 +59,16 @@
 		5572350C3069A1A700E87A1A /* LabnaUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = LabnaUITests;
+			sourceTree = "<group>";
+		};
+		B10000000000000000000003 /* LabnaShared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = LabnaShared;
+			sourceTree = "<group>";
+		};
+		B10000000000000000000004 /* LabnaWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = LabnaWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -81,6 +103,11 @@
 			isa = PBXGroup;
 			children = (
 				557234F23069A1A600E87A1A /* Labna */,
+				B10000000000000000000003 /* LabnaShared */,
+				B10000000000000000000004 /* LabnaWidget */,
+				B10000000000000000000001 /* Labna.entitlements */,
+				B10000000000000000000011 /* LabnaWidget-Info.plist */,
+				B10000000000000000000012 /* LabnaWidget.entitlements */,
 				557235023069A1A700E87A1A /* LabnaTests */,
 				5572350C3069A1A700E87A1A /* LabnaUITests */,
 				557234F13069A1A600E87A1A /* Products */,
@@ -91,6 +118,7 @@
 			isa = PBXGroup;
 			children = (
 				557234F03069A1A600E87A1A /* Labna.app */,
+				B10000000000000000000002 /* LabnaWidget.appex */,
 				557234FF3069A1A700E87A1A /* LabnaTests.xctest */,
 				557235093069A1A700E87A1A /* LabnaUITests.xctest */,
 			);
@@ -107,13 +135,16 @@
 				557234EC3069A1A600E87A1A /* Sources */,
 				557234ED3069A1A600E87A1A /* Frameworks */,
 				557234EE3069A1A600E87A1A /* Resources */,
+				B1000000000000000000000F /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				B1000000000000000000000E /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				557234F23069A1A600E87A1A /* Labna */,
+				B10000000000000000000003 /* LabnaShared */,
 			);
 			name = Labna;
 			packageProductDependencies = (
@@ -122,6 +153,29 @@
 			productName = Labna;
 			productReference = 557234F03069A1A600E87A1A /* Labna.app */;
 			productType = "com.apple.product-type.application";
+		};
+		B10000000000000000000005 /* LabnaWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B1000000000000000000000A /* Build configuration list for PBXNativeTarget "LabnaWidget" */;
+			buildPhases = (
+				B10000000000000000000007 /* Sources */,
+				B10000000000000000000008 /* Frameworks */,
+				B10000000000000000000009 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B10000000000000000000004 /* LabnaWidget */,
+				B10000000000000000000003 /* LabnaShared */,
+			);
+			name = LabnaWidget;
+			packageProductDependencies = (
+			);
+			productName = LabnaWidget;
+			productReference = B10000000000000000000002 /* LabnaWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 		557234FE3069A1A700E87A1A /* LabnaTests */ = {
 			isa = PBXNativeTarget;
@@ -190,6 +244,9 @@
 						CreatedOnToolsVersion = 26.1.1;
 						TestTargetID = 557234EF3069A1A600E87A1A;
 					};
+					B10000000000000000000005 = {
+						CreatedOnToolsVersion = 26.1.1;
+					};
 				};
 			};
 			buildConfigurationList = 557234EB3069A1A600E87A1A /* Build configuration list for PBXProject "Labna" */;
@@ -211,6 +268,7 @@
 			projectRoot = "";
 			targets = (
 				557234EF3069A1A600E87A1A /* Labna */,
+				B10000000000000000000005 /* LabnaWidget */,
 				557234FE3069A1A700E87A1A /* LabnaTests */,
 				557235083069A1A700E87A1A /* LabnaUITests */,
 			);
@@ -233,6 +291,24 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		557235073069A1A700E87A1A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B1000000000000000000000F /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				B10000000000000000000010 /* LabnaWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B10000000000000000000009 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -263,6 +339,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B10000000000000000000007 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B10000000000000000000008 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -275,6 +365,11 @@
 			isa = PBXTargetDependency;
 			target = 557234EF3069A1A600E87A1A /* Labna */;
 			targetProxy = 5572350A3069A1A700E87A1A /* PBXContainerItemProxy */;
+		};
+		B1000000000000000000000E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B10000000000000000000005 /* LabnaWidget */;
+			targetProxy = B1000000000000000000000D /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -403,6 +498,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Labna.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
@@ -431,6 +527,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Labna.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
@@ -534,6 +631,68 @@
 			};
 			name = Release;
 		};
+		B1000000000000000000000B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = LabnaWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LabnaWidget-Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Labna;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.saeed.Labna.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		B1000000000000000000000C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = LabnaWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LabnaWidget-Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Labna;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.saeed.Labna.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -569,6 +728,15 @@
 			buildConfigurations = (
 				5572351A3069A1A700E87A1A /* Debug */,
 				5572351B3069A1A700E87A1A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B1000000000000000000000A /* Build configuration list for PBXNativeTarget "LabnaWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B1000000000000000000000B /* Debug */,
+				B1000000000000000000000C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

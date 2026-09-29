@@ -31,6 +31,14 @@ final class CatalogStore {
         await refresh(manual: true)
     }
 
+    /// The most recent snapshot the store has published, if any.
+    var currentSnapshot: CatalogSnapshot? {
+        switch state {
+        case .available(let snapshot, _, _), .refreshing(let snapshot, _): snapshot
+        case .idle, .initialLoading, .fatal: nil
+        }
+    }
+
     private func loadInitialCatalog() async {
         guard !isLoading else { return }
         let previous = state

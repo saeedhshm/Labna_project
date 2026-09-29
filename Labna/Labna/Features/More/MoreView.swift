@@ -28,9 +28,9 @@ struct MoreView: View {
             }
 
             Section("more.explore") {
-                NavigationLink {
-                    FavoritesView()
-                } label: {
+                // Value based links so these rows share one destination table
+                // with deep links and programmatic navigation.
+                NavigationLink(value: AppDestination.favorites) {
                     MoreRow(
                         title: "favorites.title",
                         symbol: "heart",
@@ -40,23 +40,22 @@ struct MoreView: View {
                 }
                 .accessibilityIdentifier("more.favorites")
 
-                NavigationLink {
-                    AboutLabnaView()
-                } label: {
+                NavigationLink(value: AppDestination.recentlyViewed) {
+                    MoreRow(title: "recentlyViewed.title", symbol: "clock.arrow.circlepath")
+                }
+                .accessibilityIdentifier("more.recentlyViewed")
+
+                NavigationLink(value: AppDestination.about) {
                     MoreRow(title: "more.aboutLabna", symbol: "drop")
                 }
                 .accessibilityIdentifier("more.about")
 
-                NavigationLink {
-                    BranchListView()
-                } label: {
+                NavigationLink(value: AppDestination.branches) {
                     MoreRow(title: "more.branches", symbol: "mappin.and.ellipse")
                 }
                 .accessibilityIdentifier("more.branches")
 
-                NavigationLink {
-                    ContactView()
-                } label: {
+                NavigationLink(value: AppDestination.contact) {
                     MoreRow(title: "more.contact", symbol: "bubble.left.and.bubble.right")
                 }
                 .accessibilityIdentifier("more.contact")

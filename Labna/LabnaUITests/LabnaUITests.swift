@@ -75,7 +75,12 @@ final class LabnaUITests: XCTestCase {
         XCTAssertTrue(moreTab.waitForExistence(timeout: 10))
         moreTab.tap()
         XCTAssertTrue(app.staticTexts["more.demoNotice"].exists)
-        XCTAssertTrue(app.staticTexts["Version"].exists)
+        // The version footer sits at the bottom of the list, so scroll to it.
+        let version = app.staticTexts["Version"]
+        while !version.exists {
+            app.swipeUp()
+        }
+        XCTAssertTrue(version.exists)
 
         app.buttons["more.about"].tap()
         XCTAssertTrue(app.navigationBars["About Labna"].waitForExistence(timeout: 5))
