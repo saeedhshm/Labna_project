@@ -10,22 +10,6 @@
 		A10000000000000000000001 /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000003 /* NukeUI */; };
 /* End PBXBuildFile section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		A10000000000000000000002 /* Nuke */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/kean/Nuke.git";
-			requirement = {kind = exactVersion; version = 12.8.0; };
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		A10000000000000000000003 /* NukeUI */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = A10000000000000000000002 /* Nuke */;
-			productName = NukeUI;
-		};
-/* End XCSwiftPackageProductDependency section */
-
 /* Begin PBXContainerItemProxy section */
 		557235003069A1A700E87A1A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -219,7 +203,7 @@
 			mainGroup = 557234E73069A1A600E87A1A;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				A10000000000000000000002 /* Nuke */,
+				A10000000000000000000002 /* XCRemoteSwiftPackageReference "Nuke" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 557234F13069A1A600E87A1A /* Products */;
@@ -590,6 +574,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A10000000000000000000002 /* XCRemoteSwiftPackageReference "Nuke" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kean/Nuke.git";
+			requirement = {
+				kind = exactVersion;
+				version = 12.8.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A10000000000000000000003 /* NukeUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A10000000000000000000002 /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = NukeUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 557234E83069A1A600E87A1A /* Project object */;
 }

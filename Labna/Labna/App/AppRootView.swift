@@ -18,7 +18,9 @@ struct AppRootView: View {
             .modelContainer(container.modelContainer)
             .task {
                 await container.catalog.loadIfNeeded()
-                if case .loaded(let snapshot) = container.catalog.state {
+                if case .available(let snapshot, _, _) = container.catalog.state {
+                    container.cart.review(using: snapshot.products)
+                } else if case .refreshing(let snapshot, _) = container.catalog.state {
                     container.cart.review(using: snapshot.products)
                 }
             }

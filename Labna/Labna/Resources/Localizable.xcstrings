@@ -611,6 +611,22 @@
         }
       }
     },
+    "catalog.offlineSavedData" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أنت غير متصل بالإنترنت. يتم عرض البيانات المحفوظة."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You're offline. Showing saved data."
+          }
+        }
+      }
+    },
     "catalog.placeholder" : {
       "extractionState" : "stale",
       "localizations" : {

@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-enum CatalogError: Error {
+enum CatalogError: Error, Equatable {
     case missingResource(CatalogResource)
     case unreadableResource(CatalogResource)
     case invalidData(CatalogResource)
@@ -18,6 +18,15 @@ enum CatalogError: Error {
         case .invalidData, .invalidResponse: "data.error.invalid"
         case .missingResource, .unreadableResource, .invalidBaseURL: "data.error.configuration"
         case .httpStatus, .network, .unexpected: "data.error.general"
+        }
+    }
+
+    var isOffline: Bool {
+        switch self {
+        case .network(.notConnectedToInternet), .network(.networkConnectionLost), .network(.cannotFindHost), .network(.cannotConnectToHost):
+            true
+        default:
+            false
         }
     }
 }

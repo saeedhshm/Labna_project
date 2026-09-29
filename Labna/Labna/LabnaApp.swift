@@ -25,6 +25,8 @@ struct LabnaApp: App {
         if ProcessInfo.processInfo.arguments.contains("-resetCart") {
             container.cart.removeAll()
         }
+        container.backgroundSync.register()
+        container.backgroundSync.scheduleNextRefresh()
         _container = State(initialValue: container)
     }
 

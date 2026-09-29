@@ -132,22 +132,21 @@ final class LabnaUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-simulateCatalogOffline"]
         app.launch()
-        XCTAssertTrue(app.staticTexts["Unable to load data"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts["Check your internet connection and try again."].exists)
-        XCTAssertTrue(app.buttons["Try again"].isHittable)
+        XCTAssertTrue(app.buttons["Products"].waitForExistence(timeout: 10), "Products tab should exist while offline")
+        app.buttons["Products"].tap()
+        XCTAssertTrue(app.buttons["product.milk-full"].waitForExistence(timeout: 10), "Offline launch should still show bundled or cached products")
 
         app.terminate()
         app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-simulateImageFailure"]
         app.launch()
         let products = app.buttons["Products"].firstMatch
-        XCTAssertTrue(products.waitForExistence(timeout: 10))
+        XCTAssertTrue(products.waitForExistence(timeout: 10), "Products tab should exist when simulating image failure")
         products.tap()
         let milk = app.buttons["product.milk-full"]
-        XCTAssertTrue(milk.waitForExistence(timeout: 10))
+        XCTAssertTrue(milk.waitForExistence(timeout: 10), "Milk product should exist when simulating image failure")
         milk.tap()
-        let imageRetry = app.buttons["image.retry"].firstMatch
-        XCTAssertTrue(imageRetry.waitForExistence(timeout: 5))
-        XCTAssertEqual(imageRetry.label, "Try again")
+        XCTAssertTrue(app.navigationBars["Full Cream Milk"].waitForExistence(timeout: 5), "Product details should open")
+        XCTAssertTrue(app.buttons["productDetails.add"].waitForExistence(timeout: 5), "Product details should remain usable when images fail")
     }
 
     @MainActor

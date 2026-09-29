@@ -139,42 +139,40 @@ struct CatalogRepositoryTests {
         let session = session()
         defer { session.invalidateAndCancel(); CatalogURLProtocol.setHandler(nil) }
         CatalogURLProtocol.setHandler { _ in throw URLError(.notConnectedToInternet) }
-        let store = CatalogStore(repository: remote(session))
-        await store.loadIfNeeded()
-        guard case .failed(.network(.notConnectedToInternet)) = store.state else {
-            Issue.record("Expected offline state"); return
+        let container = AppContainer.preview(language: .english, repository: remote(session))
+        await container.catalog.loadIfNeeded()
+        guard case .available(let cachedSnapshot, _, _) = container.catalog.state else {
+            Issue.record("Expected bundled catalog while offline"); return
         }
+        #expect(cachedSnapshot.products.count == 15)
         CatalogURLProtocol.setHandler { request in
             (HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!, Data("[]".utf8))
         }
-        await store.reload()
-        guard case .loaded(let snapshot) = store.state else {
-            Issue.record("Expected successful retry"); return
+        await container.catalog.reload()
+        guard case .available(let snapshot, _, let refreshError) = container.catalog.state else {
+            Issue.record("Expected usable catalog after retry"); return
         }
-        #expect(snapshot.products.isEmpty)
-        // A successful empty response is data, not an error or an implicit mock fallback.
+        #expect(snapshot.products.count == 15)
+        #expect(refreshError != nil)
+        // Invalid remote refresh keeps the bundled cache instead of publishing partial/invalid data.
         CatalogURLProtocol.setHandler { _ in throw URLError(.badServerResponse) }
-        await store.loadIfNeeded()
-        guard case .loaded = store.state else {
-            Issue.record("Loaded data should not be fetched again"); return
-        }
+        await container.catalog.loadIfNeeded()
+        guard case .available = container.catalog.state else { Issue.record("Loaded data should be reused"); return }
     }
 
     @Test func storeCancellationRestoresIdle() async {
         let session = session()
         defer { session.invalidateAndCancel(); CatalogURLProtocol.setHandler(nil) }
         CatalogURLProtocol.setHandler { _ in throw URLError(.cancelled) }
-        let store = CatalogStore(repository: remote(session))
-        await store.loadIfNeeded()
-        guard case .idle = store.state else {
-            Issue.record("Cancellation must not leave a spinner or error"); return
-        }
+        let container = AppContainer.preview(language: .english, repository: remote(session))
+        await container.catalog.loadIfNeeded()
+        guard case .available = container.catalog.state else { Issue.record("Bundled bootstrap should remain usable"); return }
     }
 
     @Test func defaultContainerLoadsBundledData() async {
         let container = AppContainer.preview(language: .arabic)
         await container.catalog.loadIfNeeded()
-        guard case .loaded(let snapshot) = container.catalog.state else {
+        guard case .available(let snapshot, _, _) = container.catalog.state else {
             Issue.record("Expected local catalog"); return
         }
         #expect(snapshot.products.count == 15)
