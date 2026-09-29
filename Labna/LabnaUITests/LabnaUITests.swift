@@ -239,6 +239,29 @@ final class LabnaUITests: XCTestCase {
     }
 
     @MainActor
+    func testRecentlyViewedProductsAppearOnHomeAndViewAll() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-resetRecentlyViewed"]
+        app.launch()
+
+        XCTAssertTrue(app.tabBars.buttons["Products"].waitForExistence(timeout: 10))
+        app.tabBars.buttons["Products"].tap()
+        let product = app.buttons["product.milk-full"]
+        XCTAssertTrue(product.waitForExistence(timeout: 10))
+        product.tap()
+        XCTAssertTrue(app.navigationBars["Full Cream Milk"].waitForExistence(timeout: 5))
+
+        app.navigationBars.buttons.firstMatch.tap()
+        app.tabBars.buttons["Home"].tap()
+        XCTAssertTrue(app.descendants(matching: .any)["recentlyViewed.section"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["product.milk-full"].waitForExistence(timeout: 5))
+
+        app.buttons["recentlyViewed.viewAll"].tap()
+        XCTAssertTrue(app.navigationBars["Recently viewed"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["product.milk-full"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {

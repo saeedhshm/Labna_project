@@ -4,6 +4,7 @@ struct HomeView: View {
     private enum Destination: Hashable {
         case product(Product)
         case category(String)
+        case recentlyViewed
     }
 
     private struct BannerPlaybackID: Hashable {
@@ -34,6 +35,8 @@ struct HomeView: View {
                 ProductDetailsView(product: product, language: language)
             case .category(let categoryID):
                 CatalogView(initialCategoryID: categoryID)
+            case .recentlyViewed:
+                RecentlyViewedView()
             }
         }
         .sheet(item: $quickAddProduct) { product in
@@ -107,6 +110,7 @@ struct HomeView: View {
                     }
                     categoriesSection(snapshot.categories)
                         .padding(.horizontal, LabnaSpacing.large)
+                    recentlyViewedSection(snapshot.products)
                     productsSection(
                         title: "home.featured",
                         products: CatalogQuery.products(
@@ -228,6 +232,43 @@ struct HomeView: View {
         }
     }
 
+    @ViewBuilder
+    private func recentlyViewedSection(_ products: [Product]) -> some View {
+        let recentProducts = recentlyViewedProducts(from: products)
+        if !recentProducts.isEmpty {
+            VStack(alignment: .leading, spacing: LabnaSpacing.medium) {
+                HStack(alignment: .firstTextBaseline) {
+                    sectionTitle("recentlyViewed.title")
+                    Spacer()
+                    Button("recentlyViewed.viewAll") {
+                        destination = .recentlyViewed
+                    }
+                    .font(LabnaTypography.headline)
+                    .foregroundStyle(Color.labnaGreen)
+                    .accessibilityIdentifier("recentlyViewed.viewAll")
+                }
+                .padding(.horizontal, LabnaSpacing.large)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(alignment: .top, spacing: LabnaSpacing.medium) {
+                        ForEach(Array(recentProducts.prefix(8))) { product in
+                            ProductCard(
+                                product: product,
+                                language: language,
+                                openDetails: { destination = .product(product) },
+                                addToCart: { quickAddProduct = product }
+                            )
+                            .frame(width: 170)
+                        }
+                    }
+                    .padding(.horizontal, LabnaSpacing.large)
+                }
+                .contentMargins(.horizontal, 1, for: .scrollContent)
+                .accessibilityIdentifier("recentlyViewed.section")
+            }
+        }
+    }
+
     private func productsSection(title: LocalizedStringKey, products: [Product]) -> some View {
         VStack(alignment: .leading, spacing: LabnaSpacing.medium) {
             sectionTitle(title)
@@ -242,5 +283,10 @@ struct HomeView: View {
 
     private func sectionTitle(_ key: LocalizedStringKey) -> some View {
         Text(key).font(LabnaTypography.brand).foregroundStyle(Color.labnaInk)
+    }
+
+    private func recentlyViewedProducts(from products: [Product]) -> [Product] {
+        let productsByID = Dictionary(uniqueKeysWithValues: products.map { ($0.id, $0) })
+        return container.recentlyViewed.productIDs.compactMap { productsByID[$0] }
     }
 }

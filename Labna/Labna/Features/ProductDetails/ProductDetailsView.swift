@@ -58,6 +58,9 @@ struct ProductDetailsView: View {
         .safeAreaInset(edge: .bottom) {
             addButton.padding(LabnaSpacing.medium).background(.ultraThinMaterial)
         }
+        .task(id: product.id) {
+            container.recentlyViewed.record(productID: product.id)
+        }
         .addedToCartToast(productName: addedProductName) { addedProductName = nil }
     }
 

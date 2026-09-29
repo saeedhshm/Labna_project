@@ -28,6 +28,9 @@ struct LabnaApp: App {
         if ProcessInfo.processInfo.arguments.contains("-resetFavorites") {
             container.favorites.removeAll()
         }
+        if ProcessInfo.processInfo.arguments.contains("-resetRecentlyViewed") {
+            container.recentlyViewed.removeAll()
+        }
         container.backgroundSync.register()
         container.backgroundSync.scheduleNextRefresh()
         _container = State(initialValue: container)

@@ -12,6 +12,7 @@ final class AppContainer {
     let catalog: CatalogStore
     let cart: CartStore
     let favorites: FavoritesStore
+    let recentlyViewed: RecentlyViewedStore
     let modelContainer: ModelContainer
     let router: AppRouter
 
@@ -51,6 +52,7 @@ final class AppContainer {
         catalog = CatalogStore(syncService: catalogSync)
         cart = CartStore(modelContainer: selectedContainer)
         favorites = FavoritesStore(modelContainer: selectedContainer)
+        recentlyViewed = RecentlyViewedStore(modelContainer: selectedContainer)
         catalog.onSnapshotChanged = { [cart] snapshot in
             cart.review(using: snapshot.products)
         }
