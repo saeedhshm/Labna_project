@@ -12,6 +12,7 @@ enum PersistenceContainer {
                 PersistedCatalogBanner.self,
                 PersistedCatalogBranch.self,
                 PersistedCatalogMetadata.self,
+                PersistedFavorite.self,
                 configurations: configuration
             )
         } catch {

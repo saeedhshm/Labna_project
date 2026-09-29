@@ -220,6 +220,25 @@ final class LabnaUITests: XCTestCase {
     }
 
     @MainActor
+    func testFavoritesCanBeSavedAndOpenedFromMore() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-resetFavorites"]
+        app.launch()
+
+        XCTAssertTrue(app.tabBars.buttons["Products"].waitForExistence(timeout: 10))
+        app.tabBars.buttons["Products"].tap()
+        let favorite = app.buttons["favorite.milk-full"]
+        XCTAssertTrue(favorite.waitForExistence(timeout: 10))
+        favorite.tap()
+
+        app.tabBars.buttons["More"].tap()
+        XCTAssertEqual(app.staticTexts["more.favorites.count"].label, "1")
+        app.buttons["more.favorites"].tap()
+        XCTAssertTrue(app.navigationBars["Favorites"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["product.milk-full"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {

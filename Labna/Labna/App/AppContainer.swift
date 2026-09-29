@@ -11,6 +11,7 @@ final class AppContainer {
     let backgroundSync: CatalogBackgroundSync
     let catalog: CatalogStore
     let cart: CartStore
+    let favorites: FavoritesStore
     let modelContainer: ModelContainer
     let router: AppRouter
 
@@ -49,6 +50,7 @@ final class AppContainer {
         backgroundSync = CatalogBackgroundSync(syncService: catalogSync)
         catalog = CatalogStore(syncService: catalogSync)
         cart = CartStore(modelContainer: selectedContainer)
+        favorites = FavoritesStore(modelContainer: selectedContainer)
         catalog.onSnapshotChanged = { [cart] snapshot in
             cart.review(using: snapshot.products)
         }

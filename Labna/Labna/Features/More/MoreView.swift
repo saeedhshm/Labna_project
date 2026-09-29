@@ -29,6 +29,18 @@ struct MoreView: View {
 
             Section("more.explore") {
                 NavigationLink {
+                    FavoritesView()
+                } label: {
+                    MoreRow(
+                        title: "favorites.title",
+                        symbol: "heart",
+                        badgeValue: container.favorites.favoriteProductIDs.count,
+                        badgeIdentifier: "more.favorites.count"
+                    )
+                }
+                .accessibilityIdentifier("more.favorites")
+
+                NavigationLink {
                     AboutLabnaView()
                 } label: {
                     MoreRow(title: "more.aboutLabna", symbol: "drop")
@@ -83,14 +95,30 @@ struct MoreView: View {
 private struct MoreRow: View {
     let title: LocalizedStringKey
     let symbol: String
+    var badgeValue: Int?
+    var badgeIdentifier: String?
 
     var body: some View {
-        Label {
-            Text(title).foregroundStyle(Color.labnaInk)
-        } icon: {
-            Image(systemName: symbol)
-                .foregroundStyle(Color.labnaGreen)
-                .frame(width: 28)
+        HStack(spacing: LabnaSpacing.small) {
+            Label {
+                Text(title).foregroundStyle(Color.labnaInk)
+            } icon: {
+                Image(systemName: symbol)
+                    .foregroundStyle(Color.labnaGreen)
+                    .frame(width: 28)
+            }
+
+            Spacer()
+
+            if let badgeValue {
+                Text(badgeValue, format: .number)
+                    .font(LabnaTypography.caption)
+                    .foregroundStyle(Color.labnaMuted)
+                    .padding(.horizontal, LabnaSpacing.small)
+                    .padding(.vertical, 4)
+                    .background(Color.labnaCream, in: Capsule())
+                    .accessibilityIdentifier(badgeIdentifier ?? "")
+            }
         }
     }
 }

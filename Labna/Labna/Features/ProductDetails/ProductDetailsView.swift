@@ -50,6 +50,11 @@ struct ProductDetailsView: View {
         .background(Color.white)
         .navigationTitle(product.name.value(for: language))
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                FavoriteButton(productID: product.id)
+            }
+        }
         .safeAreaInset(edge: .bottom) {
             addButton.padding(LabnaSpacing.medium).background(.ultraThinMaterial)
         }
