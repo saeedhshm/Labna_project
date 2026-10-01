@@ -3,7 +3,7 @@ import SwiftUI
 struct LabnaLogo: View {
     var body: some View {
         HStack(spacing: LabnaSpacing.small) {
-            Image("LaunchLogo")
+            Image("LabnaLauncherLogo")
                 .resizable()
                 .scaledToFill()
                 .frame(width: 44, height: 44)

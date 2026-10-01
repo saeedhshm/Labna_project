@@ -49,8 +49,11 @@ struct FeaturePlaceholderView: View {
 
     private var brandHeader: some View {
         HStack(spacing: LabnaSpacing.small) {
-            Image(systemName: "drop.fill")
-                .foregroundStyle(Color.labnaGreen)
+            Image("LabnaLauncherLogo")
+                .resizable()
+                .scaledToFill()
+                .frame(width: 24, height: 24)
+                .clipShape(RoundedRectangle(cornerRadius: 7))
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("brand.name")

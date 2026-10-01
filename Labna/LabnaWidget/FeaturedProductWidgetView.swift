@@ -97,9 +97,11 @@ struct FeaturedProductWidgetView: View {
 
     private var brandHeader: some View {
         HStack(spacing: LabnaSpacing.extraSmall) {
-            Image(systemName: "drop.fill")
-                .font(.caption2)
-                .foregroundStyle(Color.labnaGreen)
+            Image("LabnaLauncherLogo")
+                .resizable()
+                .scaledToFill()
+                .frame(width: 16, height: 16)
+                .clipShape(RoundedRectangle(cornerRadius: 4))
             Text(verbatim: SharedLocalized.string("widget.brand", language: entry.language))
                 .font(LabnaTypography.caption)
                 .foregroundStyle(Color.labnaMuted)
@@ -123,9 +125,11 @@ struct FeaturedProductWidgetView: View {
     private var imagePlaceholder: some View {
         ZStack {
             Color.labnaMint
-            Image(systemName: "drop.fill")
-                .font(.title2)
-                .foregroundStyle(Color.labnaGreen.opacity(0.55))
+            Image("LabnaLauncherLogo")
+                .resizable()
+                .scaledToFill()
+                .frame(width: 32, height: 32)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
         }
         .frame(maxWidth: .infinity)
         .clipShape(RoundedRectangle(cornerRadius: LabnaRadius.medium))

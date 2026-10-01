@@ -3,13 +3,22 @@ import SwiftData
 
 struct AppRootView: View {
     @State private var container: AppContainer
+    @State private var isShowingSplash = true
 
     init(container: AppContainer) {
         _container = State(initialValue: container)
     }
 
     var body: some View {
-        ContentView()
+        ZStack {
+            ContentView()
+
+            if isShowingSplash {
+                LabnaSplashView()
+                    .transition(.opacity)
+                    .zIndex(1)
+            }
+        }
             .environment(container)
             .environment(\.locale, container.settings.language.locale)
             .environment(\.layoutDirection, container.settings.language.layoutDirection)
@@ -24,11 +33,32 @@ struct AppRootView: View {
                 await container.catalog.loadIfNeeded()
                 container.cart.review(using: container.catalog.currentSnapshot?.products ?? [])
             }
+            .task {
+                try? await Task.sleep(for: .milliseconds(700))
+                withAnimation(.easeOut(duration: 0.2)) {
+                    isShowingSplash = false
+                }
+            }
             // Replays a link that arrived before the catalog was ready. Driven by
             // real catalog state, so it runs exactly once and never on a timer.
             .onChange(of: container.catalog.state) { _, state in
                 container.deepLinks.update(readiness: DeepLinkCoordinator.readiness(for: state))
             }
+    }
+}
+
+private struct LabnaSplashView: View {
+    var body: some View {
+        ZStack {
+            Color("LaunchBackground")
+                .ignoresSafeArea()
+
+            Image("LabnaLauncherLogo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 220, height: 220)
+        }
+        .accessibilityHidden(true)
     }
 }
 
