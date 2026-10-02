@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
+import type { OrderStatus } from '@labna/contracts';
 import { api } from '../api';
 import { money } from '../format';
 import { useLanguage } from '../i18n';
@@ -14,6 +15,8 @@ const statusCopy = {
   completed: { ar: 'مكتمل', en: 'Completed' },
   cancelled: { ar: 'ملغي', en: 'Cancelled' },
 };
+const timeline: OrderStatus[] = ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'completed'];
+const dateTime = new Intl.DateTimeFormat('ar-EG', { dateStyle: 'medium', timeStyle: 'short' });
 
 export function ConfirmationPage() {
   const { orderID = '' } = useParams();
@@ -23,17 +26,68 @@ export function ConfirmationPage() {
 
   if (order.isPending) return <section className="state-card"><p>{t('جار تحميل الطلب…', 'Loading order...')}</p></section>;
   if (order.isError || !data) return <section className="state-card"><h1>{t('تعذر تحميل الطلب', 'Could not load order')}</h1><Link className="button" to="/catalog">{t('العودة للمتجر', 'Back to store')}</Link></section>;
+  const currentIndex = timeline.indexOf(data.status);
+  const history = new Map(data.statusHistory.map(item => [item.status, item.at]));
 
   return (
     <section className="section confirmation-page">
       <div className="confirmation-card">
-        <p className="eyebrow">{t('تم إنشاء الطلب', 'Order created')}</p>
-        <h1>{t('شكراً لك، طلبك جاهز للمتابعة', 'Thank you, your order is ready to track')}</h1>
+        <p className="eyebrow">{t('تتبع الطلب', 'Order tracking')}</p>
+        <h1>{t('طلبك قيد المتابعة من المتجر', 'Your order is being tracked by the store')}</h1>
         <div className="order-number">{data.orderNumber}</div>
         <p>{t('الحالة الحالية', 'Current status')}: <strong>{statusCopy[data.status][locale]}</strong></p>
+        <button className="button button--ghost" type="button" onClick={() => void order.refetch()} disabled={order.isFetching}>
+          {order.isFetching ? t('جار التحديث…', 'Refreshing...') : t('تحديث الحالة', 'Refresh status')}
+        </button>
       </div>
+      <section className="tracking-panel">
+        <div className="section__head">
+          <div>
+            <p className="eyebrow">{t('خط سير الطلب', 'Tracking timeline')}</p>
+            <h2>{t('آخر تحديث من لوحة الإدارة يظهر هنا', 'Admin status updates appear here')}</h2>
+          </div>
+        </div>
+        <ol className="tracking-timeline">
+          {timeline.map((status, index) => {
+            const done = data.status === 'cancelled' ? history.has(status) : index <= currentIndex;
+            const timestamp = history.get(status);
+            return (
+              <li className={done ? 'is-done' : 'is-pending'} key={status}>
+                <span className="tracking-dot">{done ? '✓' : '○'}</span>
+                <div>
+                  <strong>{statusCopy[status][locale]}</strong>
+                  <small>{timestamp ? dateTime.format(new Date(timestamp)) : t('بانتظار التحديث', 'Waiting for update')}</small>
+                </div>
+              </li>
+            );
+          })}
+          {data.status === 'cancelled' ? (
+            <li className="is-cancelled">
+              <span className="tracking-dot">!</span>
+              <div><strong>{statusCopy.cancelled[locale]}</strong><small>{history.get('cancelled') ? dateTime.format(new Date(history.get('cancelled')!)) : ''}</small></div>
+            </li>
+          ) : null}
+        </ol>
+      </section>
       <div className="cart-layout">
         <div className="cart-list">
+          <section className="order-info-grid">
+            <article>
+              <span>{t('العميل', 'Customer')}</span>
+              <strong>{data.customer.name}</strong>
+              <small dir="ltr">{data.customer.phoneNumber}</small>
+            </article>
+            <article>
+              <span>{t('العنوان', 'Address')}</span>
+              <strong>{data.address.city}، {data.address.area}</strong>
+              <small>{data.address.street}، {data.address.building}{data.address.apartment ? `، ${data.address.apartment}` : ''}</small>
+            </article>
+            <article>
+              <span>{t('الدفع', 'Payment')}</span>
+              <strong>{data.payment.status}</strong>
+              <small>{data.payment.method}</small>
+            </article>
+          </section>
           {data.items.map(item => (
             <article className="cart-item" key={`${item.productID}:${item.variantID}`}>
               <img src={item.imageURL} alt="" />
