@@ -1,4 +1,4 @@
-import type { CartValidationRequest, CartValidationResponse } from '@labna/contracts';
+import type { CartValidationRequest, CartValidationResponse, CheckoutRequest, OrderDTO } from '@labna/contracts';
 import type { Detail, Page, ProductFilters, PublicBanner, PublicBranch, PublicCategory, PublicProduct } from './types';
 
 const apiBase = '/api/v1';
@@ -34,4 +34,10 @@ export const api = {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
   }),
+  createOrder: (body: CheckoutRequest, signal?: AbortSignal) => request<{ data: OrderDTO }>('/orders', signal, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  }),
+  order: (id: string, signal?: AbortSignal) => request<{ data: OrderDTO }>(`/orders/${encodeURIComponent(id)}`, signal),
 };

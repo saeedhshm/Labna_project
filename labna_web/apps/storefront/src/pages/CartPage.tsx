@@ -76,7 +76,7 @@ export function CartPage() {
             <div className="summary-row"><span>{t('عدد العناصر', 'Items')}</span><strong>{cart.count}</strong></div>
             <div className="summary-row"><span>{t('المجموع الفرعي', 'Subtotal')}</span><strong>{money(data.subtotalMinor, data.currencyCode, locale)}</strong></div>
             {!data.valid ? <p className="stock-bad">{t('صحح العناصر غير المتاحة قبل checkout.', 'Fix unavailable items before checkout.')}</p> : null}
-            <button className="button button--wide" type="button" disabled={!data.valid}>{t('المتابعة إلى checkout', 'Continue to checkout')}</button>
+            <Link className={`button button--wide${data.valid ? '' : ' is-disabled'}`} to={data.valid ? '/checkout' : '/cart'}>{t('المتابعة إلى checkout', 'Continue to checkout')}</Link>
             <p className="hint">{t('السعر والمخزون محسوبان من الخادم الآن، وليس من بيانات الواجهة.', 'Prices and stock are validated by the backend, not the frontend.')}</p>
           </aside>
         </div>

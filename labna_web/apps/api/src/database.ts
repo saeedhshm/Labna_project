@@ -55,6 +55,26 @@ export const Store = mongoose.model('Store', new Schema({
   contact: { type: String, default: '' }, policies: { type: String, default: '' },
   version: { type: Number, default: 0 },
 }));
+const orderSchema = new Schema({
+  id: { type: String, required: true, unique: true, default: () => randomUUID() },
+  orderNumber: { type: String, required: true, unique: true },
+  customerID: { type: String, default: null },
+  customer: { type: Schema.Types.Mixed, required: true },
+  address: { type: Schema.Types.Mixed, required: true },
+  branchID: { type: String, required: true },
+  items: { type: [Schema.Types.Mixed], required: true },
+  currencyCode: { type: String, required: true },
+  subtotalMinor: { type: Number, min: 0, required: true },
+  deliveryFeeMinor: { type: Number, min: 0, required: true },
+  discountMinor: { type: Number, min: 0, required: true },
+  totalMinor: { type: Number, min: 0, required: true },
+  couponCode: { type: String, default: '' },
+  payment: { type: Schema.Types.Mixed, required: true },
+  status: { type: String, enum: ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'completed', 'cancelled'], required: true },
+}, { timestamps: true, strict: 'throw' });
+orderSchema.index({ createdAt: -1, id: 1 });
+orderSchema.index({ 'customer.phoneNumber': 1, createdAt: -1 });
+export const Order = mongoose.model('Order', orderSchema);
 // Serializes related catalog mutations so reference checks and archiving cannot race.
 export const CatalogLock = mongoose.model('CatalogLock', new Schema({
   id: { type: String, unique: true }, revision: { type: Number, default: 0 },

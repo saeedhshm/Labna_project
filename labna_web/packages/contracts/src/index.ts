@@ -210,6 +210,73 @@ export const cartValidationResponse = z.strictObject({
   valid: z.boolean(),
 });
 
+export const orderStatus = z.enum(['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'completed', 'cancelled']);
+export const paymentMethod = z.enum(['cash_on_delivery', 'demo_card_success', 'demo_card_failure']);
+export const paymentStatus = z.enum(['pending', 'paid', 'failed']);
+export const checkoutAddress = z.strictObject({
+  city: z.string().trim().min(2).max(100),
+  area: z.string().trim().min(2).max(100),
+  street: z.string().trim().min(3).max(200),
+  building: z.string().trim().min(1).max(50),
+  floor: z.string().trim().max(50).optional().default(''),
+  apartment: z.string().trim().max(50).optional().default(''),
+  notes: z.string().trim().max(500).optional().default(''),
+});
+export const checkoutCustomer = z.strictObject({
+  name: z.string().trim().min(2).max(120),
+  phoneNumber: z.string().regex(/^\+[1-9]\d{7,14}$/),
+  email: z.email().toLowerCase().optional(),
+});
+export const checkoutRequest = z.strictObject({
+  customerID: id.optional(),
+  customer: checkoutCustomer,
+  address: checkoutAddress,
+  branchID: id.optional(),
+  items: z.array(cartItemInput).min(1).max(100),
+  couponCode: z.string().trim().max(40).optional().default(''),
+  paymentMethod,
+});
+export const orderItemDTO = z.strictObject({
+  productID: id,
+  variantID: id,
+  productName: localized,
+  variantLabel: localized,
+  imageURL,
+  quantity: z.number().int().min(1).max(1000),
+  unit,
+  variantQuantity: z.number().int().positive().max(1_000_000),
+  currencyCode: z.string().regex(/^[A-Z]{3}$/),
+  unitPriceMinor: money,
+  lineTotalMinor: money,
+});
+export const orderDTO = z.strictObject({
+  id,
+  orderNumber: z.string().min(6).max(40),
+  customerID: id.nullable(),
+  customer: checkoutCustomer,
+  address: checkoutAddress,
+  branchID: id,
+  items: z.array(orderItemDTO).min(1),
+  currencyCode: z.string().regex(/^[A-Z]{3}$/),
+  subtotalMinor: money,
+  deliveryFeeMinor: money,
+  discountMinor: money,
+  totalMinor: money,
+  couponCode: z.string(),
+  payment: z.strictObject({ method: paymentMethod, status: paymentStatus, providerReference: z.string().nullable() }),
+  status: orderStatus,
+  statusHistory: z.array(z.strictObject({ status: orderStatus, at: z.iso.datetime(), actorID: z.string().nullable() })),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+export const adminOrderQuery = pageQuery.extend({
+  q: z.string().trim().max(100).optional(),
+  status: orderStatus.optional(),
+  from: z.iso.datetime().optional(),
+  to: z.iso.datetime().optional(),
+}).refine(query => !query.from || !query.to || Date.parse(query.from) <= Date.parse(query.to), { path: ['to'], message: 'Invalid date range' });
+export const orderStatusPatch = z.strictObject({ status: orderStatus });
+
 export type InventoryDTO = z.infer<typeof inventoryDTO>;
 export type InventoryMovementDTO = z.infer<typeof inventoryMovementDTO>;
 export type InventoryListQuery = z.infer<typeof inventoryListQuery>;
@@ -220,6 +287,13 @@ export type CartItemInput = z.infer<typeof cartItemInput>;
 export type CartValidationRequest = z.infer<typeof cartValidationRequest>;
 export type CartValidationItem = z.infer<typeof cartValidationItem>;
 export type CartValidationResponse = z.infer<typeof cartValidationResponse>;
+export type CheckoutRequest = z.infer<typeof checkoutRequest>;
+export type OrderDTO = z.infer<typeof orderDTO>;
+export type OrderItemDTO = z.infer<typeof orderItemDTO>;
+export type OrderStatus = z.infer<typeof orderStatus>;
+export type PaymentMethod = z.infer<typeof paymentMethod>;
+export type AdminOrderQuery = z.infer<typeof adminOrderQuery>;
+export type OrderStatusPatch = z.infer<typeof orderStatusPatch>;
 
 export type CategoryInput = z.infer<typeof schemas.categories>;
 export type ProductInput = z.infer<typeof schemas.products>;

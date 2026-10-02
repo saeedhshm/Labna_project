@@ -6,8 +6,9 @@
   "scripts": {
     "dev:api": "npm run dev -w @labna/api",
     "dev:admin": "npm run dev -w @labna/admin",
-    "build": "npm run build -w @labna/contracts && npm run build -w @labna/api && npm run build -w @labna/admin",
-    "typecheck": "npm run build -w @labna/contracts && npm run typecheck -w @labna/api && npm run typecheck -w @labna/admin",
+    "dev:storefront": "npm run dev -w @labna/storefront",
+    "build": "npm run build -w @labna/contracts && npm run build -w @labna/api && npm run build -w @labna/admin && npm run build -w @labna/storefront",
+    "typecheck": "npm run build -w @labna/contracts && npm run typecheck -w @labna/api && npm run typecheck -w @labna/admin && npm run typecheck -w @labna/storefront",
     "test": "npm run build -w @labna/contracts && npm run test -w @labna/api && npm run test -w @labna/admin",
     "seed": "npm run seed -w @labna/api",
     "openapi": "npm run build -w @labna/contracts && npm run openapi -w @labna/api"

@@ -3,6 +3,8 @@ import { Link, Navigate, Outlet, RouterProvider, createBrowserRouter } from 'rea
 import { LanguageProvider, useLanguage } from './i18n';
 import { CatalogPage } from './pages/CatalogPage';
 import { CartPage } from './pages/CartPage';
+import { CheckoutPage } from './pages/CheckoutPage';
+import { ConfirmationPage } from './pages/ConfirmationPage';
 import { HomePage } from './pages/HomePage';
 import { ProductPage } from './pages/ProductPage';
 import { CartProvider, useCart } from './cart';
@@ -60,6 +62,8 @@ const router = createBrowserRouter([
       { path: '/', element: <HomePage /> },
       { path: '/catalog', element: <CatalogPage /> },
       { path: '/cart', element: <CartPage /> },
+      { path: '/checkout', element: <CheckoutPage /> },
+      { path: '/orders/:orderID', element: <ConfirmationPage /> },
       { path: '/categories/:categoryID', element: <CatalogPage /> },
       { path: '/products/:productID', element: <ProductPage /> },
       { path: '/home', element: <Navigate to="/" replace /> },

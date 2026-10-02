@@ -200,6 +200,39 @@ describe('API foundation and catalog', () => {
     expect(missing.body.data.items[0]).toMatchObject({ valid: false, reason: 'variant_not_found' });
   });
 
+  it('creates checkout orders with server-side prices, snapshots and demo payments', async () => {
+    await createCatalog();
+    expect((await admin('products').send(product('milk-full', 3500))).status).toBe(201);
+    await Inventory.updateOne({ branchID: 'main', variantID: 'milk-full-1l' }, { $set: { onHand: 5, reserved: 0 } });
+    const checkout = {
+      customer: { name: 'Demo Customer', phoneNumber: '+201012345678', email: 'demo@example.com' },
+      address: { city: 'Cairo', area: 'Maadi', street: 'Road 9', building: '12', floor: '3', apartment: '5', notes: 'Ring once' },
+      items: [{ productID: 'milk-full', variantID: 'milk-full-1l', quantity: 2, unitPriceMinor: 1 }],
+      couponCode: 'LABNA10',
+      paymentMethod: 'demo_card_success',
+    };
+    expect((await request(app).post('/api/v1/orders').send(checkout)).status).toBe(422);
+    const created = await request(app).post('/api/v1/orders').send({ ...checkout, items: [{ productID: 'milk-full', variantID: 'milk-full-1l', quantity: 2 }] });
+    expect(created.status).toBe(201);
+    expect(created.body.data.orderNumber).toMatch(/^LBN-\d{8}-\d{6}$/);
+    expect(created.body.data).toMatchObject({ status: 'pending', subtotalMinor: 7000, deliveryFeeMinor: 1500, discountMinor: 700, totalMinor: 7800, payment: { method: 'demo_card_success', status: 'paid' } });
+    expect(created.body.data.items[0]).toMatchObject({ productID: 'milk-full', variantID: 'milk-full-1l', quantity: 2, unitPriceMinor: 3500, lineTotalMinor: 7000 });
+    expect(await Inventory.findOne({ variantID: 'milk-full-1l' }).then(row => row?.reserved)).toBe(2);
+
+    const detail = await request(app).get(`/api/v1/orders/${created.body.data.orderNumber}`);
+    expect(detail.status).toBe(200);
+    expect(detail.body.data.id).toBe(created.body.data.id);
+
+    const failure = await request(app).post('/api/v1/orders').send({ ...checkout, items: [{ productID: 'milk-full', variantID: 'milk-full-1l', quantity: 1 }], paymentMethod: 'demo_card_failure' });
+    expect(failure.status).toBe(402);
+    expect(failure.body.error.code).toBe('PAYMENT_FAILED');
+    expect(await Inventory.findOne({ variantID: 'milk-full-1l' }).then(row => row?.reserved)).toBe(2);
+
+    const tooMany = await request(app).post('/api/v1/orders').send({ ...checkout, items: [{ productID: 'milk-full', variantID: 'milk-full-1l', quantity: 4 }], paymentMethod: 'cash_on_delivery' });
+    expect(tooMany.status).toBe(409);
+    expect(tooMany.body.error.code).toBe('INSUFFICIENT_STOCK');
+  });
+
   it('supports search, price filters, stable pagination and stock-sensitive ETags', async () => {
     await createCatalog();
     for (const [index, name] of ['alpha', 'beta', 'gamma'].entries()) expect((await admin('products').send(product(name, (index + 1) * 100))).status).toBe(201);
