@@ -11,6 +11,7 @@ import { BannersPage } from './pages/BannersPage';
 import { BranchesPage } from './pages/BranchesPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { InventoryPage } from './pages/InventoryPage';
+import { OrdersPage } from './pages/OrdersPage';
 import { SessionProvider, useSession } from './session';
 
 const queryClient = new QueryClient({
@@ -70,6 +71,7 @@ const router = createBrowserRouter([
       { path: '/banners', element: <BannersPage /> },
       { path: '/branches', element: <BranchesPage /> },
       { path: '/inventory', element: <InventoryPage /> },
+      { path: '/orders', element: <OrdersPage /> },
       { path: '/settings', element: <SettingsPage /> },
       { path: '*', element: <NotFound /> },
     ],

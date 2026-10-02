@@ -222,6 +222,12 @@ describe('API foundation and catalog', () => {
     const detail = await request(app).get(`/api/v1/orders/${created.body.data.orderNumber}`);
     expect(detail.status).toBe(200);
     expect(detail.body.data.id).toBe(created.body.data.id);
+    expect(detail.body.data.statusHistory.map((item: { status: string }) => item.status)).toEqual(['pending']);
+
+    const adminList = await request(app).get('/api/v1/admin/orders').set('Authorization', bearer).query({ q: created.body.data.orderNumber });
+    expect(adminList.status).toBe(200);
+    expect(adminList.body.data.map((order: { orderNumber: string }) => order.orderNumber)).toContain(created.body.data.orderNumber);
+    expect((await request(app).patch(`/api/v1/admin/orders/${created.body.data.id}/status`).set('Authorization', bearer).send({ status: 'completed' })).status).toBe(409);
 
     const failure = await request(app).post('/api/v1/orders').send({ ...checkout, items: [{ productID: 'milk-full', variantID: 'milk-full-1l', quantity: 1 }], paymentMethod: 'demo_card_failure' });
     expect(failure.status).toBe(402);
@@ -231,6 +237,15 @@ describe('API foundation and catalog', () => {
     const tooMany = await request(app).post('/api/v1/orders').send({ ...checkout, items: [{ productID: 'milk-full', variantID: 'milk-full-1l', quantity: 4 }], paymentMethod: 'cash_on_delivery' });
     expect(tooMany.status).toBe(409);
     expect(tooMany.body.error.code).toBe('INSUFFICIENT_STOCK');
+
+    for (const status of ['confirmed', 'preparing', 'ready', 'out_for_delivery', 'completed']) {
+      const moved = await request(app).patch(`/api/v1/admin/orders/${created.body.data.id}/status`).set('Authorization', bearer).send({ status });
+      expect(moved.status).toBe(200);
+      expect(moved.body.data.status).toBe(status);
+    }
+    const completed = await request(app).get(`/api/v1/admin/orders/${created.body.data.id}`).set('Authorization', bearer);
+    expect(completed.body.data.statusHistory.map((item: { status: string }) => item.status)).toEqual(['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'completed']);
+    expect(await Inventory.findOne({ variantID: 'milk-full-1l' }).then(row => ({ onHand: row?.onHand, reserved: row?.reserved }))).toEqual({ onHand: 3, reserved: 0 });
   });
 
   it('supports search, price filters, stable pagination and stock-sensitive ETags', async () => {

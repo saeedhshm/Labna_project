@@ -9,6 +9,7 @@ const navigation = [
   { to: '/banners', label: 'البنرات' },
   { to: '/branches', label: 'الفروع' },
   { to: '/inventory', label: 'المخزون' },
+  { to: '/orders', label: 'الطلبات' },
   { to: '/settings', label: 'إعدادات المتجر' },
 ];
 

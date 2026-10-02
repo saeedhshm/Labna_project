@@ -166,6 +166,21 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 .inventory-projection { margin: 0; }
 .movement-filters { padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
 
+/* Orders */
+.order-detail { display: grid; gap: 1rem; }
+.order-detail section { border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; background: var(--surface-muted); }
+.order-detail h3 { margin: 0 0 0.75rem; }
+.order-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; }
+.order-items li { display: grid; grid-template-columns: 3.5rem 1fr auto; gap: 0.75rem; align-items: center; }
+.order-items img { width: 3.5rem; height: 3.5rem; border-radius: 0.75rem; object-fit: cover; background: var(--surface); }
+.status-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.status-history { margin: 0; padding-inline-start: 1.25rem; display: grid; gap: 0.55rem; }
+.status-history li { display: flex; justify-content: space-between; gap: 1rem; }
+.status-history time { color: var(--muted); }
+.order-status--cancelled { background: #fee2e2; color: #991b1b; }
+.order-status--completed { background: #dcfce7; color: #166534; }
+.order-status--pending { background: #fef3c7; color: #92400e; }
+
 /* Dialog */
 .dialog__backdrop {
   position: fixed; inset: 0; background: rgb(15 30 24 / 55%);

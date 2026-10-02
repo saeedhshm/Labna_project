@@ -7,6 +7,9 @@ import type {
   InventoryMovementDTO,
   InventoryMovementQuery,
   InventoryThresholdPatch,
+  AdminOrderQuery,
+  OrderDTO,
+  OrderStatus,
   Resource,
   StoreSettings,
 } from '@labna/contracts';
@@ -23,6 +26,7 @@ export const keys = {
 export type Page<T> = { items: T[]; nextCursor: string | null };
 export type InventoryFilters = Pick<InventoryListQuery, 'branchID' | 'variantID' | 'lowStock'>;
 export type MovementFilters = Pick<InventoryMovementQuery, 'inventoryID' | 'from' | 'to'>;
+export type OrderFilters = Pick<AdminOrderQuery, 'q' | 'status' | 'from' | 'to'>;
 
 const queryString = (values: Record<string, string | number | boolean | undefined>) => {
   const params = new URLSearchParams();
@@ -86,6 +90,31 @@ export function useInventoryMovements(filters: MovementFilters, pageSize = 20) {
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam, signal }) => getPage<InventoryMovementDTO>(`/admin/inventory/movements?${queryString({ ...filters, limit: pageSize, cursor: pageParam })}`, signal),
     getNextPageParam: page => page.nextCursor ?? undefined,
+  });
+}
+
+export function useOrdersList(filters: OrderFilters, pageSize = 25) {
+  return useInfiniteQuery({
+    queryKey: ['admin', 'orders', filters, pageSize],
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam, signal }) => getPage<OrderDTO>(`/admin/orders?${queryString({ ...filters, limit: pageSize, cursor: pageParam })}`, signal),
+    getNextPageParam: page => page.nextCursor ?? undefined,
+  });
+}
+
+export function useOrder(id: string | null) {
+  return useQuery({
+    queryKey: ['admin', 'orders', id],
+    queryFn: () => getOne<OrderDTO>(`/admin/orders/${encodeURIComponent(id!)}`),
+    enabled: Boolean(id),
+  });
+}
+
+export function useOrderStatusMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: OrderStatus }) => request(`/admin/orders/${encodeURIComponent(id)}/status`, { method: 'PATCH', body: { status } }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] }),
   });
 }
 

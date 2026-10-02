@@ -71,6 +71,7 @@ const orderSchema = new Schema({
   couponCode: { type: String, default: '' },
   payment: { type: Schema.Types.Mixed, required: true },
   status: { type: String, enum: ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'completed', 'cancelled'], required: true },
+  statusHistory: { type: [Schema.Types.Mixed], required: true, default: [] },
 }, { timestamps: true, strict: 'throw' });
 orderSchema.index({ createdAt: -1, id: 1 });
 orderSchema.index({ 'customer.phoneNumber': 1, createdAt: -1 });
