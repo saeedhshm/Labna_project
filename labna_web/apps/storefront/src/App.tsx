@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Link, Navigate, Outlet, RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { Link, Navigate, NavLink, Outlet, RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { LanguageProvider, useLanguage } from './i18n';
 import { CatalogPage } from './pages/CatalogPage';
 import { CartPage } from './pages/CartPage';
@@ -21,26 +22,41 @@ function Layout() {
   const { locale, setLocale, t } = useLanguage();
   const cart = useCart();
   const session = useCustomerSession();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
     <div className="site-shell">
       <header className="topbar">
-        <Link className="brand" to="/">
+        <Link className="brand" to="/" onClick={() => setMobileOpen(false)}>
           <img className="brand__mark" src="/labna-icon.png" alt="" />
           <span>
             <strong>{t('لبنة', 'Labna')}</strong>
             <small>{t('ألبان طازجة يوميًا', 'Fresh dairy every day')}</small>
           </span>
         </Link>
-        <nav className="nav" aria-label={t('التنقل الرئيسي', 'Main navigation')}>
-          <Link to="/">{t('الرئيسية', 'Home')}</Link>
-          <Link to="/catalog">{t('المنتجات', 'Products')}</Link>
-          <Link to="/cart">{t('السلة', 'Cart')} <span className="cart-count">{cart.count}</span></Link>
-          <Link to={session.state === 'authenticated' ? '/account' : '/login'}>{session.state === 'authenticated' ? t('حسابي', 'Account') : t('دخول', 'Login')}</Link>
+        <nav className="nav nav--desktop" aria-label={t('التنقل الرئيسي', 'Main navigation')}>
+          <NavLink to="/" end>{t('الرئيسية', 'Home')}</NavLink>
+          <NavLink to="/catalog">{t('المنتجات', 'Products')}</NavLink>
+          <NavLink to="/cart">{t('السلة', 'Cart')} <span className="cart-count">{cart.count}</span></NavLink>
+          <NavLink to={session.state === 'authenticated' ? '/account' : '/login'}>{session.state === 'authenticated' ? t('حسابي', 'Account') : t('دخول', 'Login')}</NavLink>
         </nav>
-        <button className="language-toggle" type="button" onClick={() => setLocale(locale === 'ar' ? 'en' : 'ar')}>
-          {locale === 'ar' ? 'English' : 'العربية'}
-        </button>
+        <div className="topbar__actions">
+          <button className="language-toggle" type="button" onClick={() => setLocale(locale === 'ar' ? 'en' : 'ar')}>
+            {locale === 'ar' ? 'EN' : 'ع'}
+          </button>
+          <button className="menu-toggle" type="button" aria-label="القائمة" onClick={() => setMobileOpen(v => !v)}>
+            <span /><span /><span />
+          </button>
+        </div>
       </header>
+      {mobileOpen ? (
+        <nav className="nav nav--mobile" aria-label={t('قائمة الجوال', 'Mobile navigation')}>
+          <NavLink to="/" end onClick={() => setMobileOpen(false)}>{t('الرئيسية', 'Home')}</NavLink>
+          <NavLink to="/catalog" onClick={() => setMobileOpen(false)}>{t('المنتجات', 'Products')}</NavLink>
+          <NavLink to="/cart" onClick={() => setMobileOpen(false)}>{t('السلة', 'Cart')} <span className="cart-count">{cart.count}</span></NavLink>
+          <NavLink to={session.state === 'authenticated' ? '/account' : '/login'} onClick={() => setMobileOpen(false)}>{session.state === 'authenticated' ? t('حسابي', 'Account') : t('دخول', 'Login')}</NavLink>
+        </nav>
+      ) : null}
       <main>
         <Outlet />
       </main>
