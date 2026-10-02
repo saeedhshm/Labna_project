@@ -22,7 +22,7 @@ DerivedData/
 # Package.resolved stays tracked to pin dependency versions.
 .build/
 .swiftpm/
-Packages/
+Labna/Packages/
 
 # CocoaPods / Carthage (unused, kept for future dependencies)
 Pods/

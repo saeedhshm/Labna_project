@@ -1,0 +1,30 @@
+[
+  {
+    "id":"demo-cairo","name":{"ar":"فرع القاهرة — تجريبي","en":"Cairo — Demo Branch"},
+    "address":{"ar":"موقع توضيحي بوسط القاهرة؛ ليس متجرًا فعليًا.","en":"Illustrative location in central Cairo; not an actual store."},
+    "coordinate":{"latitude":30.0444,"longitude":31.2357},"timeZoneIdentifier":"Africa/Cairo","phoneNumber":null,"isDemo":true,
+    "openingHours":[
+      {"weekday":1,"opensAt":"09:00","closesAt":"22:00"},
+      {"weekday":2,"opensAt":"09:00","closesAt":"22:00"},
+      {"weekday":3,"opensAt":"09:00","closesAt":"22:00"},
+      {"weekday":4,"opensAt":"09:00","closesAt":"22:00"},
+      {"weekday":5,"opensAt":"13:00","closesAt":"22:00"},
+      {"weekday":6,"opensAt":"09:00","closesAt":"22:00"},
+      {"weekday":7,"opensAt":"09:00","closesAt":"22:00"}
+    ]
+  },
+  {
+    "id":"demo-alexandria","name":{"ar":"فرع الإسكندرية — تجريبي","en":"Alexandria — Demo Branch"},
+    "address":{"ar":"موقع توضيحي بالإسكندرية؛ ليس متجرًا فعليًا.","en":"Illustrative location in Alexandria; not an actual store."},
+    "coordinate":{"latitude":31.2001,"longitude":29.9187},"timeZoneIdentifier":"Africa/Cairo","phoneNumber":null,"isDemo":true,
+    "openingHours":[
+      {"weekday":1,"opensAt":"10:00","closesAt":"21:00"},
+      {"weekday":2,"opensAt":"10:00","closesAt":"21:00"},
+      {"weekday":3,"opensAt":"10:00","closesAt":"21:00"},
+      {"weekday":4,"opensAt":"10:00","closesAt":"21:00"},
+      {"weekday":5,"opensAt":"13:00","closesAt":"21:00"},
+      {"weekday":6,"opensAt":"10:00","closesAt":"21:00"},
+      {"weekday":7,"opensAt":"10:00","closesAt":"21:00"}
+    ]
+  }
+]

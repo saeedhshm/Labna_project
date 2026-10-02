@@ -4,11 +4,12 @@
   "workspaces": ["apps/*", "packages/*"],
   "engines": { "node": "^22.12.0 || >=24.0.0" },
   "scripts": {
-    "dev": "npm run dev -w @labna/api",
-    "build": "npm run build -w @labna/api",
-    "typecheck": "npm run typecheck -w @labna/api",
-    "test": "npm run test -w @labna/api",
+    "dev:api": "npm run dev -w @labna/api",
+    "dev:admin": "npm run dev -w @labna/admin",
+    "build": "npm run build -w @labna/contracts && npm run build -w @labna/api && npm run build -w @labna/admin",
+    "typecheck": "npm run build -w @labna/contracts && npm run typecheck -w @labna/api && npm run typecheck -w @labna/admin",
+    "test": "npm run build -w @labna/contracts && npm run test -w @labna/api && npm run test -w @labna/admin",
     "seed": "npm run seed -w @labna/api",
-    "openapi": "npm run openapi -w @labna/api"
+    "openapi": "npm run build -w @labna/contracts && npm run openapi -w @labna/api"
   }
 }

@@ -9,6 +9,7 @@ import { initializeDatabase, Staff, Inventory, models, Audit } from '../src/data
 import { openingState } from '../src/catalog.js';
 import { openapi } from '../src/openapi.js';
 import { readConfig } from '../src/config.js';
+import { randomUUID } from 'node:crypto';
 
 const config = readConfig({ NODE_ENV: 'test', MONGODB_URI: 'mongodb://unused', JWT_SECRET: 'x'.repeat(64), CURSOR_SECRET: 'y'.repeat(64), WEB_ORIGINS: 'http://localhost:5173', MEDIA_ORIGINS: 'https://res.cloudinary.com' });
 const app = createApp(config);
@@ -72,6 +73,92 @@ describe('API foundation and catalog', () => {
     expect((await request(app).get('/api/v1/admin/categories').set('Authorization', bearer)).status).toBe(401);
   });
 
+  it('lists inventory for operators and applies idempotent manager adjustments with movements', async () => {
+    await createCatalog();
+    expect((await admin('products').send(product('milk-full'))).status).toBe(201);
+    const initial = await Inventory.findOne({ branchID: 'main', variantID: 'milk-full-1l' }).lean();
+    expect(initial).toMatchObject({ onHand: 0, reserved: 0, version: 0 });
+    expect(initial?.id).toMatch(/^[0-9a-f-]{36}$/);
+
+    await Staff.create({ email: 'operator@example.com', passwordHash: await hash('correct-password'), role: 'orderOperator' });
+    const login = await request(app).post('/api/v1/staff/auth/login').send({ email: 'operator@example.com', password: 'correct-password' });
+    const operator = `Bearer ${login.body.data.accessToken}`;
+    const operatorList = await request(app).get('/api/v1/admin/inventory').set('Authorization', operator);
+    expect(operatorList.status).toBe(200);
+    expect(operatorList.headers['cache-control']).toBe('no-store');
+    expect(operatorList.body.data[0]).toMatchObject({ available: 0, lowStock: true });
+    expect((await request(app).get('/api/v1/admin/categories').set('Authorization', operator)).status).toBe(403);
+    expect((await request(app).get('/api/v1/admin/inventory/movements').set('Authorization', operator)).status).toBe(403);
+
+    const key = randomUUID();
+    const command = { branchID: 'main', variantID: 'milk-full-1l', onHandDelta: 7, reason: ' Initial count ', version: 0 };
+    const adjustment = () => request(app).post('/api/v1/admin/inventory/adjustments').set('Authorization', bearer).set('Idempotency-Key', key).send(command);
+    const [adjusted, concurrentReplay] = await Promise.all([adjustment(), adjustment()]);
+    expect(adjusted.status).toBe(200);
+    expect(concurrentReplay.status).toBe(200);
+    expect(concurrentReplay.body).toEqual(adjusted.body);
+    expect(adjusted.body.data).toMatchObject({ onHand: 7, reserved: 0, available: 7, lowStock: false, version: 1 });
+    const replay = await adjustment();
+    expect(replay.status).toBe(200);
+    expect(replay.body).toEqual(adjusted.body);
+    const conflict = await request(app).post('/api/v1/admin/inventory/adjustments').set('Authorization', bearer).set('Idempotency-Key', key).send({ ...command, reason: 'Different' });
+    expect(conflict.status).toBe(409);
+    expect(conflict.body.error.code).toBe('IDEMPOTENCY_CONFLICT');
+
+    const movements = await request(app).get('/api/v1/admin/inventory/movements').set('Authorization', bearer).query({ inventoryID: initial!.id });
+    expect(movements.body.data).toHaveLength(1);
+    expect(movements.body.data[0]).toMatchObject({ inventoryID: initial!.id, onHandDelta: 7, reservedDelta: 0, reason: 'Initial count', commandID: key });
+    expect(movements.body.data[0].actorID).toBeTruthy();
+    expect((await request(app).get('/api/v1/admin/inventory/movements').set('Authorization', bearer).query({ from: '2026-10-02T00:00:00Z', to: '2026-10-01T00:00:00Z' })).status).toBe(422);
+
+    const threshold = await request(app).patch(`/api/v1/admin/inventory/${initial!.id}`).set('Authorization', bearer).send({ version: 1, lowStockThreshold: 10 });
+    expect(threshold.body.data).toMatchObject({ version: 2, lowStockThreshold: 10, lowStock: true });
+    const low = await request(app).get('/api/v1/admin/inventory').set('Authorization', operator).query({ lowStock: true });
+    expect(low.body.data.map((row: { id: string }) => row.id)).toContain(initial!.id);
+    expect((await request(app).patch(`/api/v1/admin/inventory/${initial!.id}`).set('Authorization', bearer).send({ version: 2, onHand: 99 })).status).toBe(422);
+    await Inventory.updateOne({ id: initial!.id }, { $set: { reserved: 3 } });
+    const belowReserved = await request(app).post('/api/v1/admin/inventory/adjustments').set('Authorization', bearer).set('Idempotency-Key', randomUUID())
+      .send({ branchID: 'main', variantID: 'milk-full-1l', onHandDelta: -5, reason: 'Bad count', version: 2 });
+    expect(belowReserved.status).toBe(409);
+    expect(belowReserved.body.error.code).toBe('INVENTORY_CONSTRAINT');
+    expect(await Inventory.findOne({ id: initial!.id }).then(row => row?.onHand)).toBe(7);
+  });
+
+  it('sorts and filters by price using only variants a customer can buy', async () => {
+    await createCatalog();
+    // Two variants: one cheap but deactivated, one pricier and sellable.
+    const input = product('mixed');
+    input.variants[0].isActive = false;
+    input.variants.push({ ...input.variants[0], id: 'mixed-2l', sku: 'MIXED-2L', priceMinor: 5000, label: { ar: '٢ لتر', en: '2 litres' } });
+    expect((await admin('products').send(input)).status).toBe(201);
+    expect((await admin('products').send({ ...product('sold-out'), variants: [{ ...input.variants[0], id: 'sold-out-1l', sku: 'SOLD-1L' }] })).status).toBe(201);
+    await Inventory.updateMany({}, { $set: { onHand: 5 } });
+
+    const ascending = await request(app).get('/api/v1/products').query({ sort: 'priceAsc' });
+    const ids = ascending.body.data.map((p: { id: string }) => p.id);
+    expect(ids.at(-1)).toBe('sold-out');
+    expect(ids.indexOf('mixed')).toBeLessThan(ids.indexOf('sold-out'));
+    // The deactivated 3500 variant must not define the price.
+    expect(ascending.body.data.find((p: { id: string }) => p.id === 'mixed').variants[0]).toMatchObject({ isAvailable: false, priceMinor: 3500 });
+
+    const filtered = await request(app).get('/api/v1/products').query({ maxPriceMinor: 4000 });
+    expect(filtered.body.data.map((p: { id: string }) => p.id)).not.toContain('mixed');
+    expect(filtered.body.data.map((p: { id: string }) => p.id)).not.toContain('sold-out');
+    expect((await request(app).get('/api/v1/products').query({ available: true })).body.data.map((p: { id: string }) => p.id)).not.toContain('sold-out');
+  });
+
+  it('reports zero availability while a branch is paused for new orders', async () => {
+    await createCatalog();
+    expect((await admin('products').send(product('milk-full'))).status).toBe(201);
+    await Inventory.updateOne({ variantID: 'milk-full-1l' }, { $set: { onHand: 10 } });
+    expect((await request(app).get('/api/v1/products/milk-full')).body.data.variants[0].isAvailable).toBe(true);
+    expect((await request(app).patch('/api/v1/admin/branches/main').set('Authorization', bearer).send({ version: 0, acceptsOrders: false })).status).toBe(200);
+    const paused = await request(app).get('/api/v1/products/milk-full');
+    expect(paused.body.data.variants[0]).toMatchObject({ isAvailable: false, availableQuantity: 0 });
+    // The stock itself is untouched, so reopening the branch restores it.
+    expect(await Inventory.findOne({ variantID: 'milk-full-1l' }).then(row => row?.onHand)).toBe(10);
+  });
+
   it('creates zero stock, computes branch-specific availability and excludes private fields', async () => {
     await createCatalog();
     expect((await admin('products').send(product('milk-full'))).status).toBe(201);
@@ -90,6 +177,29 @@ describe('API foundation and catalog', () => {
     expect((await request(app).get('/api/v1/products').query({ branchID: 'missing' })).status).toBe(422);
   });
 
+  it('validates cart items against current catalog, stock and server-side prices', async () => {
+    await createCatalog();
+    expect((await admin('products').send(product('milk-full', 3500))).status).toBe(201);
+    await Inventory.updateOne({ branchID: 'main', variantID: 'milk-full-1l' }, { $set: { onHand: 3, reserved: 1 } });
+
+    const polluted = await request(app).post('/api/v1/cart/validate').send({
+      items: [{ productID: 'milk-full', variantID: 'milk-full-1l', quantity: 2, unitPriceMinor: 1 }],
+    });
+    expect(polluted.status).toBe(422);
+
+    const valid = await request(app).post('/api/v1/cart/validate').send({ items: [{ productID: 'milk-full', variantID: 'milk-full-1l', quantity: 2 }] });
+    expect(valid.status).toBe(200);
+    expect(valid.body.data).toMatchObject({ branchID: 'main', valid: true, subtotalMinor: 7000 });
+    expect(valid.body.data.items[0]).toMatchObject({ unitPriceMinor: 3500, lineTotalMinor: 7000, availableQuantity: 2, reason: 'ok' });
+
+    const tooMany = await request(app).post('/api/v1/cart/validate').send({ items: [{ productID: 'milk-full', variantID: 'milk-full-1l', quantity: 3 }] });
+    expect(tooMany.body.data).toMatchObject({ valid: false, subtotalMinor: 0 });
+    expect(tooMany.body.data.items[0]).toMatchObject({ valid: false, reason: 'insufficient_stock', availableQuantity: 2, unitPriceMinor: 3500 });
+
+    const missing = await request(app).post('/api/v1/cart/validate').send({ items: [{ productID: 'milk-full', variantID: 'missing', quantity: 1 }] });
+    expect(missing.body.data.items[0]).toMatchObject({ valid: false, reason: 'variant_not_found' });
+  });
+
   it('supports search, price filters, stable pagination and stock-sensitive ETags', async () => {
     await createCatalog();
     for (const [index, name] of ['alpha', 'beta', 'gamma'].entries()) expect((await admin('products').send(product(name, (index + 1) * 100))).status).toBe(201);
@@ -99,6 +209,10 @@ describe('API foundation and catalog', () => {
     expect(next.body.data[0].id).toBe('beta');
     expect((await request(app).get('/api/v1/products').query({ sort: 'priceDesc', limit: 1, cursor: first.body.meta.nextCursor })).status).toBe(400);
     expect((await request(app).get('/api/v1/products').query({ cursor: 'fake' })).status).toBe(400);
+    // A price range only matches products that can actually be bought, so stock
+    // has to exist before the range is applied.
+    expect((await request(app).get('/api/v1/products').query({ maxPriceMinor: 4000 })).body.data).toEqual([]);
+    await Inventory.updateMany({}, { $set: { onHand: 3 } });
     expect((await request(app).get('/api/v1/products').query({ q: 'alpha', minPriceMinor: 90, maxPriceMinor: 110 })).body.data.map((p: { id: string }) => p.id)).toEqual(['alpha']);
     expect((await request(app).get('/api/v1/products').query({ q: '.*' })).body.data).toEqual([]);
     const detail = await request(app).get('/api/v1/products/alpha');

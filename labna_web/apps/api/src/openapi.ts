@@ -1,5 +1,8 @@
 import { z } from 'zod';
-import { schemas, resources, id, loginBody, settingsPatch, versionBody } from './contracts.js';
+import {
+  schemas, resources, id, loginBody, settingsPatch, versionBody,
+  inventoryDTO, inventoryMovementDTO, inventoryAdjustmentCommand, inventoryThresholdPatch,
+} from './contracts.js';
 
 const json = (schema: z.ZodType) => {
   const { $schema, ...result } = z.toJSONSchema(schema, { target: 'draft-2020-12', io: 'input' });
@@ -28,6 +31,10 @@ const namedSchemas: Record<string, object> = {
     meta: { type: 'object', required: ['requestID'], properties: { requestID: { type: 'string' } } },
   } },
 };
+namedSchemas.Inventory = json(inventoryDTO);
+namedSchemas.InventoryMovement = json(inventoryMovementDTO);
+namedSchemas.InventoryAdjustment = json(inventoryAdjustmentCommand);
+namedSchemas.InventoryThresholdPatch = json(inventoryThresholdPatch);
 const paths: Record<string, any> = {};
 for (const resource of resources) {
   const schema = schemas[resource];
@@ -69,12 +76,47 @@ paths['/admin/settings'] = {
   get: { security: bearer, responses: { '200': response(envelope(storeSchema)), ...errors } },
   patch: { security: bearer, requestBody: body(json(settingsPatch)), responses: { '200': response(envelope({ type: 'object', required: ['id', 'version', 'defaultPickupBranchID'], properties: { id: { const: 'store' }, version: { type: 'integer' }, defaultPickupBranchID: { type: 'string' } } })), ...errors } },
 };
+const lowStockParameter = { name: 'lowStock', in: 'query', schema: { type: 'boolean' } };
+const idempotencyKey = { name: 'Idempotency-Key', in: 'header', required: true, schema: { type: 'string', format: 'uuid' } };
+paths['/admin/inventory'] = {
+  get: {
+    tags: ['Inventory'], summary: 'List inventory (all authenticated staff)', security: bearer,
+    parameters: [...pagination, lowStockParameter,
+      { name: 'branchID', in: 'query', schema: json(id) }, { name: 'variantID', in: 'query', schema: json(id) }],
+    responses: { '200': response(envelope({ type: 'array', items: ref('Inventory') }, true)), ...errors },
+  },
+};
+paths['/admin/inventory/adjustments'] = {
+  post: {
+    tags: ['Inventory'], summary: 'Adjust on-hand inventory (manager only)', security: bearer,
+    parameters: [idempotencyKey], requestBody: body(ref('InventoryAdjustment')),
+    responses: { '200': response(envelope(ref('Inventory'))), ...errors },
+  },
+};
+paths['/admin/inventory/movements'] = {
+  get: {
+    tags: ['Inventory'], summary: 'List inventory movements (manager only)', security: bearer,
+    parameters: [...pagination,
+      { name: 'inventoryID', in: 'query', schema: { type: 'string', format: 'uuid' } },
+      { name: 'from', in: 'query', schema: { type: 'string', format: 'date-time' } },
+      { name: 'to', in: 'query', schema: { type: 'string', format: 'date-time' } }],
+    responses: { '200': response(envelope({ type: 'array', items: ref('InventoryMovement') }, true)), ...errors },
+  },
+};
+paths['/admin/inventory/{id}'] = {
+  parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+  patch: {
+    tags: ['Inventory'], summary: 'Update low-stock threshold (manager only)', security: bearer,
+    requestBody: body(ref('InventoryThresholdPatch')),
+    responses: { '200': response(envelope(ref('Inventory'))), ...errors },
+  },
+};
 const sessionSchema = envelope({ type: 'object', required: ['accessToken', 'expiresIn'], properties: { accessToken: { type: 'string' }, expiresIn: { const: 900 } } });
 paths['/staff/auth/login'] = { post: { tags: ['Staff authentication'], requestBody: body(json(loginBody)), responses: { '200': { ...response(sessionSchema), headers: { 'Set-Cookie': { schema: { type: 'string' }, description: 'HttpOnly refresh cookie; Secure in production' } } }, ...errors } } };
 paths['/staff/auth/refresh'] = { post: { tags: ['Staff authentication'], security: [{ staffRefresh: [] }], parameters: [{ name: 'Origin', in: 'header', required: true, schema: { type: 'string' } }], responses: { '200': response(sessionSchema), ...errors } } };
 paths['/staff/auth/logout'] = { post: { tags: ['Staff authentication'], security: bearer, responses: { '200': response(envelope({ type: 'object', properties: { loggedOut: { const: true } } })), ...errors } } };
 export const openapi = {
-  openapi: '3.1.0', info: { title: 'Labna API', version: '0.1.0', description: 'Implemented catalog/branches and manager API. Customer auth, checkout, stock adjustments and uploads are planned, not implemented. Administrative routes require manager role. Media URLs must use MEDIA_ORIGINS. Pagination uses signed, filter-bound offset cursors (maximum 10,000); concurrent edits may shift pages.' },
+  openapi: '3.1.0', info: { title: 'Labna API', version: '0.1.0', description: 'Implemented catalog, branches, staff authentication and inventory administration. Inventory listing is available to authenticated staff; inventory adjustments, movement history and threshold changes require manager role. Customer auth, checkout and uploads are planned, not implemented. Media URLs must use MEDIA_ORIGINS. Pagination uses signed, filter-bound offset cursors (maximum 10,000); concurrent edits may shift pages.' },
   servers: [{ url: '/api/v1' }], paths,
   components: { schemas: namedSchemas, responses: { Error: { description: 'Structured API error', content: { 'application/json': { schema: ref('Error') } } } }, securitySchemes: {
     staffBearer: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
