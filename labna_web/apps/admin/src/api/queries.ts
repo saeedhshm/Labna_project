@@ -8,6 +8,7 @@ import type {
   InventoryMovementQuery,
   InventoryThresholdPatch,
   AdminOrderQuery,
+  DashboardMetrics,
   OrderDTO,
   OrderStatus,
   Resource,
@@ -115,6 +116,14 @@ export function useOrderStatusMutation() {
   return useMutation({
     mutationFn: ({ id, status }: { id: string; status: OrderStatus }) => request(`/admin/orders/${encodeURIComponent(id)}/status`, { method: 'PATCH', body: { status } }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] }),
+  });
+}
+
+export function useDashboardMetrics(filters: { from?: string; to?: string }) {
+  return useQuery({
+    queryKey: ['admin', 'dashboard', filters],
+    queryFn: () => getOne<DashboardMetrics>(`/admin/dashboard?${queryString(filters)}`),
+    staleTime: 30_000,
   });
 }
 

@@ -1,26 +1,41 @@
 # Labna Web
 
-مرحلة المشروع الحالية: **API الكتالوج والفروع ولوحة إدارتها باستخدام React**.
+مرحلة المشروع الحالية: **Full-stack e-commerce demo**: Backend + Admin Dashboard + Customer Storefront مبنية على Node.js/Express/MongoDB وReact.
 
 ## المنفّذ الآن
 
 - Express 5 + TypeScript + Mongoose، مع health endpoints وإيقاف منظم للسيرفر.
 - استيراد كتالوج تطبيق iOS (`Labna/Labna/Resources/Data`) عبر أمر `npm run seed`، بنفس قواعد الكتابة المستخدمة في لوحة الإدارة.
-- قراءة المنتجات والأقسام والبنرات والفروع وإعدادات المتجر.
-- البحث والتصفية والترتيب وpagination وETag/304. السعر الابتدائي يعتمد الخيارات القابلة للشراء فقط، والمنتجات غير المتوفرة تظهر في آخر النتائج.
-- CRUD إداري مع الأرشفة وversion checks ومعاملات تمنع تعارض مراجع الكتالوج.
-- حساب مدير، Argon2، access tokens، refresh cookies دوارة وإبطال الجلسات.
-- إنشاء صفوف مخزون بصفر، وحساب التوفر حسب الفرع، وتعديل الجرد بسجل حركات وidempotency.
+- Storefront React على `5175`: Home, Catalog, Product details, Cart, Checkout, Order tracking, Login/Register, Account, Addresses, My Orders, Reorder.
+- Admin React على `5174`: Catalog, Inventory, Orders lifecycle, Dashboard analytics, Settings.
+- Customer auth وStaff auth منفصلان: Argon2، JWT access tokens، refresh cookies دوارة، logout.
+- Cart validation وcheckout يعيدان قراءة المنتجات والأسعار والمخزون من MongoDB؛ لا يثق الخادم بسعر الواجهة.
+- Orders بحالات كاملة، status history، mock payments، وربط اختياري بـcustomerId.
+- Inventory لكل variant/branch: onHand/reserved/available، low/out-of-stock، adjustments، movements، reserve/cancel/complete integration.
+- Dashboard حقيقي من MongoDB aggregation: revenue, orders, AOV, status breakdown, top products, sales by day/week, low stock.
 - حساب مواعيد الفروع والاستثناءات اليومية بتوقيت الفرع.
 - Zod validation، أخطاء موحدة، CORS، rate limiting، وسجل تدقيق للتعديلات.
 - OpenAPI 3.1 حي على `/api/v1/openapi.json` مشتق جزئيًا من schemas المستخدمة فعليًا.
 - اختبارات تكامل باستخدام MongoDB replica set مؤقت حقيقي، وليس mock لقاعدة البيانات.
-- لوحة إدارة عربية RTL باستخدام React وVite وTanStack Query؛ إدارة الأقسام والمنتجات وخيارات العبوات والبنرات والفروع وفرع الاستلام الافتراضي.
 - مخططات Zod مشتركة بين اللوحة والخادم في `packages/contracts`، مع تحقق على الطرفين.
-- جلسة المدير تستعاد عبر cookie من نوع HttpOnly؛ access token في ذاكرة المتصفح فقط، ويُمسح cache الخاص بالبيانات الإدارية عند الخروج أو انتهاء الجلسة.
-- اختبارات للوحة تغطي الاتصال بالـ API ونماذج العبوات والمواعيد والدخول.
+- اختبارات للـ API واللوحة تغطي catalog, auth, cart, orders, inventory, dashboard, forms.
 
-**متجر العملاء، حساباتهم، OTP، الطلبات، رفع الصور والإشعارات هي المراحل التالية.** حاليًا الصور روابط HTTPS من `MEDIA_ORIGINS`؛ تكامل ملكية الصور ورفعها إلى Cloudinary لم ينفذ بعد. الأرقام في النظرة العامة تمثل الصفحات المحمّلة فقط؛ لا توجد إحصاءات طلبات أو مبيعات وهمية.
+ما ليس production حقيقيًا: الدفع وOTP والإشعارات ورفع الصور مزيفة/غير منفذة عمدًا؛ الهدف Demo قوي للـ CV وليس متجرًا ماليًا حقيقيًا.
+
+## Architecture
+
+```text
+Browser
+  ├─ Admin Dashboard :5174 ─┐
+  └─ Storefront      :5175 ─┤ Vite proxy /api
+                            ↓
+Express API :3001
+  ├─ shared Zod contracts
+  ├─ Staff auth / Customer auth
+  ├─ Catalog / Cart / Orders / Inventory / Dashboard
+  ↓
+MongoDB replica set
+```
 
 ## التشغيل المحلي
 
@@ -39,8 +54,9 @@ cp apps/api/.env.example apps/api/.env
 عدّل `apps/api/.env`:
 - ولّد `JWT_SECRET` و`CURSOR_SECRET` بشكل مستقل ومخالف لكل منهما باستخدام `openssl rand -hex 32` (64 حرفًا لكل مفتاح). قيمة فارغة أو قصيرة تُرفض برسالة توضح المطلوب.
 - حدّد `SEED_ADMIN_EMAIL` و`SEED_ADMIN_PASSWORD` (12 حرفًا على الأقل).
+- اختياريًا حدّد `SEED_CUSTOMER_EMAIL` و`SEED_CUSTOMER_PASSWORD` لإنشاء حساب عميل demo.
 - اضبط `MEDIA_ORIGINS` على مضيف صورك. الكتالوج المستورد من iOS يستخدم `https://images.unsplash.com`، لذا أضف هذا المضيف أو غيّر مصدر الصور.
-- اضبط `WEB_ORIGINS` على أصول واجهاتك؛ الافتراضي `http://localhost:5174` وهو منفذ لوحة الإدارة.
+- اضبط `WEB_ORIGINS` على أصول واجهاتك؛ التطوير يحتاج `http://localhost:5174,http://localhost:5175`.
 - `SEED_STOCK_ON_HAND` اختياري (الافتراضي صفر). القيمة الموجبة تضبط مخزونًا تجريبيًا عبر تعديلات مسجلة.
 - لا ترفع `.env` إلى Git؛ هو مستثنى بالفعل.
 
@@ -49,7 +65,16 @@ npm run seed
 npm run dev:api
 ```
 
-`npm run seed` ينشئ المدير، ثم يستورد الكتالوج من `seed/ios-catalog/` (نسخة من ملفات تطبيق iOS) بالترتيب: الفروع، الأقسام، المنتجات، البنرات. كل سجل يمر بنفس التحقق الذي يمر به تعديل يدوي من اللوحة، وكل عملية مسجلة في سجل التدقيق. الأمر آمن لإعادة التشغيل: يحدّث السجلات الموجودة بدل تكرارها.
+`npm run seed` ينشئ المدير والعميل التجريبي، ثم يستورد الكتالوج من `seed/ios-catalog/` وينشئ مخزونًا وطلبات demo بحالات مختلفة. الأمر آمن لإعادة التشغيل: يحدّث سجلات الكتالوج الموجودة ولا يكرر طلبات demo الثابتة.
+
+بيانات demo المقترحة محليًا:
+
+```text
+Manager:  admin@example.com / password@12345
+Customer: customer@example.com / password123
+```
+
+لا تستخدم هذه القيم في بيئة عامة.
 
 الاستيراد يطبع ملاحظات تشرح القرارات، أهمها:
 
@@ -65,7 +90,7 @@ npm run dev:api
 cp ../Labna/Labna/Resources/Data/{categories,products,banners,branches}.json seed/ios-catalog/
 ```
 
-لا يغيّر `npm run seed` كلمة مرور حساب مدير موجود، ولا يوجد حساب أو كلمة مرور افتراضية. المنفذ الافتراضي `3001`.
+لا يغيّر `npm run seed` كلمة مرور حساب مدير أو عميل موجود. المنفذ الافتراضي `3001`.
 
 افتح Terminal ثانيًا من `labna_web` وشغّل لوحة الإدارة:
 
@@ -75,13 +100,21 @@ npm run dev:admin
 
 افتح `http://localhost:5174` وسجّل ببيانات المدير من `.env`. يجب أن يكون المنفذ 5174 متاحًا؛ يتوقف Vite برسالة واضحة إذا كان مشغولًا حتى لا يختلف أصل المتصفح عن `WEB_ORIGINS`. لوحة الإدارة تمرر `/api` إلى API المحلي عبر Vite proxy، ولذلك لا تحتاج `VITE_API_BASE_URL` في التطوير. يمكن تغيير وجهة الـ proxy بواسطة `LABNA_API_URL` إذا كان الخادم على مضيف/منفذ آخر. في النشر، قدّم الواجهة والـ API تحت نفس الأصل عبر reverse proxy يمرر `/api` إلى الخادم مع HTTPS، وسجّل هذا الأصل ضمن `WEB_ORIGINS`؛ مجلد `dist` وحده لا يوفر proxy.
 
+وشغّل متجر العملاء:
+
+```bash
+npm run dev:storefront
+```
+
+افتح `http://localhost:5175` وجرب: product → cart → checkout → confirmation → admin orders → status change → storefront refresh.
+
 ```bash
 curl http://localhost:3001/health/ready
 curl http://localhost:3001/api/v1/store
 curl http://localhost:3001/api/v1/openapi.json
 ```
 
-بعد الدخول أنشئ فرعًا، حدّده كفرع افتراضي، ثم أضف قسمًا ومنتجًا وبنرًا من اللوحة. خطوات API المكافئة موضحة في [دليل التشغيل](docs/implementation.md).
+بعد الدخول ستجد كتالوجًا وطلبات demo جاهزة. خطوات API المكافئة موضحة في [دليل التشغيل](docs/implementation.md).
 
 ## التحقق والبناء
 
@@ -97,16 +130,32 @@ npm run start -w @labna/api
 
 ملف `package-lock.json` مثبت في المشروع. استخدم `npm ci` للتثبيت المتكرر؛ إذا واجه npm 10 خطأ `edgesOut` عند ترقية dependencies فاستخدم npm 11 مع Node LTS.
 
+## Deployment Notes
+
+- Backend: شغّل `npm run build -w @labna/api` ثم `npm run start -w @labna/api` خلف HTTPS reverse proxy.
+- MongoDB: استخدم replica set؛ محليًا `docker compose up -d --wait`، وعلى السحابة MongoDB Atlas مناسب.
+- Admin/Storefront: شغّل `npm run build -w @labna/admin` و`npm run build -w @labna/storefront` وقدّم `dist` لكل تطبيق.
+- Proxy: مرر `/api` إلى backend، أو اضبط `LABNA_API_URL` أثناء التطوير فقط. في production أضف أصول HTTPS إلى `WEB_ORIGINS`.
+- Secrets: ولّد `JWT_SECRET` و`CURSOR_SECRET` مستقلين. لا تنشر `.env`.
+- Images: أضف مضيف الصور إلى `MEDIA_ORIGINS`، أو استخدم تكامل Cloudinary/S3 لاحقًا.
+
+## Portfolio Checklist
+
+- اعرض screenshots للصفحات: storefront home/catalog/product/cart/checkout/tracking، admin dashboard/orders/inventory.
+- اشرح في الـ CV: server-side price validation، inventory reservation، order lifecycle، MongoDB aggregation dashboard، shared Zod contracts.
+- OpenAPI: `npm run openapi --silent` أو `/api/v1/openapi.json`.
+- Demo script: سجل كعميل، أنشئ order، افتح admin وغيّر الحالة، ارجع للـ storefront واضغط refresh.
+
 ## النطاق المعتمد
 
 - متجر ويب بتخطيط مكتبي متجاوب، وهوية لبنة، ووظائف متوافقة مع تطبيق iOS.
 - الاستلام من الفرع فقط، والدفع عند الاستلام، دون توصيل أو حجز موعد.
 - فرع استلام واحد مبدئيًا؛ إدارة عدة فروع وتفعيل الاستلام منها لاحقًا.
 - مخزون لكل خيار منتج ولكل فرع، وأسعار وكتالوج موحدان.
-- تصفح وسلة محلية دون حساب؛ تأكيد الطلب بعد الدخول برقم الهاتف.
-- كود تحقق ثابت للتطوير فقط، واستبداله بمزوّد SMS للإطلاق الحقيقي.
-- مزامنة المفضلة والمشاهدات، وسلة مستقلة لكل جهاز.
-- إلغاء العميل قبل تأكيد الموظف فقط.
+- حسابات عملاء بالبريد وكلمة المرور للـ demo؛ لا يوجد OTP حقيقي.
+- السلة محلية، ثم checkout يربط الطلب بالحساب إن كان العميل مسجل الدخول.
+- المفضلة والمشاهدات غير منفذة.
+- إلغاء العميل الذاتي غير منفذ؛ الإلغاء من لوحة الإدارة.
 - قبول الطلبات خارج مواعيد العمل مع إعلام العميل بأنها تُعالج عند الفتح التالي.
 
 ## الوثائق
@@ -120,7 +169,7 @@ npm run start -w @labna/api
 labna_web/
   apps/
     api/          # Node.js, Express, TypeScript, Mongoose
-    storefront/   # مخطط: Next.js / React
+    storefront/   # React / Vite: متجر العملاء
     admin/        # React / Vite: لوحة الإدارة العربية
   packages/
     contracts/    # مخططات Zod وأنواع TypeScript المشتركة
@@ -129,11 +178,11 @@ labna_web/
 
 MongoDB replica set مطلوب للمعاملات، حتى في بيئة التطوير. السيرفر يتحقق من هذا الشرط عند بدء التشغيل. schemas الحالية في `packages/contracts/src/index.ts`، وتوثيق OpenAPI في `apps/api/src/openapi.ts`.
 
-## مراحل التنفيذ التالية
+## مراحل لاحقة اختيارية
 
-1. ربط إدارة المخزون المنفذة بواجهة المدير قبل عرض منتجات متاحة للبيع.
-2. حسابات العملاء والجلسات والتحقق بكود التطوير ثم المفضلة والمشاهدات.
-3. الطلبات ومعاملات الحجز والإلغاء والتسليم، ولوحة متابعة الطلبات.
-4. متجر العملاء على الويب وربط iOS عبر adapter، ورفع الصور والإشعارات.
+1. رفع صور حقيقي Cloudinary/S3 بدل روابط فقط.
+2. OTP/SMS وإشعارات بريدية.
+3. Payment gateway حقيقي.
+4. E2E tests بـ Playwright وسيناريو screenshots تلقائي.
 
-وثيقتا التصميم تصفان الخطة الكاملة؛ OpenAPI الحي يصف المسارات المنفّذة فقط. التفاصيل والحدود المرحلية موثقة في `docs/implementation.md`.
+OpenAPI الحي يصف المسارات المنفّذة فقط. التفاصيل والحدود موثقة في `docs/implementation.md`.

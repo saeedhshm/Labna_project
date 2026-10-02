@@ -1,8 +1,33 @@
-# مرحلتا API ولوحة الإدارة — التشغيل وحدود التنفيذ
+# Labna Web Demo — التشغيل وحدود التنفيذ
+
+المشروع الآن Demo متجر إلكتروني كامل نسبيًا للـ CV: storefront + admin + API + MongoDB. المسار الأساسي المنفّذ:
+
+```text
+Customer register/login
+-> Browse catalog
+-> Add to cart
+-> Checkout
+-> Order created with server-side prices and inventory reservation
+-> Admin sees order
+-> Admin changes status
+-> Customer refreshes tracking page
+-> Dashboard shows MongoDB aggregation metrics
+```
 
 ## لوحة الإدارة وواجهات API
 
-لوحة React العربية متاحة على `http://localhost:5174` بعد تشغيل `npm run dev:admin`، وAPI على `http://localhost:3001` بعد `npm run dev:api`. الخطوات أدناه توضح استدعاءات API المكافئة للوحة، ويمكن تجربتها أيضًا باستخدام Postman أو curl. لتشغيل الخدمة من الصفر اتبع [README](../README.md).
+لوحة React العربية متاحة على `http://localhost:5174`، متجر العملاء على `http://localhost:5175`، وAPI على `http://localhost:3001`. لتشغيل الخدمة من الصفر اتبع [README](../README.md).
+
+## Demo Credentials
+
+القيم تأتي من `.env`:
+
+```text
+Manager:  SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD
+Customer: SEED_CUSTOMER_EMAIL / SEED_CUSTOMER_PASSWORD
+```
+
+`npm run seed` ينشئ كتالوجًا ومخزونًا وعميلًا وطلبات demo بحالات: pending, confirmed, preparing, ready, out_for_delivery, completed, cancelled.
 
 ### 1. الدخول
 
@@ -118,6 +143,38 @@ cp ../Labna/Labna/Resources/Data/{categories,products,banners,branches}.json see
 
 توجد بيانات توضيحية في الملفات المصدرية تُستورد كما هي: فرعان يحملان `demo-` في المعرّف ونص «تجريبي» في الاسم، و`cheese-roumy` غير متاح في التطبيق. استبدلها ببيانات الفروع الفعلية قبل التشغيل التجاري.
 
+## مسارات demo الرئيسية
+
+### Storefront
+
+```text
+GET  /api/v1/categories
+GET  /api/v1/products
+GET  /api/v1/products/:id
+POST /api/v1/cart/validate
+POST /api/v1/orders
+GET  /api/v1/orders/:id
+POST /api/v1/customer/auth/register
+POST /api/v1/customer/auth/login
+GET  /api/v1/customer/me
+POST /api/v1/customer/addresses
+GET  /api/v1/customer/orders
+```
+
+### Admin
+
+```text
+POST  /api/v1/staff/auth/login
+GET   /api/v1/admin/dashboard
+GET   /api/v1/admin/orders
+PATCH /api/v1/admin/orders/:id/status
+GET   /api/v1/admin/inventory?lowStock=true
+GET   /api/v1/admin/inventory?outOfStock=true
+POST  /api/v1/admin/inventory/adjustments
+```
+
+السعر النهائي والمخزون لا يأتيان من الواجهة؛ `cart/validate` و`orders` يعيدان قراءة MongoDB. إتمام الطلب يحجز `reserved`، الإلغاء يحرره، والإكمال يخصم من `onHand` و`reserved`.
+
 ## ما تحقق بالفعل
 
 اختبارات integration تنشئ MongoDB replica set مؤقتًا وتتحقق من:
@@ -133,6 +190,8 @@ cp ../Labna/Labna/Resources/Data/{categories,products,banners,branches}.json see
 - تجربة تشغيل فعلية على MongoDB replica set: `npm run seed` استورد 5 أقسام و15 منتجًا و4 بنرات وفرعين و68 صف مخزون، ثم قرأتها الواجهة العامة ولوحة الإدارة. إعادة تشغيل `seed` حدّثت 26 سجلًا دون تكرار.
 - الترتيب السعري يعرض المنتجات غير المتوفرة في النهاية ولا يستخدم سعر خيار معطّل؛ عند إيقاف فرع مؤقتًا للاستقبال يصبح التوفر صفرًا دون المساس بالمخزون المخزن.
 - استجابة خطأ الإعداد تذكر اسم الحقل وطريقة توليد القيم المطلوبة بدل رسالة Zod عامة.
+- رحلة order كاملة: checkout، حجز المخزون، ظهور الطلب في admin، تغيير الحالة، tracking في storefront، dashboard aggregation.
+- حسابات العملاء والعناوين وMy Orders وReorder.
 
 ## الحدود والاختيارات المرحلية
 
@@ -140,12 +199,15 @@ cp ../Labna/Labna/Resources/Data/{categories,products,banners,branches}.json see
 - cursor موقّع مرتبط بالفلاتر وlimit، ويستخدم offset حتى 10,000. الفرز يحسم التعادل بـid؛ التعديلات أثناء التنقل قد تحرك الصفحات، ولا توجد snapshot guarantee.
 - إدارة الكتالوج تستخدم قفل revision داخل معاملات MongoDB لتسلسل التعديلات المرتبطة. هذا مناسب للمتجر الحالي، وليس تصميمًا لأعداد ضخمة من الكتابات.
 - payload الكتالوج داخل حقل `data` في MongoDB، مع strict Zod validation عند كل كتابة API. الـAPI يعرض DTO مسطحًا. لا تُكتب payloads مباشرة من خارج services.
-- إدارة settings الحالية تعدل الفرع الافتراضي فقط. بيانات contact/policies تبقى فارغة إلى حين مرحلة إدارة إعدادات المتجر.
+- إدارة settings الحالية تعدل الفرع الافتراضي فقط. بيانات contact/policies تبقى فارغة.
 - تصحيح في هذه المرحلة: السعر الابتدائي للترتيب والتصفية صار مشتقًا من الخيارات المتاحة فعلًا فقط، موافقةً مع `startingPriceMinor` في تطبيق iOS. قبل ذلك كان منتج بلا مخزون يظهر في أول قائمة السعر مع سعر خيار غير قابل للشراء.
-- حماية أرشفة الفرع تفحص المخزون المحجوز الآن؛ عند تنفيذ الطلبات يجب إضافة فحص الطلبات المفتوحة داخل المعاملة نفسها.
+- حماية أرشفة الفرع تفحص المخزون المحجوز. الطلبات المفتوحة تظهر في لوحة الطلبات، لكن لا توجد صفحة audit عامة.
 - فرع acceptsOrders=false يرجع خيارات غير متاحة؛ إغلاق ساعات العمل وحده لا يوقف التوفر، بما يتوافق مع قبول الطلبات للمعالجة التالية.
 - iOS لم يُربط بهذه الخدمة بعد؛ استجابات envelope وpagination تحتاج adapter. الملفات المحلية القديمة ما زالت تعمل.
 - وثائق `backend-design.md` و`api-v1.md` تمثل الخطة الكاملة. المصدر الدقيق للمسارات الحالية هو `/api/v1/openapi.json`.
-- لوحة الإدارة تعرض بيانات الكتالوج والفروع فقط؛ لا تخمّن إحصاءات مخزون أو مبيعات، ولا تعرض «صفحة الطلبات» قبل وجود API لها. أرقام النظرة العامة تخص الصفحات المحمّلة، وليست الإجمالي الكامل عند وجود cursor إضافي.
+- لوحة الإدارة تعرض dashboard من MongoDB aggregation، وليس من البيانات المحمّلة في React.
 - نموذج المنتجات يسمح بعدة روابط صور HTTPS ويحافظ على جميع الصور الموجودة عند التعديل. لا يوجد رفع صور في هذه المرحلة؛ الروابط يجب أن تأتي من `MEDIA_ORIGINS`.
 - لوحة الإدارة تعتمد على refresh cookie خاص بالمسار `/api/v1/staff/auth` وaccess token في الذاكرة. يجب تشغيلها وAPI من نفس الأصل في الإنتاج عبر reverse proxy وHTTPS؛ `dist` وحده لا يوجه `/api`.
+- Storefront يستخدم refresh cookie منفصلًا للعملاء ومسار `/api/v1/customer/auth`.
+- الدفع mock فقط: `cash_on_delivery`, `demo_card_success`, `demo_card_failure`. لا توجد بوابة دفع حقيقية.
+- رفع الصور غير منفذ؛ الصور روابط HTTPS من مضيفات `MEDIA_ORIGINS`.

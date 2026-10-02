@@ -11,6 +11,8 @@ const schema = z.object({
   MEDIA_ORIGINS: origins,
   SEED_ADMIN_EMAIL: z.email().toLowerCase().optional(),
   SEED_ADMIN_PASSWORD: z.string().min(12).max(200).optional(),
+  SEED_CUSTOMER_EMAIL: z.email().toLowerCase().optional(),
+  SEED_CUSTOMER_PASSWORD: z.string().min(8).max(200).optional(),
   SEED_STOCK_ON_HAND: z.coerce.number().int().min(0).max(1_000_000).default(0),
 });
 export type Config = z.infer<typeof schema>;
@@ -30,6 +32,7 @@ function reportIssues(error: z.ZodError): never {
       return `  ${name} is empty or shorter than 64 characters — ${hints[name]}`;
     }
     if (name === 'SEED_ADMIN_PASSWORD' && issue.code === 'too_small') return '  SEED_ADMIN_PASSWORD needs at least 12 characters';
+    if (name === 'SEED_CUSTOMER_PASSWORD' && issue.code === 'too_small') return '  SEED_CUSTOMER_PASSWORD needs at least 8 characters';
     return `  ${name || 'configuration'}: ${issue.message.toLowerCase()}`;
   });
   throw new Error(`Invalid configuration. Copy apps/api/.env.example to apps/api/.env and fill it in:\n${lines.join('\n')}\nSee labna_web/README.md for the full setup.`);

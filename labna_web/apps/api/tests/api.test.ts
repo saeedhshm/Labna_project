@@ -258,6 +258,13 @@ describe('API foundation and catalog', () => {
     const completed = await request(app).get(`/api/v1/admin/orders/${created.body.data.id}`).set('Authorization', bearer);
     expect(completed.body.data.statusHistory.map((item: { status: string }) => item.status)).toEqual(['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'completed']);
     expect(await Inventory.findOne({ variantID: 'milk-full-1l' }).then(row => ({ onHand: row?.onHand, reserved: row?.reserved }))).toEqual({ onHand: 3, reserved: 0 });
+
+    const dashboard = await request(app).get('/api/v1/admin/dashboard').set('Authorization', bearer).query({ from: '2020-01-01T00:00:00.000Z', to: '2099-01-01T00:00:00.000Z' });
+    expect(dashboard.status).toBe(200);
+    expect(dashboard.body.data).toMatchObject({ revenueMinor: 7800, ordersCount: 1, averageOrderValueMinor: 7800, lowStockCount: 1 });
+    expect(dashboard.body.data.ordersByStatus).toMatchObject({ completed: 1, cancelled: 1 });
+    expect(dashboard.body.data.topProducts[0]).toMatchObject({ productID: 'milk-full', unitsSold: 2, revenueMinor: 7000 });
+    expect(dashboard.body.data.salesByDay[0]).toMatchObject({ revenueMinor: 7800, ordersCount: 1 });
   });
 
   it('registers customers, stores addresses and lists their own orders', async () => {

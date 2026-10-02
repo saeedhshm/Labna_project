@@ -282,6 +282,23 @@ export const adminOrderQuery = pageQuery.extend({
   to: z.iso.datetime().optional(),
 }).refine(query => !query.from || !query.to || Date.parse(query.from) <= Date.parse(query.to), { path: ['to'], message: 'Invalid date range' });
 export const orderStatusPatch = z.strictObject({ status: orderStatus });
+export const dashboardQuery = z.strictObject({
+  from: z.iso.datetime().optional(),
+  to: z.iso.datetime().optional(),
+}).refine(query => !query.from || !query.to || Date.parse(query.from) <= Date.parse(query.to), { path: ['to'], message: 'Invalid date range' });
+export const dashboardMetrics = z.strictObject({
+  range: z.strictObject({ from: z.iso.datetime(), to: z.iso.datetime() }),
+  currencyCode: z.string().regex(/^[A-Z]{3}$/),
+  revenueMinor: money,
+  ordersCount: z.number().int().min(0),
+  averageOrderValueMinor: money,
+  ordersByStatus: z.record(orderStatus, z.number().int().min(0)),
+  topProducts: z.array(z.strictObject({ productID: id, name: localized, unitsSold: z.number().int().min(0), revenueMinor: money })).max(10),
+  lowStockCount: z.number().int().min(0),
+  outOfStockCount: z.number().int().min(0),
+  salesByDay: z.array(z.strictObject({ date: z.iso.date(), revenueMinor: money, ordersCount: z.number().int().min(0) })),
+  salesByWeek: z.array(z.strictObject({ week: z.string(), revenueMinor: money, ordersCount: z.number().int().min(0) })),
+});
 
 export type InventoryDTO = z.infer<typeof inventoryDTO>;
 export type InventoryMovementDTO = z.infer<typeof inventoryMovementDTO>;
@@ -300,6 +317,8 @@ export type OrderStatus = z.infer<typeof orderStatus>;
 export type PaymentMethod = z.infer<typeof paymentMethod>;
 export type AdminOrderQuery = z.infer<typeof adminOrderQuery>;
 export type OrderStatusPatch = z.infer<typeof orderStatusPatch>;
+export type DashboardMetrics = z.infer<typeof dashboardMetrics>;
+export type DashboardQuery = z.infer<typeof dashboardQuery>;
 export type CustomerRegisterBody = z.infer<typeof customerRegisterBody>;
 export type CustomerLoginBody = z.infer<typeof customerLoginBody>;
 export type CustomerAddressInput = z.infer<typeof customerAddressInput>;
