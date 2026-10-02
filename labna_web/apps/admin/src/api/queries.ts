@@ -24,7 +24,7 @@ export const keys = {
 };
 
 export type Page<T> = { items: T[]; nextCursor: string | null };
-export type InventoryFilters = Pick<InventoryListQuery, 'branchID' | 'variantID' | 'lowStock'>;
+export type InventoryFilters = Pick<InventoryListQuery, 'branchID' | 'variantID' | 'lowStock' | 'outOfStock'>;
 export type MovementFilters = Pick<InventoryMovementQuery, 'inventoryID' | 'from' | 'to'>;
 export type OrderFilters = Pick<AdminOrderQuery, 'q' | 'status' | 'from' | 'to'>;
 

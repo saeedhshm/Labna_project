@@ -15,7 +15,7 @@ export function ordersRouter() {
   router.post('/orders', async (req, res) => {
     const input = checkoutRequest.parse(req.body);
     if (input.paymentMethod === 'demo_card_failure') throw new ApiError(402, 'PAYMENT_FAILED', 'Demo card payment failed');
-    const order = await createOrder(input);
+    const order = await createOrder(input, res.locals.customer?.id ?? null);
     respond(res, order, {}, 201);
   });
 
@@ -65,7 +65,7 @@ export function adminOrdersRouter(config: Config) {
   return router;
 }
 
-async function createOrder(input: CheckoutRequest) {
+async function createOrder(input: CheckoutRequest, authenticatedCustomerID: string | null) {
   return mongoose.connection.transaction(async session => {
     const store = await Store.findOne({ id: 'store' }).session(session).lean();
     const branchID = input.branchID ?? store?.defaultPickupBranchID;
@@ -110,7 +110,7 @@ async function createOrder(input: CheckoutRequest) {
     const totalMinor = Math.max(0, subtotalMinor + deliveryFeeMinor - discountMinor);
     const paymentStatus = input.paymentMethod === 'demo_card_success' ? 'paid' : 'pending';
     const now = new Date().toISOString();
-    const [order] = await Order.create([{ id: orderID, orderNumber, customerID: input.customerID ?? null, customer: input.customer, address: input.address, branchID, items, currencyCode: store?.currencyCode ?? items[0]?.currencyCode ?? 'EGP', subtotalMinor, deliveryFeeMinor, discountMinor, totalMinor, couponCode: input.couponCode.toUpperCase(), payment: { method: input.paymentMethod, status: paymentStatus, providerReference: paymentStatus === 'paid' ? `demo_${randomUUID()}` : null }, status: 'pending', statusHistory: [{ status: 'pending', at: now, actorID: null }] }], { session });
+    const [order] = await Order.create([{ id: orderID, orderNumber, customerID: authenticatedCustomerID, customer: input.customer, address: input.address, branchID, items, currencyCode: store?.currencyCode ?? items[0]?.currencyCode ?? 'EGP', subtotalMinor, deliveryFeeMinor, discountMinor, totalMinor, couponCode: input.couponCode.toUpperCase(), payment: { method: input.paymentMethod, status: paymentStatus, providerReference: paymentStatus === 'paid' ? `demo_${randomUUID()}` : null }, status: 'pending', statusHistory: [{ status: 'pending', at: now, actorID: null }] }], { session });
     return toOrderDTO(order.toObject());
   });
 }

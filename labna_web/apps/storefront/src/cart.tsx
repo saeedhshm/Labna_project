@@ -8,6 +8,7 @@ type CartContextValue = {
   add: (product: PublicProduct, variant: PublicVariant, quantity: number) => void;
   updateQuantity: (productID: string, variantID: string, quantity: number) => void;
   remove: (productID: string, variantID: string) => void;
+  replace: (items: CartItemInput[]) => void;
   clear: () => void;
 };
 
@@ -46,6 +47,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return [{ ...item, quantity: Math.min(1000, quantity) }];
     })),
     remove: (productID, variantID) => setItems(current => current.filter(item => item.productID !== productID || item.variantID !== variantID)),
+    replace: next => setItems(next),
     clear: () => setItems([]),
   }), [items]);
 

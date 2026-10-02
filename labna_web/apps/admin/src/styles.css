@@ -153,6 +153,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 .tag--ok { background: #d6f0e0; }
 .tag--muted { background: #eceeed; color: var(--muted); }
 .tag--low { background: #fde7cf; color: #884611; }
+.tag--danger { background: #fee2e2; color: #991b1b; }
 .plain-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; font-size: 0.9rem; }
 .table-scroll { max-width: 100%; overflow-x: auto; }
 

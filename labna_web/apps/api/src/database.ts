@@ -94,6 +94,20 @@ export const Session = mongoose.model('Session', new Schema({
   previousHashes: { type: [String], default: [] },
   expiresAt: { type: Date, required: true }, revokedAt: { type: Date, default: null },
 }).index({ expiresAt: 1 }, { expireAfterSeconds: 0 }));
+export const Customer = mongoose.model('Customer', new Schema({
+  id: { type: String, unique: true, required: true, default: () => randomUUID() },
+  name: { type: String, required: true },
+  phoneNumber: { type: String, required: true },
+  email: { type: String, unique: true, required: true },
+  passwordHash: { type: String, required: true },
+  addresses: { type: [Schema.Types.Mixed], default: [] },
+}, { timestamps: true }));
+export const CustomerSession = mongoose.model('CustomerSession', new Schema({
+  customerID: { type: String, required: true },
+  refreshHash: { type: String, unique: true, required: true },
+  previousHashes: { type: [String], default: [] },
+  expiresAt: { type: Date, required: true }, revokedAt: { type: Date, default: null },
+}).index({ expiresAt: 1 }, { expireAfterSeconds: 0 }));
 
 export async function initializeDatabase() {
   // Existing deployments predate public inventory IDs and optimistic versions.

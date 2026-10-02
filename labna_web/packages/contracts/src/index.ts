@@ -159,6 +159,7 @@ export const inventoryListQuery = pageQuery.extend({
   branchID: id.optional(),
   variantID: id.optional(),
   lowStock: booleanQuery,
+  outOfStock: booleanQuery,
 });
 export const inventoryMovementQuery = pageQuery.extend({
   inventoryID: z.uuid().optional(),
@@ -227,6 +228,11 @@ export const checkoutCustomer = z.strictObject({
   phoneNumber: z.string().regex(/^\+[1-9]\d{7,14}$/),
   email: z.email().toLowerCase().optional(),
 });
+export const customerRegisterBody = checkoutCustomer.extend({ password: z.string().min(8).max(200) });
+export const customerLoginBody = z.strictObject({ email: z.email().toLowerCase(), password: z.string().min(1).max(200) });
+export const customerAddressInput = checkoutAddress.extend({ label: z.string().trim().min(1).max(80), isDefault: z.boolean().default(false) });
+export const customerAddressDTO = customerAddressInput.extend({ id });
+export const customerDTO = z.strictObject({ id, name: z.string(), phoneNumber: z.string(), email: z.email(), addresses: z.array(customerAddressDTO), createdAt: z.iso.datetime() });
 export const checkoutRequest = z.strictObject({
   customerID: id.optional(),
   customer: checkoutCustomer,
@@ -294,6 +300,11 @@ export type OrderStatus = z.infer<typeof orderStatus>;
 export type PaymentMethod = z.infer<typeof paymentMethod>;
 export type AdminOrderQuery = z.infer<typeof adminOrderQuery>;
 export type OrderStatusPatch = z.infer<typeof orderStatusPatch>;
+export type CustomerRegisterBody = z.infer<typeof customerRegisterBody>;
+export type CustomerLoginBody = z.infer<typeof customerLoginBody>;
+export type CustomerAddressInput = z.infer<typeof customerAddressInput>;
+export type CustomerAddressDTO = z.infer<typeof customerAddressDTO>;
+export type CustomerDTO = z.infer<typeof customerDTO>;
 
 export type CategoryInput = z.infer<typeof schemas.categories>;
 export type ProductInput = z.infer<typeof schemas.products>;

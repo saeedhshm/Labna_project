@@ -5,9 +5,13 @@ import { CatalogPage } from './pages/CatalogPage';
 import { CartPage } from './pages/CartPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { ConfirmationPage } from './pages/ConfirmationPage';
+import { AccountPage } from './pages/AccountPage';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
 import { HomePage } from './pages/HomePage';
 import { ProductPage } from './pages/ProductPage';
 import { CartProvider, useCart } from './cart';
+import { CustomerSessionProvider, useCustomerSession } from './customer-session';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000, refetchOnWindowFocus: false } },
@@ -16,6 +20,7 @@ const queryClient = new QueryClient({
 function Layout() {
   const { locale, setLocale, t } = useLanguage();
   const cart = useCart();
+  const session = useCustomerSession();
   return (
     <div className="site-shell">
       <header className="topbar">
@@ -30,6 +35,7 @@ function Layout() {
           <Link to="/">{t('الرئيسية', 'Home')}</Link>
           <Link to="/catalog">{t('المنتجات', 'Products')}</Link>
           <Link to="/cart">{t('السلة', 'Cart')} <span className="cart-count">{cart.count}</span></Link>
+          <Link to={session.state === 'authenticated' ? '/account' : '/login'}>{session.state === 'authenticated' ? t('حسابي', 'Account') : t('دخول', 'Login')}</Link>
         </nav>
         <button className="language-toggle" type="button" onClick={() => setLocale(locale === 'ar' ? 'en' : 'ar')}>
           {locale === 'ar' ? 'English' : 'العربية'}
@@ -63,6 +69,9 @@ const router = createBrowserRouter([
       { path: '/catalog', element: <CatalogPage /> },
       { path: '/cart', element: <CartPage /> },
       { path: '/checkout', element: <CheckoutPage /> },
+      { path: '/login', element: <LoginPage /> },
+      { path: '/register', element: <RegisterPage /> },
+      { path: '/account', element: <AccountPage /> },
       { path: '/orders/:orderID', element: <ConfirmationPage /> },
       { path: '/categories/:categoryID', element: <CatalogPage /> },
       { path: '/products/:productID', element: <ProductPage /> },
@@ -76,9 +85,11 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
-        <CartProvider>
-          <RouterProvider router={router} />
-        </CartProvider>
+        <CustomerSessionProvider>
+          <CartProvider>
+            <RouterProvider router={router} />
+          </CartProvider>
+        </CustomerSessionProvider>
       </LanguageProvider>
     </QueryClientProvider>
   );

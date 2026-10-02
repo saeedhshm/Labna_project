@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import type { PaymentMethod } from '@labna/contracts';
 import { api, ApiError } from '../api';
 import { useCart } from '../cart';
+import { useCustomerSession } from '../customer-session';
 import { money } from '../format';
 import { useLanguage } from '../i18n';
 
@@ -25,6 +26,7 @@ const initial = {
 
 export function CheckoutPage() {
   const cart = useCart();
+  const session = useCustomerSession();
   const navigate = useNavigate();
   const { locale, t } = useLanguage();
   const [form, setForm] = useState(initial);
@@ -41,6 +43,26 @@ export function CheckoutPage() {
   const discountPreview = form.couponCode.trim().toUpperCase() === 'LABNA10' && data ? Math.floor(data.subtotalMinor * 0.1) : 0;
   const deliveryFeeMinor = 1500;
   const totalMinor = data ? Math.max(0, data.subtotalMinor + deliveryFeeMinor - discountPreview) : 0;
+
+  useEffect(() => {
+    if (session.state !== 'authenticated' || !session.customer) return;
+    const defaultAddress = session.customer.addresses.find(item => item.isDefault) ?? session.customer.addresses[0];
+    setForm(current => ({
+      ...current,
+      name: session.customer!.name,
+      phoneNumber: session.customer!.phoneNumber,
+      email: session.customer!.email,
+      ...(defaultAddress ? {
+        city: defaultAddress.city,
+        area: defaultAddress.area,
+        street: defaultAddress.street,
+        building: defaultAddress.building,
+        floor: defaultAddress.floor ?? '',
+        apartment: defaultAddress.apartment ?? '',
+        notes: defaultAddress.notes ?? '',
+      } : {}),
+    }));
+  }, [session.customer, session.state]);
 
   if (cart.items.length === 0) {
     return <section className="state-card"><h1>{t('السلة فارغة', 'Cart is empty')}</h1><Link className="button" to="/catalog">{t('تصفح المنتجات', 'Browse products')}</Link></section>;

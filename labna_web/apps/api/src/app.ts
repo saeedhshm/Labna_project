@@ -12,6 +12,7 @@ import { openapi } from './openapi.js';
 import { inventoryRouter } from './inventory.js';
 import { cartRouter } from './cart.js';
 import { adminOrdersRouter, ordersRouter } from './orders.js';
+import { customerAuthentication } from './customer-auth.js';
 
 export function createApp(config: Config) {
   const app = express();
@@ -33,14 +34,17 @@ export function createApp(config: Config) {
   });
   app.get('/api/v1/openapi.json', (_req, res) => { res.json(openapi); });
   const auth = authentication(config);
+  const customerAuth = customerAuthentication(config);
   const catalog = catalogRouters(config);
   app.use('/api/v1/staff/auth', auth.router);
+  app.use('/api/v1/customer/auth', customerAuth.router);
+  app.use('/api/v1/customer', customerAuth.requireCustomer, customerAuth.account);
   app.use('/api/v1/admin', (_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
   app.use('/api/v1/admin/inventory', auth.requireStaff, inventoryRouter(config, auth.requireManager));
   app.use('/api/v1/admin/orders', auth.requireStaff, auth.requireManager, adminOrdersRouter(config));
   app.use('/api/v1/admin', auth.requireStaff, auth.requireManager, catalog.admin);
   app.use('/api/v1', cartRouter());
-  app.use('/api/v1', ordersRouter());
+  app.use('/api/v1', customerAuth.optionalCustomer, ordersRouter());
   app.use('/api/v1', catalog.publicRouter);
   app.use(() => { throw new ApiError(404, 'NOT_FOUND', 'Endpoint not found'); });
   app.use(errors);

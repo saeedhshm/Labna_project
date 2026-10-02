@@ -115,6 +115,10 @@ describe('API foundation and catalog', () => {
     expect(threshold.body.data).toMatchObject({ version: 2, lowStockThreshold: 10, lowStock: true });
     const low = await request(app).get('/api/v1/admin/inventory').set('Authorization', operator).query({ lowStock: true });
     expect(low.body.data.map((row: { id: string }) => row.id)).toContain(initial!.id);
+    await Inventory.updateOne({ id: initial!.id }, { $set: { onHand: 0, reserved: 0 } });
+    const out = await request(app).get('/api/v1/admin/inventory').set('Authorization', operator).query({ outOfStock: true });
+    expect(out.body.data.map((row: { id: string }) => row.id)).toContain(initial!.id);
+    await Inventory.updateOne({ id: initial!.id }, { $set: { onHand: 7, reserved: 0 } });
     expect((await request(app).patch(`/api/v1/admin/inventory/${initial!.id}`).set('Authorization', bearer).send({ version: 2, onHand: 99 })).status).toBe(422);
     await Inventory.updateOne({ id: initial!.id }, { $set: { reserved: 3 } });
     const belowReserved = await request(app).post('/api/v1/admin/inventory/adjustments').set('Authorization', bearer).set('Idempotency-Key', randomUUID())
@@ -238,6 +242,14 @@ describe('API foundation and catalog', () => {
     expect(tooMany.status).toBe(409);
     expect(tooMany.body.error.code).toBe('INSUFFICIENT_STOCK');
 
+    const cancellable = await request(app).post('/api/v1/orders').send({ ...checkout, items: [{ productID: 'milk-full', variantID: 'milk-full-1l', quantity: 1 }], paymentMethod: 'cash_on_delivery' });
+    expect(cancellable.status).toBe(201);
+    expect(await Inventory.findOne({ variantID: 'milk-full-1l' }).then(row => row?.reserved)).toBe(3);
+    const cancelled = await request(app).patch(`/api/v1/admin/orders/${cancellable.body.data.id}/status`).set('Authorization', bearer).send({ status: 'cancelled' });
+    expect(cancelled.status).toBe(200);
+    expect(cancelled.body.data.status).toBe('cancelled');
+    expect(await Inventory.findOne({ variantID: 'milk-full-1l' }).then(row => row?.reserved)).toBe(2);
+
     for (const status of ['confirmed', 'preparing', 'ready', 'out_for_delivery', 'completed']) {
       const moved = await request(app).patch(`/api/v1/admin/orders/${created.body.data.id}/status`).set('Authorization', bearer).send({ status });
       expect(moved.status).toBe(200);
@@ -246,6 +258,33 @@ describe('API foundation and catalog', () => {
     const completed = await request(app).get(`/api/v1/admin/orders/${created.body.data.id}`).set('Authorization', bearer);
     expect(completed.body.data.statusHistory.map((item: { status: string }) => item.status)).toEqual(['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'completed']);
     expect(await Inventory.findOne({ variantID: 'milk-full-1l' }).then(row => ({ onHand: row?.onHand, reserved: row?.reserved }))).toEqual({ onHand: 3, reserved: 0 });
+  });
+
+  it('registers customers, stores addresses and lists their own orders', async () => {
+    await createCatalog();
+    expect((await admin('products').send(product('milk-full', 3500))).status).toBe(201);
+    await Inventory.updateOne({ branchID: 'main', variantID: 'milk-full-1l' }, { $set: { onHand: 5 } });
+    const registered = await request(app).post('/api/v1/customer/auth/register').send({ name: 'Customer One', phoneNumber: '+201012345678', email: 'customer@example.com', password: 'password123' });
+    expect(registered.status).toBe(200);
+    const customerBearer = `Bearer ${registered.body.data.accessToken}`;
+    const address = await request(app).post('/api/v1/customer/addresses').set('Authorization', customerBearer).send({ label: 'Home', city: 'Cairo', area: 'Maadi', street: 'Road 9', building: '12', isDefault: true });
+    expect(address.status).toBe(201);
+    expect((await request(app).get('/api/v1/customer/me').set('Authorization', customerBearer)).body.data.addresses[0]).toMatchObject({ label: 'Home', isDefault: true });
+    const created = await request(app).post('/api/v1/orders').set('Authorization', customerBearer).send({
+      customer: { name: 'Customer One', phoneNumber: '+201012345678', email: 'customer@example.com' },
+      address: { city: 'Cairo', area: 'Maadi', street: 'Road 9', building: '12' },
+      items: [{ productID: 'milk-full', variantID: 'milk-full-1l', quantity: 1 }],
+      paymentMethod: 'cash_on_delivery',
+    });
+    expect(created.status).toBe(201);
+    expect(created.body.data.customerID).toBeTruthy();
+    const mine = await request(app).get('/api/v1/customer/orders').set('Authorization', customerBearer);
+    expect(mine.status).toBe(200);
+    expect(mine.body.data.map((order: { orderNumber: string }) => order.orderNumber)).toContain(created.body.data.orderNumber);
+    const login = await request(app).post('/api/v1/customer/auth/login').send({ email: 'customer@example.com', password: 'password123' });
+    expect(login.status).toBe(200);
+    expect((await request(app).get('/api/v1/customer/orders')).status).toBe(401);
+    expect((await request(app).post('/api/v1/customer/auth/logout').set('Authorization', customerBearer)).status).toBe(200);
   });
 
   it('supports search, price filters, stable pagination and stock-sensitive ETags', async () => {

@@ -26,7 +26,7 @@ const nonnegativeInteger = /^\d+$/;
 const errorMessage = (failure: unknown, fallback: string) => failure instanceof ApiError ? failure.message : fallback;
 
 export function InventoryPage() {
-  const [draft, setDraft] = useState({ branchID: '', variantID: '', lowStock: '' });
+  const [draft, setDraft] = useState({ branchID: '', variantID: '', stockState: '' });
   const [filters, setFilters] = useState<InventoryFilters>({});
   const [adjusting, setAdjusting] = useState<InventoryDTO | null>(null);
   const [threshold, setThreshold] = useState<InventoryDTO | null>(null);
@@ -44,12 +44,14 @@ export function InventoryPage() {
     setFilters({
       ...(draft.branchID ? { branchID: draft.branchID } : {}),
       ...(draft.variantID.trim() ? { variantID: draft.variantID.trim() } : {}),
-      ...(draft.lowStock ? { lowStock: draft.lowStock === 'true' } : {}),
+      ...(draft.stockState === 'low' ? { lowStock: true } : {}),
+      ...(draft.stockState === 'stable' ? { lowStock: false } : {}),
+      ...(draft.stockState === 'out' ? { outOfStock: true } : {}),
     });
   }
 
   function resetFilters() {
-    setDraft({ branchID: '', variantID: '', lowStock: '' });
+    setDraft({ branchID: '', variantID: '', stockState: '' });
     setFilters({});
   }
 
@@ -72,10 +74,11 @@ export function InventoryPage() {
             {products.hasNextPage ? <button type="button" className="ghost" onClick={() => void products.fetchNextPage()} disabled={products.isFetchingNextPage}>{products.isFetchingNextPage ? 'جارٍ التحميل…' : 'تحميل خيارات منتجات إضافية'}</button> : null}
           </Field>
           <Field label="حالة المخزون" htmlFor="inventory-low-stock">
-            <select id="inventory-low-stock" value={draft.lowStock} onChange={event => setDraft({ ...draft, lowStock: event.target.value })}>
+            <select id="inventory-low-stock" value={draft.stockState} onChange={event => setDraft({ ...draft, stockState: event.target.value })}>
               <option value="">الكل</option>
-              <option value="true">منخفض فقط</option>
-              <option value="false">غير منخفض فقط</option>
+              <option value="out">نفد المخزون فقط</option>
+              <option value="low">منخفض فقط</option>
+              <option value="stable">غير منخفض فقط</option>
             </select>
           </Field>
           <div className="inventory-filters__actions">
@@ -111,7 +114,7 @@ export function InventoryPage() {
                       <td className="stock-number">{row.reserved}</td>
                       <td className="stock-number"><strong>{row.available}</strong></td>
                       <td className="stock-number">{row.lowStockThreshold}</td>
-                      <td><span className={row.lowStock ? 'tag tag--low' : 'tag tag--ok'}>{row.lowStock ? 'مخزون منخفض' : 'مستقر'}</span></td>
+                      <td><span className={row.available === 0 ? 'tag tag--danger' : row.lowStock ? 'tag tag--low' : 'tag tag--ok'}>{row.available === 0 ? 'نفد المخزون' : row.lowStock ? 'مخزون منخفض' : 'مستقر'}</span></td>
                       <td className="table__actions">
                         <button type="button" className="ghost" onClick={() => setAdjusting(row)}>تعديل الكمية</button>
                         <button type="button" className="ghost" onClick={() => setThreshold(row)}>تعديل الحد</button>

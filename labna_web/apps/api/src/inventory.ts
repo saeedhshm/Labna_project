@@ -17,13 +17,18 @@ export function inventoryRouter(config: Config, requireManager: RequestHandler) 
 
   router.get('/', async (req, res) => {
     const query = inventoryListQuery.parse(req.query);
-    const { cursor, limit, lowStock, ...fields } = query;
-    const page = pagination(config.CURSOR_SECRET, ['inventory', fields, lowStock, limit], cursor);
+    const { cursor, limit, lowStock, outOfStock, ...fields } = query;
+    const page = pagination(config.CURSOR_SECRET, ['inventory', fields, lowStock, outOfStock, limit], cursor);
     const filter: Record<string, unknown> = { ...fields };
+    const expressions: Record<string, unknown>[] = [];
+    const available = { $subtract: ['$onHand', '$reserved'] };
     if (lowStock !== undefined) {
-      const comparison = { $lte: [{ $subtract: ['$onHand', '$reserved'] }, '$lowStockThreshold'] };
-      filter.$expr = lowStock ? comparison : { $not: [comparison] };
+      const comparison = { $lte: [available, '$lowStockThreshold'] };
+      expressions.push(lowStock ? comparison : { $not: [comparison] });
     }
+    if (outOfStock !== undefined) expressions.push(outOfStock ? { $eq: [available, 0] } : { $gt: [available, 0] });
+    if (expressions.length === 1) filter.$expr = expressions[0];
+    else if (expressions.length > 1) filter.$expr = { $and: expressions };
     const items = await Inventory.find(filter).sort({ id: 1 }).skip(page.offset).limit(limit + 1).lean();
     respond(res, items.slice(0, limit).map(toInventoryDTO), { nextCursor: page.next(limit, items.length > limit) });
   });
