@@ -197,18 +197,25 @@ export async function logout() {
   }
 }
 
+let restoreSessionRequest: Promise<boolean> | null = null;
+
 /** Used once at startup to turn the HttpOnly refresh cookie into an access token. */
 export async function restoreSession() {
-  try {
-    const response = await fetch('/api/v1/staff/auth/refresh', { method: 'POST', credentials: 'include' });
-    if (!response.ok) return false;
-    const body = (await response.json()) as { data: { accessToken: string } };
-    if (!body.data?.accessToken) return false;
-    setAccessToken(body.data.accessToken);
-    return true;
-  } catch {
-    return false;
-  }
+  restoreSessionRequest ??= (async () => {
+    try {
+      const response = await fetch('/api/v1/staff/auth/refresh', { method: 'POST', credentials: 'include' });
+      if (!response.ok) return false;
+      const body = (await response.json()) as { data: { accessToken: string } };
+      if (!body.data?.accessToken) return false;
+      setAccessToken(body.data.accessToken);
+      return true;
+    } catch {
+      return false;
+    } finally {
+      restoreSessionRequest = null;
+    }
+  })();
+  return restoreSessionRequest;
 }
 
 export const isUnauthorized = (error: unknown) => error instanceof ApiError && error.status === 401;

@@ -3,8 +3,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
+import { StrictMode } from 'react';
 import { LoginPage } from '../src/pages/LoginPage';
-import { SessionProvider } from '../src/session';
+import { SessionProvider, useSession } from '../src/session';
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -46,5 +47,31 @@ describe('LoginPage', () => {
     await screen.findByLabelText('البريد الإلكتروني');
     expect(screen.getByLabelText('البريد الإلكتروني')).toBeRequired();
     expect(screen.getByLabelText('كلمة المرور')).toBeRequired();
+  });
+
+  it('restores a staff session only once under React StrictMode', async () => {
+    function Probe() {
+      const { state } = useSession();
+      return <div>{state}</div>;
+    }
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+    const fetchMock = vi.fn(async () => json({ data: { accessToken: 'restored-token' } }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter>
+            <SessionProvider>
+              <Probe />
+            </SessionProvider>
+          </MemoryRouter>
+        </QueryClientProvider>
+      </StrictMode>,
+    );
+
+    expect(await screen.findByText('authenticated')).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/staff/auth/refresh', { method: 'POST', credentials: 'include' });
   });
 });

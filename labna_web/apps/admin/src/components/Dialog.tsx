@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Notice } from './Primitives';
 
 export function FormDialog({
@@ -18,6 +18,14 @@ export function FormDialog({
   busy?: boolean;
   children: ReactNode;
 }) {
+  // Optimistic locking rejects a duplicate edit, but a create has no version to
+  // compare, so a fast double submit would insert two records. The ref latches
+  // synchronously, before React has re-rendered the disabled button.
+  const submitting = useRef(false);
+  useEffect(() => {
+    if (!busy) submitting.current = false;
+  }, [busy]);
+
   return (
     <div className="dialog__backdrop" role="presentation" onMouseDown={event => event.target === event.currentTarget && onClose()}>
       <div className="dialog" role="dialog" aria-modal="true" aria-label={title}>
@@ -30,6 +38,8 @@ export function FormDialog({
         <form
           onSubmit={event => {
             event.preventDefault();
+            if (submitting.current) return;
+            submitting.current = true;
             onSubmit();
           }}
         >

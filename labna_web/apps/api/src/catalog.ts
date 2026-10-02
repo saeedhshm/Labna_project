@@ -3,7 +3,7 @@ import { Router, type Response } from 'express';
 import { DateTime } from 'luxon';
 import { z } from 'zod';
 import { Store, models } from './database.js';
-import { id, pageQuery, productQuery, resources, schemas, settingsPatch, type Resource } from './contracts.js';
+import { id, pageQuery, productDetailQuery, productQuery, resources, schemas, settingsPatch, type Resource } from './contracts.js';
 import { ApiError, pagination, publicResponse, respond } from './http.js';
 import { archiveResource, createResource, updateResource, updateSettings } from './catalog-service.js';
 import type { Config } from './config.js';
@@ -26,7 +26,10 @@ export function openingState(branch: BranchData, now = new Date()) {
     }
     if (nextOpensAt) break;
   }
-  return { isOpen, nextOpensAt };
+  // While the branch is open there is no "next opening" worth advertising: a
+  // split shift would otherwise report the later same-day interval (or the next
+  // week's first interval) as if the shop were still shut.
+  return { isOpen, nextOpensAt: isOpen ? null : nextOpensAt };
 }
 
 export function catalogRouters(config: Config) {
@@ -163,7 +166,9 @@ export function catalogRouters(config: Config) {
     publicResponse(req, res, result.data, result.meta);
   });
   publicRouter.get('/products/:id', async (req, res) => {
-    const query = z.strictObject({ branchID: id.optional() }).parse(req.query);
+    // A single product honours branch and locale like the list route, but the
+    // list-only filters are rejected instead of silently becoming a false 404.
+    const query = productDetailQuery.parse(req.query);
     const result = await products(productQuery.parse(query), id.parse(req.params.id));
     if (!result.data.length) throw new ApiError(404, 'NOT_FOUND', 'Product not found');
     publicResponse(req, res, result.data[0], { branchID: result.meta.branchID });

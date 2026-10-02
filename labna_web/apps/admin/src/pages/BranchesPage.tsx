@@ -6,6 +6,7 @@ import { ConfirmDialog, FormDialog, TextPreview } from '../components/Dialog';
 import { LocalizedField } from '../components/LocalizedField';
 import { OpeningHoursEditor, branchPayload, fromOpeningHours, timezones } from '../components/OpeningHoursEditor';
 import { EmptyState, Field, Notice, Panel, Spinner } from '../components/Primitives';
+import { useToast } from '../components/Toasts';
 import { ar, en, isBlank } from '../lib/format';
 import { emptySchedule, validateSchedule, weekdayLabel, type DateOverride, type Schedule } from '../lib/forms';
 
@@ -24,9 +25,20 @@ const emptyDraft = {
 
 export function BranchesPage() {
   const list = useResourceList<BranchDTO>('branches');
+  const { notify } = useToast();
   const [editing, setEditing] = useState<BranchDTO | 'new' | null>(null);
   const [archiving, setArchiving] = useState<BranchDTO | null>(null);
+  const toggle = useResourceMutation('branches');
   const items = list.data?.pages.flatMap(page => page.items) ?? [];
+
+  async function setVisible(record: BranchDTO, isVisible: boolean) {
+    try {
+      await toggle.mutateAsync({ id: record.id, version: record.version, payload: { isVisible } });
+      notify('success', isVisible ? `تم إظهار الفرع ${record.id}.` : `تم إخفاء الفرع ${record.id}.`);
+    } catch (failure) {
+      notify('error', failure instanceof ApiError ? failure.message : 'تعذر تغيير حالة الفرع.');
+    }
+  }
 
   return (
     <Panel
@@ -44,14 +56,17 @@ export function BranchesPage() {
       ) : null}
       {items.length > 0 ? (
         <>
-        <table className="table">
+        <div className="table-scroll">
+          <table className="table branch-table">
           <thead>
             <tr>
               <th scope="col">المعرّف</th>
               <th scope="col">الاسم</th>
               <th scope="col">العنوان</th>
-              <th scope="col">الظهور</th>
-              <th scope="col">الاستلام</th>
+              <th scope="col">الهاتف</th>
+              <th scope="col">الموقع</th>
+              <th scope="col">المواعيد</th>
+              <th scope="col">الحالة</th>
               <th scope="col">إجراءات</th>
             </tr>
           </thead>
@@ -61,11 +76,21 @@ export function BranchesPage() {
                 <td><code>{item.id}</code></td>
                 <td><TextPreview ar={ar(item.name)} en={en(item.name)} /></td>
                 <td>{ar(item.address)}</td>
-                <td>{item.isVisible ? 'ظاهر' : 'مخفي'}</td>
-                <td>{item.pickupEnabled ? (item.acceptsOrders ? 'يستقبل طلبات' : 'موقوف مؤقتًا') : 'للعرض فقط'}</td>
+                <td dir="ltr">{item.phoneNumber ?? <span className="hint">—</span>}</td>
+                <td dir="ltr" className="stock-number">
+                  {item.coordinate.latitude.toFixed(4)}, {item.coordinate.longitude.toFixed(4)}
+                </td>
+                <td className="hint">{scheduleSummary(item)}</td>
+                <td>
+                  <span className={`tag ${item.isVisible ? 'tag--ok' : 'tag--muted'}`}>{item.isVisible ? 'ظاهر' : 'مخفي'}</span>
+                  <small className="hint">{item.pickupEnabled ? (item.acceptsOrders ? 'يستقبل طلبات' : 'موقوف مؤقتًا') : 'للعرض فقط'}</small>
+                </td>
                 <td className="table__actions">
                   <button type="button" className="ghost" onClick={() => setEditing(item)}>
                     تعديل
+                  </button>
+                  <button type="button" className="ghost" onClick={() => void setVisible(item, !item.isVisible)} disabled={toggle.isPending}>
+                    {item.isVisible ? 'إخفاء' : 'إظهار'}
                   </button>
                   <button type="button" className="danger-ghost" onClick={() => setArchiving(item)}>
                     أرشفة
@@ -75,11 +100,14 @@ export function BranchesPage() {
             ))}
           </tbody>
         </table>
+        </div>
         {list.hasNextPage ? (
           <button type="button" className="ghost" onClick={() => void list.fetchNextPage()} disabled={list.isFetchingNextPage}>
             {list.isFetchingNextPage ? 'جارٍ التحميل…' : 'عرض المزيد'}
           </button>
-        ) : null}
+        ) : (
+          <p className="hint">تم عرض كل الفروع.</p>
+        )}
         </>
       ) : null}
       {editing ? <BranchDialog record={editing === 'new' ? null : editing} onClose={() => setEditing(null)} /> : null}
@@ -88,7 +116,16 @@ export function BranchesPage() {
   );
 }
 
+/** Compact "N days/week · HH:MM–HH:MM" hint so the table shows real schedule data. */
+function scheduleSummary(record: BranchDTO): string {
+  const days = new Set(record.openingHours.map(item => item.weekday)).size;
+  if (days === 0) return 'غير منشورة';
+  const first = [...record.openingHours].sort((a, b) => a.weekday - b.weekday || a.opensAt.localeCompare(b.opensAt))[0];
+  return first ? `${days} أيام · ${first.opensAt}–${first.closesAt}` : `${days} أيام`;
+}
+
 function BranchDialog({ record, onClose }: { record: BranchDTO | null; onClose: () => void }) {
+  const { notify } = useToast();
   const [draft, setDraft] = useState(() =>
     record
       ? {
@@ -149,6 +186,7 @@ function BranchDialog({ record, onClose }: { record: BranchDTO | null; onClose: 
         version: record?.version,
         payload: record ? parsed.data : { id: draft.id.trim(), ...parsed.data },
       });
+      notify('success', record ? 'تم تحديث الفرع.' : 'تم إنشاء الفرع.');
       onClose();
     } catch (failure) {
       setError(failure instanceof ApiError ? failure.message : 'تعذر حفظ الفرع.');
@@ -214,6 +252,7 @@ function BranchDialog({ record, onClose }: { record: BranchDTO | null; onClose: 
 
 function ArchiveDialog({ record, onClose }: { record: BranchDTO; onClose: () => void }) {
   const [error, setError] = useState<string>();
+  const { notify } = useToast();
   const mutation = useArchiveMutation('branches');
 
   return (
@@ -228,6 +267,7 @@ function ArchiveDialog({ record, onClose }: { record: BranchDTO; onClose: () => 
         setError(undefined);
         try {
           await mutation.mutateAsync({ id: record.id, version: record.version });
+          notify('success', 'تمت أرشفة الفرع.');
           onClose();
         } catch (failure) {
           setError(failure instanceof ApiError ? failure.message : 'تعذر أرشفة الفرع.');

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
-import { BannerCarousel, LoadingGrid, ProductCard, StateCard } from '../components';
+import { BannerCarousel, BranchPreviewCard, LoadingGrid, ProductCard, StateCard } from '../components';
 import { useLanguage } from '../i18n';
 import { text } from '../types';
 
@@ -17,6 +17,7 @@ export function HomePage() {
 
   return (
     <>
+      <h1 className="sr-only">{t('لبنة — منتجات ألبان طازجة', 'Labna — fresh dairy products')}</h1>
       {banners.isPending ? (
         <div className="banner-carousel banner-carousel--loading" role="status" aria-label={t('جار تحميل البنرات…', 'Loading banners…')}>
           <div className="banner-carousel__track">
@@ -78,18 +79,18 @@ export function HomePage() {
           </div>
           <Link to="/branches">{t('كل الفروع', 'View all branches')}</Link>
         </div>
-        {branches.isPending ? <div className="skeleton-lines" /> : null}
+        {branches.isPending ? (
+          <div className="grid branches-grid" role="status" aria-label={t('جار تحميل الفروع…', 'Loading branches…')}>
+            {Array.from({ length: 3 }, (_, index) => (
+              <div className="skeleton-card" key={index} />
+            ))}
+          </div>
+        ) : null}
         {branches.isError ? <StateCard title={t('تعذر تحميل الفروع.', 'Could not load branches.')} /> : null}
         {branches.data?.data.length === 0 && branches.isSuccess ? <StateCard title={t('لا توجد فروع متاحة حاليًا.', 'No branches available yet.')} /> : null}
-        <div className="grid branches-grid">
+        <div className="grid branches-grid branches-grid--preview">
           {branches.data?.data.slice(0, 3).map((branch) => (
-            <article className="branch-card" key={branch.id}>
-              <h2>{text(branch.name, locale)}</h2>
-              <p>{text(branch.address, locale)}</p>
-              <div className="branch-card__meta">
-                <span className={`tag ${branch.isOpen ? 'tag--ok' : 'tag--muted'}`}>{branch.isOpen ? t('مفتوح', 'Open') : t('مغلق', 'Closed')}</span>
-              </div>
-            </article>
+            <BranchPreviewCard key={branch.id} branch={branch} />
           ))}
         </div>
       </section>

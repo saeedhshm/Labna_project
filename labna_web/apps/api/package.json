@@ -7,7 +7,7 @@
     "build": "tsc",
     "start": "node --env-file=.env dist/server.js",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
-    "test": "vitest run",
+    "test": "vitest run --no-file-parallelism",
     "seed": "npm run build -w @labna/contracts && tsx --env-file=.env src/seed.ts",
     "openapi": "tsx src/export-openapi.ts"
   },

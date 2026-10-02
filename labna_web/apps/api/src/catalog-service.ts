@@ -78,14 +78,19 @@ async function validateReferences(resource: Resource, data: Record<string, any>,
     }
   }
   if (resource === 'banners') {
-    const target = data.destination.kind === 'product' ? models.products : models.categories;
-    const filter = {
-      id: data.destination.id,
-      archivedAt: null,
-      ...(data.destination.kind === 'product' ? { 'data.publicationStatus': 'published' } : {}),
-    };
-    if (!await target.exists(filter).session(session)) {
-      throw new ApiError(422, 'INVALID_DESTINATION', 'Banner destination must be published');
+    // `external` and `none` carry no catalog reference: the URL is already checked
+    // by the shared HTTPS rule, and `none` intentionally points nowhere.
+    const { destination } = data as z.infer<typeof schemas.banners>;
+    if (destination.kind === 'product' || destination.kind === 'category') {
+      const target = destination.kind === 'product' ? models.products : models.categories;
+      const filter = {
+        id: destination.id,
+        archivedAt: null,
+        ...(destination.kind === 'product' ? { 'data.publicationStatus': 'published' } : {}),
+      };
+      if (!await target.exists(filter).session(session)) {
+        throw new ApiError(422, 'INVALID_DESTINATION', 'Banner destination must be published');
+      }
     }
   }
 }

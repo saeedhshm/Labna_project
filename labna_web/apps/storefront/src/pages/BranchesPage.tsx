@@ -1,21 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api';
-import { StateCard } from '../components';
+import { BranchCard, StateCard } from '../components';
 import { useLanguage } from '../i18n';
-import { text } from '../types';
 
 export function BranchesPage() {
-  const { locale, t } = useLanguage();
+  const { t } = useLanguage();
   const branches = useQuery({ queryKey: ['branches'], queryFn: ({ signal }) => api.branches(signal) });
-
-  if (branches.isPending)
-    return (
-      <section className="section">
-        <div className="skeleton-lines" />
-      </section>
-    );
-  if (branches.isError) return <StateCard title={t('تعذر تحميل الفروع.', 'Could not load branches.')} />;
-  if (branches.data?.data.length === 0) return <StateCard title={t('لا توجد فروع متاحة حاليًا.', 'No branches available yet.')} />;
 
   return (
     <section className="section">
@@ -25,20 +15,31 @@ export function BranchesPage() {
           <h1>{t('فروعنا', 'Our branches')}</h1>
         </div>
       </div>
+
+      {branches.isPending ? (
+        <div className="grid branches-grid" role="status" aria-label={t('جار تحميل الفروع…', 'Loading branches…')}>
+          {Array.from({ length: 2 }, (_, index) => (
+            <div className="skeleton-card" key={index} />
+          ))}
+        </div>
+      ) : null}
+
+      {branches.isError ? (
+        <StateCard
+          title={t('تعذر تحميل الفروع.', 'Could not load branches.')}
+          action={
+            <button className="button" type="button" onClick={() => void branches.refetch()}>
+              {t('إعادة المحاولة', 'Retry')}
+            </button>
+          }
+        />
+      ) : null}
+
+      {branches.data?.data.length === 0 && branches.isSuccess ? <StateCard title={t('لا توجد فروع متاحة حاليًا.', 'No branches available yet.')} /> : null}
+
       <div className="grid branches-grid">
         {branches.data?.data.map((branch) => (
-          <article className="branch-card" key={branch.id}>
-            <h2>{text(branch.name, locale)}</h2>
-            <p>{text(branch.address, locale)}</p>
-            <div className="branch-card__meta">
-              <span className={`tag ${branch.isOpen ? 'tag--ok' : 'tag--muted'}`}>{branch.isOpen ? t('مفتوح', 'Open') : t('مغلق', 'Closed')}</span>
-              {branch.phoneNumber ? (
-                <a href={`tel:${branch.phoneNumber}`} dir="ltr">
-                  {branch.phoneNumber}
-                </a>
-              ) : null}
-            </div>
-          </article>
+          <BranchCard key={branch.id} branch={branch} />
         ))}
       </div>
     </section>

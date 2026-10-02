@@ -204,6 +204,25 @@ describe('API foundation and catalog', () => {
     expect(missing.body.data.items[0]).toMatchObject({ valid: false, reason: 'variant_not_found' });
   });
 
+  it('reports no next opening while a branch is open and honours date overrides', () => {
+    // Monday split shift 09:00-12:00 and 15:00-21:00 Cairo time.
+    const split = {
+      ...branch,
+      openingHours: [
+        { weekday: 1, opensAt: '09:00', closesAt: '12:00' },
+        { weekday: 1, opensAt: '15:00', closesAt: '21:00' },
+      ],
+    };
+    // Inside the morning interval: open, so there is no "next opening" to show.
+    expect(openingState(split as never, new Date('2026-10-05T07:00:00Z'))).toEqual({ isOpen: true, nextOpensAt: null });
+    // Between the two intervals (10:30Z = 13:30 Cairo): shut, with the afternoon
+    // interval reported.
+    expect(openingState(split as never, new Date('2026-10-05T10:30:00Z'))).toEqual({ isOpen: false, nextOpensAt: '2026-10-05T12:00:00.000Z' });
+    // A closure override wins over the weekly schedule.
+    const closed = { ...split, dateOverrides: [{ date: '2026-10-05', intervals: [] }] };
+    expect(openingState(closed as never, new Date('2026-10-05T07:00:00Z')).isOpen).toBe(false);
+  });
+
   it('creates checkout orders with server-side prices, snapshots and demo payments', async () => {
     await createCatalog();
     expect((await admin('products').send(product('milk-full', 3500))).status).toBe(201);
@@ -315,6 +334,20 @@ describe('API foundation and catalog', () => {
     expect((await request(app).get('/api/v1/products/alpha').set('If-None-Match', detail.headers.etag)).status).toBe(200);
   });
 
+  it('accepts locale and branch on product detail but rejects list-only filters', async () => {
+    await createCatalog();
+    expect((await admin('products').send(product('alpha'))).status).toBe(201);
+    expect((await request(app).get('/api/v1/products/alpha').query({ locale: 'ar' })).status).toBe(200);
+    expect((await request(app).get('/api/v1/products/alpha').query({ locale: 'en' })).status).toBe(200);
+    expect((await request(app).get('/api/v1/products/alpha').query({ branchID: 'main' })).status).toBe(200);
+    expect((await request(app).get('/api/v1/products/alpha').query({ locale: 'ar', branchID: 'main' })).status).toBe(200);
+    // A filter that cannot apply to one product must fail loudly, not become a false 404.
+    expect((await request(app).get('/api/v1/products/alpha').query({ categoryID: 'cat-1' })).status).toBe(422);
+    expect((await request(app).get('/api/v1/products/alpha').query({ q: 'alpha' })).status).toBe(422);
+    expect((await request(app).get('/api/v1/products/alpha').query({ locale: 'fr' })).status).toBe(422);
+    expect((await request(app).get('/api/v1/products/alpha').query({ branchID: 'ghost' })).body.error.code).toBe('INVALID_BRANCH');
+  });
+
   it('keeps drafts/hidden branches private and excludes disabled variants from availability', async () => {
     await createCatalog();
     expect((await admin('products').send({ ...product('draft'), publicationStatus: 'draft' })).status).toBe(201);
@@ -359,6 +392,50 @@ describe('API foundation and catalog', () => {
     expect((await request(app).delete('/api/v1/admin/products/milk-full').set('Authorization', bearer).send({ version: 0 })).status).toBe(200);
     expect((await request(app).get('/api/v1/products/milk-full')).status).toBe(404);
     expect((await request(app).get('/api/v1/banners')).body.data).toEqual([]);
+  });
+
+  it('supports every banner target kind and validates referenced records', async () => {
+    await createCatalog();
+    expect((await admin('products').send(product('milk-full'))).status).toBe(201);
+    const base = { title: text, subtitle: text, imageURL, sortOrder: 1, isActive: true };
+
+    const toCategory = await admin('banners').send({ id: 'to-category', ...base, destination: { kind: 'category', id: 'milk' }, cta: { ar: 'تصفح', en: 'Browse' } });
+    expect(toCategory.status).toBe(201);
+    const toProduct = await admin('banners').send({ id: 'to-product', ...base, destination: { kind: 'product', id: 'milk-full' } });
+    expect(toProduct.status).toBe(201);
+    const toExternal = await admin('banners').send({ id: 'to-external', ...base, destination: { kind: 'external', url: 'https://example.com/menu' } });
+    expect(toExternal.status).toBe(201);
+    const toNone = await admin('banners').send({ id: 'to-none', ...base, destination: { kind: 'none' } });
+    expect(toNone.status).toBe(201);
+
+    // Referenced records must exist, and product targets must stay published.
+    expect((await admin('banners').send({ id: 'bad-cat', ...base, destination: { kind: 'category', id: 'missing' } })).status).toBe(422);
+    expect((await admin('banners').send({ id: 'bad-prod', ...base, destination: { kind: 'product', id: 'missing' } })).status).toBe(422);
+    expect((await admin('banners').send({ id: 'draft-prod', ...base, destination: { kind: 'product', id: 'cheese-labneh' } })).status).toBe(422);
+    // External targets must still be HTTPS.
+    expect((await admin('banners').send({ id: 'bad-url', ...base, destination: { kind: 'external', url: 'http://example.com' } })).status).toBe(422);
+
+    // The public payload keeps the target and CTA and hides the active flag.
+    const active = await request(app).get('/api/v1/banners').query({ limit: 100 });
+    const ids = active.body.data.map((banner: { id: string }) => banner.id);
+    expect(ids).toEqual(expect.arrayContaining(['to-category', 'to-product', 'to-external', 'to-none']));
+    expect(active.body.data.find((banner: { id: string }) => banner.id === 'to-category')).toMatchObject({
+      destination: { kind: 'category', id: 'milk' },
+      cta: { ar: 'تصفح', en: 'Browse' },
+    });
+    expect(active.body.data.find((banner: { id: string }) => banner.id === 'to-external')).toMatchObject({ destination: { url: 'https://example.com/menu' } });
+    expect(active.body.data[0]).not.toHaveProperty('isActive');
+
+    // Deactivating hides a banner from the storefront without deleting it.
+    const record = await request(app).get('/api/v1/admin/banners/to-external').set('Authorization', bearer);
+    expect((await request(app).patch('/api/v1/admin/banners/to-external').set('Authorization', bearer).send({ version: record.body.data.version, isActive: false })).status).toBe(200);
+    expect((await request(app).get('/api/v1/banners').query({ limit: 100 })).body.data.map((banner: { id: string }) => banner.id)).not.toContain('to-external');
+    expect((await request(app).get('/api/v1/admin/banners/to-external').set('Authorization', bearer)).status).toBe(200);
+
+    // External and none targets do not block archiving their referenced records.
+    expect((await admin('categories').send({ id: 'scratch', ...category, sortOrder: 9 })).status).toBe(201);
+    const scratch = await request(app).get('/api/v1/admin/categories/scratch').set('Authorization', bearer);
+    expect((await request(app).patch('/api/v1/admin/categories/scratch').set('Authorization', bearer).send({ version: scratch.body.data.version })).status).toBe(200);
   });
 
   it('rotates refresh cookies, rejects CSRF and revokes a family after replay', async () => {

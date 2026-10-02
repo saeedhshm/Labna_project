@@ -12,6 +12,7 @@ import { BranchesPage } from './pages/BranchesPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { InventoryPage } from './pages/InventoryPage';
 import { OrdersPage } from './pages/OrdersPage';
+import { ToastProvider } from './components/Toasts';
 import { SessionProvider, useSession } from './session';
 
 const queryClient = new QueryClient({
@@ -80,10 +81,12 @@ const router = createBrowserRouter([
 
 export function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <SessionProvider>
-        <RouterProvider router={router} />
-      </SessionProvider>
-    </QueryClientProvider>
+    <ToastProvider>
+      <QueryClientProvider client={queryClient}>
+        <SessionProvider>
+          <RouterProvider router={router} />
+        </SessionProvider>
+      </QueryClientProvider>
+    </ToastProvider>
   );
 }

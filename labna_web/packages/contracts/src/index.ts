@@ -19,8 +19,10 @@ export const localized = z.strictObject({
   en: z.string().trim().min(1).max(5000),
 });
 
+/** Only HTTPS URLs. Shared by image sources and banner destination links. */
+export const httpsURL = z.url().refine(value => new URL(value).protocol === 'https:', 'HTTPS required');
 /** Only HTTPS image URLs; the host allowlist is enforced server side. */
-export const imageURL = z.url().refine(value => new URL(value).protocol === 'https:', 'HTTPS required');
+export const imageURL = httpsURL;
 
 export const unit = z.enum(['ml', 'g']);
 
@@ -66,6 +68,20 @@ export const branchFields = {
   acceptsOrders: z.boolean(),
 };
 
+/**
+ * Where a banner sends the customer.
+ *
+ * A discriminated union keyed on `kind` keeps existing `{ kind, id }` rows valid
+ * and lets the storefront decide between an in-app route, an outbound link, and no
+ * navigation at all without special-casing a missing field.
+ */
+export const bannerTarget = z.discriminatedUnion('kind', [
+  z.strictObject({ kind: z.literal('product'), id }),
+  z.strictObject({ kind: z.literal('category'), id }),
+  z.strictObject({ kind: z.literal('external'), url: httpsURL }),
+  z.strictObject({ kind: z.literal('none') }),
+]);
+
 export const schemas = {
   categories: z.strictObject({ name: localized, imageURL, sortOrder: z.number().int().min(0) }),
   products: z.strictObject({
@@ -84,7 +100,8 @@ export const schemas = {
     title: localized,
     subtitle: localized,
     imageURL,
-    destination: z.strictObject({ kind: z.enum(['product', 'category']), id }),
+    destination: bannerTarget,
+    cta: localized.optional(),
     sortOrder: z.number().int().min(0),
     isActive: z.boolean(),
   }),
@@ -105,7 +122,7 @@ export const pageQuery = z.strictObject({
 
 const booleanQuery = z.enum(['true', 'false']).transform(value => value === 'true').optional();
 
-export const productQuery = pageQuery.extend({
+const productFields = {
   branchID: id.optional(),
   categoryID: id.optional(),
   q: z.string().trim().max(100).optional(),
@@ -115,10 +132,19 @@ export const productQuery = pageQuery.extend({
   minPriceMinor: z.coerce.number().int().min(0).optional(),
   maxPriceMinor: z.coerce.number().int().min(0).optional(),
   sort: z.enum(['featured', 'priceAsc', 'priceDesc', 'name']).default('featured'),
-}).refine(
+};
+
+// Kept unrefined so sibling query schemas can reuse the same field definitions.
+// `.pick()` throws on schemas that already carry a refinement.
+const productQueryBase = pageQuery.extend(productFields);
+
+export const productQuery = productQueryBase.refine(
   query => query.minPriceMinor === undefined || query.maxPriceMinor === undefined || query.minPriceMinor <= query.maxPriceMinor,
   'Invalid price range',
 );
+
+/** Single-product lookup accepts only the fields that make sense for one product. */
+export const productDetailQuery = productQueryBase.pick({ branchID: true, locale: true });
 
 export const loginBody = z.strictObject({ email: z.email().toLowerCase(), password: z.string().min(1).max(200) });
 export const versionBody = z.strictObject({ version: z.number().int().min(0) });
@@ -178,10 +204,16 @@ export const inventoryThresholdPatch = z.strictObject({
   lowStockThreshold: stockQuantity,
 });
 
+/**
+ * Upper bound for a single cart line, shared so the storefront quantity stepper
+ * cannot offer a quantity the API would later reject.
+ */
+export const cartQuantityMax = 1000;
+
 export const cartItemInput = z.strictObject({
   productID: id,
   variantID: id,
-  quantity: z.number().int().min(1).max(1000),
+  quantity: z.number().int().min(1).max(cartQuantityMax),
 });
 export const cartValidationRequest = z.strictObject({
   branchID: id.optional(),
@@ -190,7 +222,7 @@ export const cartValidationRequest = z.strictObject({
 export const cartValidationItem = z.strictObject({
   productID: id,
   variantID: id,
-  quantity: z.number().int().min(1).max(1000),
+  quantity: z.number().int().min(1).max(cartQuantityMax),
   productName: localized,
   variantLabel: localized,
   imageURL,
@@ -329,6 +361,7 @@ export type CategoryInput = z.infer<typeof schemas.categories>;
 export type ProductInput = z.infer<typeof schemas.products>;
 export type BranchInput = z.infer<typeof schemas.branches>;
 export type BannerInput = z.infer<typeof schemas.banners>;
+export type BannerTarget = z.infer<typeof bannerTarget>;
 export type VariantInput = z.infer<typeof variant>;
 export type LocalizedText = z.infer<typeof localized>;
 

@@ -58,8 +58,15 @@ describe('iOS catalog mapping', () => {
     const productIDs = new Set(load('products').map(row => row.id));
     for (const row of load('banners')) {
       const { destination } = mapBanner(row).value;
-      const known = destination.kind === 'category' ? categoryIDs : productIDs;
-      expect(known.has(destination.id)).toBe(true);
+      // The bundled iOS catalog only uses catalog targets, and every one of them
+      // must exist in the same seed run.
+      if (destination.kind === 'category') {
+        expect(categoryIDs.has(destination.id)).toBe(true);
+      } else if (destination.kind === 'product') {
+        expect(productIDs.has(destination.id)).toBe(true);
+      } else {
+        throw new Error(`unexpected iOS banner target kind: ${destination.kind}`);
+      }
     }
   });
 
