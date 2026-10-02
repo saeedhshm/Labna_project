@@ -1,18 +1,12 @@
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Link, Navigate, NavLink, Outlet, RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { Link, NavLink, Outlet, RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { LanguageProvider, useLanguage } from './i18n';
 import { CatalogPage } from './pages/CatalogPage';
-import { CartPage } from './pages/CartPage';
-import { CheckoutPage } from './pages/CheckoutPage';
-import { ConfirmationPage } from './pages/ConfirmationPage';
-import { AccountPage } from './pages/AccountPage';
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
 import { HomePage } from './pages/HomePage';
 import { ProductPage } from './pages/ProductPage';
-import { CartProvider, useCart } from './cart';
-import { CustomerSessionProvider, useCustomerSession } from './customer-session';
+import { BranchesPage } from './pages/BranchesPage';
+import { CartPlaceholderPage } from './pages/CartPlaceholderPage';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000, refetchOnWindowFocus: false } },
@@ -20,9 +14,14 @@ const queryClient = new QueryClient({
 
 function Layout() {
   const { locale, setLocale, t } = useLanguage();
-  const cart = useCart();
-  const session = useCustomerSession();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const navItems = [
+    { to: '/', label: t('الرئيسية', 'Home'), end: true },
+    { to: '/products', label: t('المنتجات', 'Products') },
+    { to: '/branches', label: t('الفروع', 'Branches') },
+    { to: '/cart', label: t('السلة', 'Cart') },
+  ];
 
   return (
     <div className="site-shell">
@@ -35,26 +34,30 @@ function Layout() {
           </span>
         </Link>
         <nav className="nav nav--desktop" aria-label={t('التنقل الرئيسي', 'Main navigation')}>
-          <NavLink to="/" end>{t('الرئيسية', 'Home')}</NavLink>
-          <NavLink to="/catalog">{t('المنتجات', 'Products')}</NavLink>
-          <NavLink to="/cart">{t('السلة', 'Cart')} <span className="cart-count">{cart.count}</span></NavLink>
-          <NavLink to={session.state === 'authenticated' ? '/account' : '/login'}>{session.state === 'authenticated' ? t('حسابي', 'Account') : t('دخول', 'Login')}</NavLink>
+          {navItems.map((item) => (
+            <NavLink key={item.to} to={item.to} end={item.end}>
+              {item.label}
+            </NavLink>
+          ))}
         </nav>
         <div className="topbar__actions">
           <button className="language-toggle" type="button" onClick={() => setLocale(locale === 'ar' ? 'en' : 'ar')}>
             {locale === 'ar' ? 'EN' : 'ع'}
           </button>
-          <button className="menu-toggle" type="button" aria-label="القائمة" onClick={() => setMobileOpen(v => !v)}>
-            <span /><span /><span />
+          <button className="menu-toggle" type="button" aria-label="القائمة" aria-expanded={mobileOpen} onClick={() => setMobileOpen((v) => !v)}>
+            <span />
+            <span />
+            <span />
           </button>
         </div>
       </header>
       {mobileOpen ? (
         <nav className="nav nav--mobile" aria-label={t('قائمة الجوال', 'Mobile navigation')}>
-          <NavLink to="/" end onClick={() => setMobileOpen(false)}>{t('الرئيسية', 'Home')}</NavLink>
-          <NavLink to="/catalog" onClick={() => setMobileOpen(false)}>{t('المنتجات', 'Products')}</NavLink>
-          <NavLink to="/cart" onClick={() => setMobileOpen(false)}>{t('السلة', 'Cart')} <span className="cart-count">{cart.count}</span></NavLink>
-          <NavLink to={session.state === 'authenticated' ? '/account' : '/login'} onClick={() => setMobileOpen(false)}>{session.state === 'authenticated' ? t('حسابي', 'Account') : t('دخول', 'Login')}</NavLink>
+          {navItems.map((item) => (
+            <NavLink key={item.to} to={item.to} end={item.end} onClick={() => setMobileOpen(false)}>
+              {item.label}
+            </NavLink>
+          ))}
         </nav>
       ) : null}
       <main>
@@ -72,7 +75,9 @@ function NotFound() {
   return (
     <section className="state-card">
       <h1>{t('الصفحة غير موجودة', 'Page not found')}</h1>
-      <Link className="button" to="/catalog">{t('تصفح المنتجات', 'Browse products')}</Link>
+      <Link className="button" to="/products">
+        {t('تصفح المنتجات', 'Browse products')}
+      </Link>
     </section>
   );
 }
@@ -82,16 +87,11 @@ const router = createBrowserRouter([
     element: <Layout />,
     children: [
       { path: '/', element: <HomePage /> },
-      { path: '/catalog', element: <CatalogPage /> },
-      { path: '/cart', element: <CartPage /> },
-      { path: '/checkout', element: <CheckoutPage /> },
-      { path: '/login', element: <LoginPage /> },
-      { path: '/register', element: <RegisterPage /> },
-      { path: '/account', element: <AccountPage /> },
-      { path: '/orders/:orderID', element: <ConfirmationPage /> },
-      { path: '/categories/:categoryID', element: <CatalogPage /> },
-      { path: '/products/:productID', element: <ProductPage /> },
-      { path: '/home', element: <Navigate to="/" replace /> },
+      { path: '/products', element: <CatalogPage /> },
+      { path: '/products/:productId', element: <ProductPage /> },
+      { path: '/categories/:categoryId', element: <CatalogPage /> },
+      { path: '/branches', element: <BranchesPage /> },
+      { path: '/cart', element: <CartPlaceholderPage /> },
       { path: '*', element: <NotFound /> },
     ],
   },
@@ -101,11 +101,7 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
-        <CustomerSessionProvider>
-          <CartProvider>
-            <RouterProvider router={router} />
-          </CartProvider>
-        </CustomerSessionProvider>
+        <RouterProvider router={router} />
       </LanguageProvider>
     </QueryClientProvider>
   );

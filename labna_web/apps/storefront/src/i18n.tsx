@@ -11,7 +11,10 @@ type LanguageContextValue = {
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocale] = useState<Locale>(() => localStorage.getItem('labna.locale') === 'en' ? 'en' : 'ar');
+  const [locale, setLocale] = useState<Locale>(() => {
+    const stored = localStorage.getItem('labna.locale');
+    return stored === 'en' ? 'en' : 'ar';
+  });
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
 
   useEffect(() => {
@@ -21,7 +24,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, [dir, locale]);
 
   return (
-    <LanguageContext.Provider value={{ locale, dir, setLocale, t: (ar, en) => locale === 'ar' ? ar : en }}>
+    <LanguageContext.Provider value={{ locale, dir, setLocale, t: (ar, en) => (locale === 'ar' ? ar : en) }}>
       {children}
     </LanguageContext.Provider>
   );

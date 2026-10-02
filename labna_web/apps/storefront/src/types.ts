@@ -41,6 +41,4 @@ export type ProductFilters = {
   locale: Locale;
 };
 
-export type Copy = Record<Locale, string>;
-
 export const text = (value: LocalizedText, locale: Locale) => value[locale] || value.ar || value.en;
