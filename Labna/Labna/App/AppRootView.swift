@@ -34,6 +34,9 @@ struct AppRootView: View {
                 container.cart.review(using: container.catalog.currentSnapshot?.products ?? [])
             }
             .task {
+                await container.auth.restore()
+            }
+            .task {
                 try? await Task.sleep(for: .milliseconds(700))
                 withAnimation(.easeOut(duration: 0.2)) {
                     isShowingSplash = false

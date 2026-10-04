@@ -2366,6 +2366,162 @@
         }
       }
     },
+    "account.addressesSoon" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "العناوين قريباً" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Addresses coming soon" } }
+      }
+    },
+    "account.availableLater" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "ميزات الحساب القادمة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Coming account features" } }
+      }
+    },
+    "account.ordersSoon" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الطلبات قريباً" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Orders coming soon" } }
+      }
+    },
+    "account.profileSoon" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعديل الملف الشخصي قريباً" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Profile editing coming soon" } }
+      }
+    },
+    "account.title" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الحساب" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Account" } }
+      }
+    },
+    "auth.email" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "البريد الإلكتروني" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Email" } }
+      }
+    },
+    "auth.error.configuration" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إعدادات الاتصال غير صحيحة." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The connection configuration is invalid." } }
+      }
+    },
+    "auth.error.duplicateAccount" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "يوجد حساب بهذا البريد الإلكتروني بالفعل." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "An account with this email already exists." } }
+      }
+    },
+    "auth.error.expiredSession" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "انتهت الجلسة. سجّل الدخول مرة أخرى." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Your session expired. Please sign in again." } }
+      }
+    },
+    "auth.error.invalidCredentials" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "البريد الإلكتروني أو كلمة المرور غير صحيحة." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Email or password is incorrect." } }
+      }
+    },
+    "auth.error.network" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعذر الاتصال بالخادم. حاول مرة أخرى." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Could not reach the server. Try again." } }
+      }
+    },
+    "auth.error.server" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الخدمة غير متاحة حالياً." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The service is unavailable right now." } }
+      }
+    },
+    "auth.error.unauthorized" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "يلزم تسجيل الدخول للمتابعة." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Please sign in to continue." } }
+      }
+    },
+    "auth.error.validation" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "راجع البيانات المدخلة وحاول مرة أخرى." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Check the entered details and try again." } }
+      }
+    },
+    "auth.login.action" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تسجيل الدخول" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign in" } }
+      }
+    },
+    "auth.login.subtitle" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "ادخل إلى حسابك لمتابعة طلباتك لاحقاً." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign in to keep your Labna account ready for future orders." } }
+      }
+    },
+    "auth.login.title" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تسجيل الدخول" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign in" } }
+      }
+    },
+    "auth.logout" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تسجيل الخروج" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign out" } }
+      }
+    },
+    "auth.mode" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "وضع الحساب" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Account mode" } }
+      }
+    },
+    "auth.name" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الاسم" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Name" } }
+      }
+    },
+    "auth.password" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "كلمة المرور" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Password" } }
+      }
+    },
+    "auth.phone" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "رقم الهاتف" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Phone number" } }
+      }
+    },
+    "auth.register.action" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إنشاء الحساب" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Create account" } }
+      }
+    },
+    "auth.register.subtitle" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أنشئ حساب لبنة لحفظ بياناتك بأمان." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Create a Labna account so your details are ready later." } }
+      }
+    },
+    "auth.register.title" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "حساب جديد" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Create account" } }
+      }
+    },
+    "auth.restoring" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "جارٍ استعادة الجلسة..." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Restoring session..." } }
+      }
+    },
     "weekday.wednesday" : {
       "localizations" : {
         "ar" : {

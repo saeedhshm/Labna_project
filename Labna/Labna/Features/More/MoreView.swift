@@ -28,6 +28,16 @@ struct MoreView: View {
             }
 
             Section("more.explore") {
+                NavigationLink {
+                    AccountView()
+                } label: {
+                    MoreRow(
+                        title: container.auth.isAuthenticated ? "account.title" : "auth.login.title",
+                        symbol: container.auth.isAuthenticated ? "person.crop.circle.fill" : "person.crop.circle"
+                    )
+                }
+                .accessibilityIdentifier("more.account")
+
                 // Value based links so these rows share one destination table
                 // with deep links and programmatic navigation.
                 NavigationLink(value: AppDestination.favorites) {

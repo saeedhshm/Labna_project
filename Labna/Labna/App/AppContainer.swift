@@ -15,6 +15,7 @@ final class AppContainer {
     let cart: CartStore
     let favorites: FavoritesStore
     let recentlyViewed: RecentlyViewedStore
+    let auth: AuthStore
     let modelContainer: ModelContainer
     let router: AppRouter
     let deepLinks: DeepLinkCoordinator
@@ -27,7 +28,8 @@ final class AppContainer {
         cachePolicy: CatalogCachePolicy = .default,
         now: @escaping () -> Date = Date.init,
         modelContainer: ModelContainer? = nil,
-        widgetPublisher: WidgetSnapshotPublisher? = nil
+        widgetPublisher: WidgetSnapshotPublisher? = nil,
+        authService: AuthService? = nil
     ) {
         self.settings = settings
         self.configuration = configuration
@@ -58,6 +60,11 @@ final class AppContainer {
         cart = CartStore(modelContainer: selectedContainer)
         favorites = FavoritesStore(modelContainer: selectedContainer)
         recentlyViewed = RecentlyViewedStore(modelContainer: selectedContainer)
+        let authBaseURL: URL = switch configuration.dataSource {
+        case .localJSON: AppConfiguration.backendAPIBaseURL
+        case .remote(let baseURL): baseURL
+        }
+        auth = AuthStore(service: authService ?? AuthService(baseURL: authBaseURL))
         router = AppRouter()
         deepLinks = DeepLinkCoordinator(router: router)
         let publisher = widgetPublisher ?? WidgetSnapshotPublisher(
@@ -95,7 +102,8 @@ final class AppContainer {
         repository: (any CatalogRepository)? = nil,
         cachePolicy: CatalogCachePolicy = .default,
         now: @escaping () -> Date = Date.init,
-        modelContainer: ModelContainer = PersistenceContainer.make(inMemory: true)
+        modelContainer: ModelContainer = PersistenceContainer.make(inMemory: true),
+        authService: AuthService? = nil
     ) -> AppContainer {
         let settings = AppSettings(storage: nil)
         settings.language = language
@@ -105,7 +113,8 @@ final class AppContainer {
             repository: repository,
             cachePolicy: cachePolicy,
             now: now,
-            modelContainer: modelContainer
+            modelContainer: modelContainer,
+            authService: authService
         )
     }
 
