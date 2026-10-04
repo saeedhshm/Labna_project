@@ -48,6 +48,10 @@ struct CatalogRepositoryTests {
         ))
     }
 
+    private func backend(_ session: URLSession, baseURL: URL = URL(string: "http://127.0.0.1:3001/api/v1")!) -> BackendCatalogRepository {
+        BackendCatalogRepository(baseURL: baseURL, session: session)
+    }
+
     @Test func localAndRemoteDecodeIdenticalCatalogs() async throws {
         let local = JSONCatalogRepository(source: LocalJSONDataSource())
         // Prepare fixtures on the main actor; URLProtocol callbacks may run elsewhere.
@@ -75,6 +79,80 @@ struct CatalogRepositoryTests {
         #expect(categories == (try await local.fetchCategories()))
         #expect(banners == (try await local.fetchBanners()))
         #expect(branches == (try await local.fetchBranches()))
+    }
+
+    @Test func backendRepositoryDecodesEnvelopePagesAndMapsDTOs() async throws {
+        var requestedURLs: [URL] = []
+        CatalogURLProtocol.setHandler { request in
+            let url = try #require(request.url)
+            requestedURLs.append(url)
+            #expect(request.httpMethod == "GET")
+            #expect(request.value(forHTTPHeaderField: "Accept") == "application/json")
+            let path = url.path
+            let body: String
+            if path.hasSuffix("/products") && url.query?.contains("cursor=next-products") == true {
+                body = #"{"data":[{"id":"yogurt","categoryID":"dairy","name":{"ar":"زبادي","en":"Yogurt"},"description":{"ar":"طازج","en":"Fresh"},"imageURLs":["https://images.unsplash.com/yogurt.png"],"ingredients":{"ar":"لبن","en":"Milk"},"storageInstructions":{"ar":"بارد","en":"Keep chilled"},"isFeatured":false,"isDemo":false,"variants":[{"id":"yogurt-1","label":{"ar":"كوب","en":"Cup"},"quantity":200,"unit":"g","priceMinor":2500,"currencyCode":"EGP","isAvailable":false}]}],"meta":{"requestID":"r2","nextCursor":null}}"#
+            } else if path.hasSuffix("/products") {
+                body = #"{"data":[{"id":"milk-full","categoryID":"dairy","name":{"ar":"حليب","en":"Milk"},"description":{"ar":"كامل الدسم","en":"Full cream"},"imageURLs":["https://images.unsplash.com/milk.png"],"ingredients":{"ar":"لبن","en":"Milk"},"storageInstructions":{"ar":"بارد","en":"Keep chilled"},"isFeatured":true,"isDemo":false,"variants":[{"id":"milk-full-1l","label":{"ar":"١ لتر","en":"1 L"},"quantity":1000,"unit":"ml","priceMinor":5000,"currencyCode":"EGP","isAvailable":true}]}],"meta":{"requestID":"r1","nextCursor":"next-products"}}"#
+            } else if path.hasSuffix("/categories") {
+                body = #"{"data":[{"id":"dairy","name":{"ar":"ألبان","en":"Dairy"},"imageURL":"https://images.unsplash.com/category.png","sortOrder":1}],"meta":{"requestID":"r3","nextCursor":null}}"#
+            } else if path.hasSuffix("/banners") {
+                body = #"{"data":[{"id":"hero","title":{"ar":"عرض","en":"Offer"},"subtitle":{"ar":"طازج","en":"Fresh"},"imageURL":"https://images.unsplash.com/banner.png","destination":{"kind":"product","id":"milk-full"},"sortOrder":1},{"id":"external","title":{"ar":"خارجي","en":"External"},"subtitle":{"ar":"رابط","en":"Link"},"imageURL":"https://images.unsplash.com/external.png","destination":{"kind":"external","url":"https://example.com"},"sortOrder":2}],"meta":{"requestID":"r4","nextCursor":null}}"#
+            } else if path.hasSuffix("/branches") {
+                body = #"{"data":[{"id":"main","name":{"ar":"الرئيسي","en":"Main"},"address":{"ar":"القاهرة","en":"Cairo"},"coordinate":{"latitude":30.0,"longitude":31.0},"timeZoneIdentifier":"Africa/Cairo","openingHours":[{"weekday":1,"opensAt":"09:00","closesAt":"17:00"}],"phoneNumber":"+201012345678","isDemo":false}],"meta":{"requestID":"r5","nextCursor":null}}"#
+            } else {
+                body = #"{"data":[],"meta":{"requestID":"missing","nextCursor":null}}"#
+            }
+            return (HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!, Data(body.utf8))
+        }
+        let session = session()
+        defer { session.invalidateAndCancel(); CatalogURLProtocol.setHandler(nil) }
+        let repository = backend(session)
+
+        let products = try await repository.fetchProducts()
+        let categories = try await repository.fetchCategories()
+        let banners = try await repository.fetchBanners()
+        let branches = try await repository.fetchBranches()
+
+        #expect(products.map(\.id) == ["milk-full", "yogurt"])
+        #expect(products[0].variants[0].isAvailable)
+        #expect(categories.first?.name.en == "Dairy")
+        #expect(banners.map(\.id) == ["hero"])
+        #expect(branches.first?.openingHours.first?.weekday == 1)
+        #expect(requestedURLs.contains { $0.query?.contains("cursor=next-products") == true })
+        #expect(requestedURLs.contains { $0.query?.contains("locale=en") == true })
+    }
+
+    @Test func backendRepositoryReportsHTTPAndDecodingErrors() async throws {
+        CatalogURLProtocol.setHandler { request in
+            (HTTPURLResponse(url: request.url!, statusCode: 500, httpVersion: nil, headerFields: nil)!, Data("{}".utf8))
+        }
+        let session = session()
+        defer { session.invalidateAndCancel(); CatalogURLProtocol.setHandler(nil) }
+        do {
+            _ = try await backend(session).fetchCategories()
+            Issue.record("Expected HTTP failure")
+        } catch CatalogError.httpStatus(let status) {
+            #expect(status == 500)
+        }
+
+        CatalogURLProtocol.setHandler { request in
+            (HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!, Data("{broken".utf8))
+        }
+        do {
+            _ = try await backend(session).fetchCategories()
+            Issue.record("Expected decoding failure")
+        } catch CatalogError.invalidData(let resource) {
+            #expect(resource == .categories)
+        }
+    }
+
+    @Test func backendConfigurationUsesLocalSimulatorURLAndRejectsNonLocalHTTP() async throws {
+        #expect(AppConfiguration.backendAPIBaseURL.path.hasSuffix("/api/v1") || AppConfiguration.backendAPIBaseURL.scheme == "https")
+        do {
+            _ = try await backend(session(), baseURL: URL(string: "http://example.com/api/v1")!).fetchProducts()
+            Issue.record("Expected invalid non-local HTTP base URL")
+        } catch CatalogError.invalidBaseURL {}
     }
 
     @Test func httpFailureDoesNotFallBackToMock() async throws {

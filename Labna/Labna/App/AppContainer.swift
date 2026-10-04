@@ -22,7 +22,7 @@ final class AppContainer {
 
     init(
         settings: AppSettings = AppSettings(),
-        configuration: AppConfiguration = .mock,
+        configuration: AppConfiguration = .backend,
         repository: (any CatalogRepository)? = nil,
         cachePolicy: CatalogCachePolicy = .default,
         now: @escaping () -> Date = Date.init,
@@ -42,7 +42,7 @@ final class AppContainer {
             case .localJSON:
                 remoteRepository = nil
             case .remote(let baseURL):
-                remoteRepository = JSONCatalogRepository(source: RemoteCatalogDataSource(baseURL: baseURL))
+                remoteRepository = BackendCatalogRepository(baseURL: baseURL)
             }
         }
         catalogRepository = remoteRepository ?? bundledRepository
@@ -101,6 +101,7 @@ final class AppContainer {
         settings.language = language
         return AppContainer(
             settings: settings,
+            configuration: .mock,
             repository: repository,
             cachePolicy: cachePolicy,
             now: now,

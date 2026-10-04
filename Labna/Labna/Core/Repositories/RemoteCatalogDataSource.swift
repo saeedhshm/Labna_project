@@ -11,7 +11,7 @@ struct RemoteCatalogDataSource: CatalogDataSource {
 
     func data(for resource: CatalogResource) async throws -> Data {
         try Task.checkCancellation()
-        guard baseURL.scheme == "https", baseURL.host != nil,
+        guard baseURL.isAllowedCatalogAPIBaseURL,
               baseURL.query == nil, baseURL.fragment == nil else {
             throw CatalogError.invalidBaseURL
         }
@@ -36,5 +36,13 @@ struct RemoteCatalogDataSource: CatalogDataSource {
             if error.code == .cancelled { throw CancellationError() }
             throw CatalogError.network(error.code)
         }
+    }
+}
+
+extension URL {
+    var isAllowedCatalogAPIBaseURL: Bool {
+        guard let scheme, let host else { return false }
+        if scheme == "https" { return true }
+        return scheme == "http" && ["127.0.0.1", "localhost", "::1"].contains(host)
     }
 }
