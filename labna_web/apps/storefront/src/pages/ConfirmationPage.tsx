@@ -1,25 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
-import type { OrderStatus } from '@labna/contracts';
 import { api } from '../api';
 import { money } from '../format';
 import { useLanguage } from '../i18n';
+import { dateTime, statusCopy, timeline } from '../order-display';
 import { text } from '../types';
-
-const statusCopy = {
-  pending: { ar: 'قيد المراجعة', en: 'Pending' },
-  confirmed: { ar: 'مؤكد', en: 'Confirmed' },
-  preparing: { ar: 'جار التحضير', en: 'Preparing' },
-  ready: { ar: 'جاهز', en: 'Ready' },
-  out_for_delivery: { ar: 'خرج للتوصيل', en: 'Out for delivery' },
-  completed: { ar: 'مكتمل', en: 'Completed' },
-  cancelled: { ar: 'ملغي', en: 'Cancelled' },
-};
-const timeline: OrderStatus[] = ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'completed'];
-
-function dateTime(value: string, locale: 'ar' | 'en') {
-  return new Intl.DateTimeFormat(locale === 'ar' ? 'ar-EG' : 'en-EG', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
-}
 
 export function ConfirmationPage() {
   const { orderID = '' } = useParams();

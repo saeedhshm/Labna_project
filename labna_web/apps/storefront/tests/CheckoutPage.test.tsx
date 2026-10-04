@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
+import { AuthProvider } from '../src/auth';
 import { CartProvider } from '../src/cart';
 import { LanguageProvider } from '../src/i18n';
 import { CheckoutPage } from '../src/pages/CheckoutPage';
@@ -45,15 +46,17 @@ function renderPage() {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>
       <LanguageProvider>
-        <CartProvider>
-          <MemoryRouter initialEntries={['/checkout']}>
-            <Routes>
-              <Route path="/checkout" element={children} />
-              <Route path="/orders/:orderID" element={<h1>Created order</h1>} />
-              <Route path="/products" element={<h1>Products</h1>} />
-            </Routes>
-          </MemoryRouter>
-        </CartProvider>
+        <AuthProvider>
+          <CartProvider>
+            <MemoryRouter initialEntries={['/checkout']}>
+              <Routes>
+                <Route path="/checkout" element={children} />
+                <Route path="/orders/:orderID" element={<h1>Created order</h1>} />
+                <Route path="/products" element={<h1>Products</h1>} />
+              </Routes>
+            </MemoryRouter>
+          </CartProvider>
+        </AuthProvider>
       </LanguageProvider>
     </QueryClientProvider>
   );
@@ -66,9 +69,9 @@ beforeEach(() => {
 });
 
 describe('CheckoutPage', () => {
-  it('redirects an empty cart back to browsing', () => {
+  it('redirects an empty cart back to browsing', async () => {
     renderPage();
-    expect(screen.getByRole('heading', { name: 'Cart is empty' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Cart is empty' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Browse products' })).toHaveAttribute('href', '/products');
   });
 

@@ -4,6 +4,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import type { PaymentMethod } from '@labna/contracts';
 import { api, ApiError } from '../api';
+import { useAuth } from '../auth';
 import { useCart } from '../cart';
 import { money } from '../format';
 import { useLanguage } from '../i18n';
@@ -25,6 +26,7 @@ const initial = {
 
 export function CheckoutPage() {
   const cart = useCart();
+  const auth = useAuth();
   const navigate = useNavigate();
   const { locale, t } = useLanguage();
   const [form, setForm] = useState(initial);
@@ -36,7 +38,7 @@ export function CheckoutPage() {
     items: cart.items,
     couponCode: form.couponCode,
     paymentMethod: form.paymentMethod,
-  }) });
+  }, undefined, auth.accessToken) });
   const data = validation.data?.data;
   const discountPreview = form.couponCode.trim().toUpperCase() === 'LABNA10' && data ? Math.floor(data.subtotalMinor * 0.1) : 0;
   const deliveryFeeMinor = 1500;

@@ -262,9 +262,20 @@ export const checkoutCustomer = z.strictObject({
 });
 export const customerRegisterBody = checkoutCustomer.extend({ password: z.string().min(8).max(200) });
 export const customerLoginBody = z.strictObject({ email: z.email().toLowerCase(), password: z.string().min(1).max(200) });
-export const customerAddressInput = checkoutAddress.extend({ label: z.string().trim().min(1).max(80), isDefault: z.boolean().default(false) });
+export const customerAddressInput = checkoutAddress.extend({
+  label: z.string().trim().min(1).max(80),
+  recipientName: z.string().trim().min(2).max(120).optional(),
+  phoneNumber: z.string().regex(/^\+[1-9]\d{7,14}$/).optional(),
+  isDefault: z.boolean().default(false),
+});
 export const customerAddressDTO = customerAddressInput.extend({ id });
 export const customerDTO = z.strictObject({ id, name: z.string(), phoneNumber: z.string(), email: z.email(), addresses: z.array(customerAddressDTO), createdAt: z.iso.datetime() });
+export const customerProfilePatch = z.strictObject({
+  name: checkoutCustomer.shape.name.optional(),
+  phoneNumber: checkoutCustomer.shape.phoneNumber.optional(),
+  email: checkoutCustomer.shape.email.optional(),
+});
+export const customerAuthResponse = z.strictObject({ accessToken: z.string().min(1), expiresIn: z.literal(900), customer: customerDTO });
 export const checkoutRequest = z.strictObject({
   customerID: id.optional(),
   customer: checkoutCustomer,
@@ -356,6 +367,8 @@ export type CustomerLoginBody = z.infer<typeof customerLoginBody>;
 export type CustomerAddressInput = z.infer<typeof customerAddressInput>;
 export type CustomerAddressDTO = z.infer<typeof customerAddressDTO>;
 export type CustomerDTO = z.infer<typeof customerDTO>;
+export type CustomerProfilePatch = z.infer<typeof customerProfilePatch>;
+export type CustomerAuthResponse = z.infer<typeof customerAuthResponse>;
 
 export type CategoryInput = z.infer<typeof schemas.categories>;
 export type ProductInput = z.infer<typeof schemas.products>;

@@ -5,7 +5,7 @@ import request from 'supertest';
 import { hash } from '@node-rs/argon2';
 import SwaggerParser from '@apidevtools/swagger-parser';
 import { createApp } from '../src/app.js';
-import { initializeDatabase, Staff, Inventory, models, Audit } from '../src/database.js';
+import { initializeDatabase, Staff, Inventory, models, Audit, Customer, CustomerSession } from '../src/database.js';
 import { openingState } from '../src/catalog.js';
 import { openapi } from '../src/openapi.js';
 import { readConfig } from '../src/config.js';
@@ -292,25 +292,106 @@ describe('API foundation and catalog', () => {
     await Inventory.updateOne({ branchID: 'main', variantID: 'milk-full-1l' }, { $set: { onHand: 5 } });
     const registered = await request(app).post('/api/v1/customer/auth/register').send({ name: 'Customer One', phoneNumber: '+201012345678', email: 'customer@example.com', password: 'password123' });
     expect(registered.status).toBe(200);
+    expect(registered.body.data.customer).toMatchObject({ name: 'Customer One', phoneNumber: '+201012345678', email: 'customer@example.com', addresses: [] });
+    expect(registered.body.data.customer).not.toHaveProperty('passwordHash');
     const customerBearer = `Bearer ${registered.body.data.accessToken}`;
-    const address = await request(app).post('/api/v1/customer/addresses').set('Authorization', customerBearer).send({ label: 'Home', city: 'Cairo', area: 'Maadi', street: 'Road 9', building: '12', isDefault: true });
+    expect((await request(app).post('/api/v1/customer/auth/register').send({ name: 'Customer One', phoneNumber: '+201012345678', email: 'customer@example.com', password: 'password123' })).status).toBe(409);
+    expect((await request(app).post('/api/v1/customer/auth/register').send({ name: 'C', phoneNumber: '01012345678', email: 'bad', password: 'short' })).status).toBe(422);
+    expect((await request(app).get('/api/v1/admin/products').set('Authorization', customerBearer)).status).toBe(401);
+    expect((await request(app).get('/api/v1/customer/addresses')).status).toBe(401);
+    expect((await request(app).post('/api/v1/customer/addresses').set('Authorization', customerBearer).send({ label: '', city: 'C', area: 'M', street: 'R', building: '' })).status).toBe(422);
+    const address = await request(app).post('/api/v1/customer/addresses').set('Authorization', customerBearer).send({ label: 'Home', recipientName: 'Receiver One', phoneNumber: '+201012345678', city: 'Cairo', area: 'Maadi', street: 'Road 9', building: '12' });
     expect(address.status).toBe(201);
-    expect((await request(app).get('/api/v1/customer/me').set('Authorization', customerBearer)).body.data.addresses[0]).toMatchObject({ label: 'Home', isDefault: true });
+    expect(address.body.data).toMatchObject({ label: 'Home', recipientName: 'Receiver One', phoneNumber: '+201012345678', isDefault: true });
+    const work = await request(app).post('/api/v1/customer/addresses').set('Authorization', customerBearer).send({ label: 'Work', city: 'Cairo', area: 'Zamalek', street: 'Office St', building: '5' });
+    expect(work.status).toBe(201);
+    let addresses = await request(app).get('/api/v1/customer/addresses').set('Authorization', customerBearer);
+    expect(addresses.body.data).toHaveLength(2);
+    expect(addresses.body.data.filter((item: { isDefault: boolean }) => item.isDefault)).toHaveLength(1);
+    const defaulted = await request(app).patch(`/api/v1/customer/addresses/${work.body.data.id}/default`).set('Authorization', customerBearer);
+    expect(defaulted.status).toBe(200);
+    expect(defaulted.body.data).toMatchObject({ id: work.body.data.id, isDefault: true });
+    addresses = await request(app).get('/api/v1/customer/addresses').set('Authorization', customerBearer);
+    expect(addresses.body.data.find((item: { id: string }) => item.id === address.body.data.id).isDefault).toBe(false);
+    const updatedAddress = await request(app).patch(`/api/v1/customer/addresses/${address.body.data.id}`).set('Authorization', customerBearer).send({ label: 'Home Updated', isDefault: true, apartment: '7' });
+    expect(updatedAddress.status).toBe(200);
+    expect(updatedAddress.body.data).toMatchObject({ label: 'Home Updated', apartment: '7', isDefault: true });
+    const deletedDefault = await request(app).delete(`/api/v1/customer/addresses/${address.body.data.id}`).set('Authorization', customerBearer);
+    expect(deletedDefault.status).toBe(200);
+    expect(deletedDefault.body.data.addresses).toHaveLength(1);
+    expect(deletedDefault.body.data.addresses[0]).toMatchObject({ id: work.body.data.id, isDefault: true });
+    expect((await request(app).delete('/api/v1/customer/addresses/missing').set('Authorization', customerBearer)).status).toBe(404);
+    expect((await request(app).get('/api/v1/customer/me').set('Authorization', customerBearer)).body.data.addresses[0]).toMatchObject({ label: 'Work', isDefault: true });
+    const other = await request(app).post('/api/v1/customer/auth/register').send({ name: 'Other Customer', phoneNumber: '+201012345680', email: 'other@example.com', password: 'password123' });
+    const otherBearer = `Bearer ${other.body.data.accessToken}`;
+    expect((await request(app).patch(`/api/v1/customer/addresses/${work.body.data.id}`).set('Authorization', otherBearer).send({ label: 'Stolen' })).status).toBe(404);
+    expect((await request(app).patch(`/api/v1/customer/addresses/${work.body.data.id}/default`).set('Authorization', otherBearer)).status).toBe(404);
+    expect((await request(app).delete(`/api/v1/customer/addresses/${work.body.data.id}`).set('Authorization', otherBearer)).status).toBe(404);
+    expect((await Customer.findOne({ email: 'customer@example.com' }).lean())?.addresses).toHaveLength(1);
+    const updated = await request(app).patch('/api/v1/customer/me').set('Authorization', customerBearer).send({ name: 'Customer Updated', phoneNumber: '+201012345679' });
+    expect(updated.status).toBe(200);
+    expect(updated.body.data).toMatchObject({ name: 'Customer Updated', phoneNumber: '+201012345679', email: 'customer@example.com' });
     const created = await request(app).post('/api/v1/orders').set('Authorization', customerBearer).send({
-      customer: { name: 'Customer One', phoneNumber: '+201012345678', email: 'customer@example.com' },
+      customer: { name: 'Customer Updated', phoneNumber: '+201012345679', email: 'customer@example.com' },
       address: { city: 'Cairo', area: 'Maadi', street: 'Road 9', building: '12' },
       items: [{ productID: 'milk-full', variantID: 'milk-full-1l', quantity: 1 }],
       paymentMethod: 'cash_on_delivery',
     });
     expect(created.status).toBe(201);
     expect(created.body.data.customerID).toBeTruthy();
+    expect(created.body.data.items[0]).toMatchObject({ unitPriceMinor: 3500, lineTotalMinor: 3500 });
+    expect(await Inventory.findOne({ variantID: 'milk-full-1l' }).then(row => row?.reserved)).toBe(1);
     const mine = await request(app).get('/api/v1/customer/orders').set('Authorization', customerBearer);
     expect(mine.status).toBe(200);
     expect(mine.body.data.map((order: { orderNumber: string }) => order.orderNumber)).toContain(created.body.data.orderNumber);
+    expect(mine.body.data[0]).not.toHaveProperty('_id');
+    const mineDetail = await request(app).get(`/api/v1/customer/orders/${created.body.data.orderNumber}`).set('Authorization', customerBearer);
+    expect(mineDetail.status).toBe(200);
+    expect(mineDetail.body.data.statusHistory.map((item: { status: string }) => item.status)).toEqual(['pending']);
+    expect((await request(app).get(`/api/v1/customer/orders/${created.body.data.id}`).set('Authorization', otherBearer)).status).toBe(404);
+    expect((await request(app).patch(`/api/v1/customer/orders/${created.body.data.id}/cancel`).set('Authorization', otherBearer)).status).toBe(404);
+    expect((await request(app).patch(`/api/v1/customer/orders/${created.body.data.id}`).set('Authorization', customerBearer).send({ status: 'completed' })).status).toBe(404);
+
+    const cancellable = await request(app).post('/api/v1/orders').set('Authorization', customerBearer).send({
+      customer: { name: 'Customer Updated', phoneNumber: '+201012345679', email: 'customer@example.com' },
+      address: { city: 'Cairo', area: 'Maadi', street: 'Road 9', building: '12' },
+      items: [{ productID: 'milk-full', variantID: 'milk-full-1l', quantity: 1 }],
+      paymentMethod: 'cash_on_delivery',
+    });
+    expect(cancellable.status).toBe(201);
+    expect(await Inventory.findOne({ variantID: 'milk-full-1l' }).then(row => row?.reserved)).toBe(2);
+    const cancelled = await request(app).patch(`/api/v1/customer/orders/${cancellable.body.data.orderNumber}/cancel`).set('Authorization', customerBearer);
+    expect(cancelled.status).toBe(200);
+    expect(cancelled.body.data.status).toBe('cancelled');
+    expect(cancelled.body.data.statusHistory.map((item: { status: string }) => item.status)).toEqual(['pending', 'cancelled']);
+    expect(await Inventory.findOne({ variantID: 'milk-full-1l' }).then(row => row?.reserved)).toBe(1);
+
+    const locked = await request(app).post('/api/v1/orders').set('Authorization', customerBearer).send({
+      customer: { name: 'Customer Updated', phoneNumber: '+201012345679', email: 'customer@example.com' },
+      address: { city: 'Cairo', area: 'Maadi', street: 'Road 9', building: '12' },
+      items: [{ productID: 'milk-full', variantID: 'milk-full-1l', quantity: 1 }],
+      paymentMethod: 'cash_on_delivery',
+    });
+    expect((await request(app).patch(`/api/v1/admin/orders/${locked.body.data.id}/status`).set('Authorization', bearer).send({ status: 'confirmed' })).status).toBe(200);
+    const blockedCancel = await request(app).patch(`/api/v1/customer/orders/${locked.body.data.id}/cancel`).set('Authorization', customerBearer);
+    expect(blockedCancel.status).toBe(409);
+    expect(blockedCancel.body.error.code).toBe('ORDER_NOT_CANCELLABLE');
+    const afterAdmin = await request(app).get(`/api/v1/customer/orders/${locked.body.data.orderNumber}`).set('Authorization', customerBearer);
+    expect(afterAdmin.body.data.status).toBe('confirmed');
+    expect(afterAdmin.body.data.statusHistory.map((item: { status: string }) => item.status)).toEqual(['pending', 'confirmed']);
     const login = await request(app).post('/api/v1/customer/auth/login').send({ email: 'customer@example.com', password: 'password123' });
     expect(login.status).toBe(200);
+    expect(login.body.data.customer.name).toBe('Customer Updated');
+    expect((await request(app).post('/api/v1/customer/auth/login').send({ email: 'customer@example.com', password: 'wrong-password' })).status).toBe(401);
     expect((await request(app).get('/api/v1/customer/orders')).status).toBe(401);
+    expect((await request(app).get('/api/v1/customer/me')).status).toBe(401);
+    const customerCookie = login.headers['set-cookie'][0].split(';')[0];
+    expect((await request(app).post('/api/v1/customer/auth/refresh').set('Origin', config.WEB_ORIGINS[0]).set('Cookie', customerCookie)).status).toBe(200);
+    const replay = await request(app).post('/api/v1/customer/auth/refresh').set('Origin', config.WEB_ORIGINS[0]).set('Cookie', customerCookie);
+    expect(replay.status).toBe(401);
+    expect(await CustomerSession.countDocuments({ revokedAt: { $ne: null } })).toBeGreaterThan(0);
     expect((await request(app).post('/api/v1/customer/auth/logout').set('Authorization', customerBearer)).status).toBe(200);
+    expect((await request(app).get('/api/v1/customer/me').set('Authorization', customerBearer)).status).toBe(401);
   });
 
   it('supports search, price filters, stable pagination and stock-sensitive ETags', async () => {

@@ -125,7 +125,7 @@ const transitions: Record<OrderStatus, OrderStatus[]> = {
   cancelled: [],
 };
 
-async function transitionOrder(id: string, nextStatus: OrderStatus, actorID: string | null) {
+export async function transitionOrder(id: string, nextStatus: OrderStatus, actorID: string | null) {
   return mongoose.connection.transaction(async session => {
     const order = await Order.findOne({ $or: [{ id }, { orderNumber: id }] }).session(session);
     if (!order) throw new ApiError(404, 'NOT_FOUND', 'Order not found');
@@ -174,7 +174,7 @@ async function nextOrderNumber(session: ClientSession) {
   throw new ApiError(500, 'ORDER_NUMBER_FAILED', 'Could not allocate an order number');
 }
 
-function toOrderDTO(order: any): OrderDTO {
+export function toOrderDTO(order: any): OrderDTO {
   return {
     id: order.id,
     orderNumber: order.orderNumber,

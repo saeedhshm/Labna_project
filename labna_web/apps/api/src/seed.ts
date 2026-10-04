@@ -183,7 +183,8 @@ try {
       phoneNumber: '+201012345678',
       email: demoCustomer.email,
       passwordHash: await hash(demoCustomer.password),
-      addresses: [{ id: 'demo-home', label: 'Home', city: 'Cairo', area: 'Maadi', street: 'Road 9', building: '12', floor: '3', apartment: '5', notes: 'Demo address', isDefault: true }],
+      isActive: true,
+      addresses: [{ id: 'demo-home', label: 'Home', recipientName: 'Demo Customer', phoneNumber: '+201012345678', city: 'Cairo', area: 'Maadi', street: 'Road 9', building: '12', floor: '3', apartment: '5', notes: 'Demo address', isDefault: true }],
     } }, { upsert: true });
     await createDemoOrders(customerID, finalStore.defaultPickupBranchID);
   }

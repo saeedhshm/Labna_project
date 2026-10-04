@@ -100,6 +100,7 @@ export const Customer = mongoose.model('Customer', new Schema({
   phoneNumber: { type: String, required: true },
   email: { type: String, unique: true, required: true },
   passwordHash: { type: String, required: true },
+  isActive: { type: Boolean, default: true, required: true },
   addresses: { type: [Schema.Types.Mixed], default: [] },
 }, { timestamps: true }));
 export const CustomerSession = mongoose.model('CustomerSession', new Schema({
@@ -112,6 +113,7 @@ export const CustomerSession = mongoose.model('CustomerSession', new Schema({
 export async function initializeDatabase() {
   // Existing deployments predate public inventory IDs and optimistic versions.
   await Inventory.updateMany({ version: { $exists: false } }, { $set: { version: 0 } });
+  await Customer.updateMany({ isActive: { $exists: false } }, { $set: { isActive: true } });
   const missingIDs = await Inventory.find({ $or: [{ id: { $exists: false } }, { id: null }] }).select('_id').lean();
   if (missingIDs.length) await Inventory.bulkWrite(missingIDs.map(row => ({ updateOne: { filter: { _id: row._id }, update: { $set: { id: randomUUID() } } } })));
   await Promise.all(Object.values(mongoose.models).map(model => model.init()));

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Link, NavLink, Outlet, RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { Link, Navigate, NavLink, Outlet, RouterProvider, createBrowserRouter, useLocation, useNavigate } from 'react-router-dom';
 import { LanguageProvider, useLanguage } from './i18n';
 import { CatalogPage } from './pages/CatalogPage';
 import { HomePage } from './pages/HomePage';
@@ -9,7 +9,12 @@ import { BranchesPage } from './pages/BranchesPage';
 import { CartPage } from './pages/CartPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { ConfirmationPage } from './pages/ConfirmationPage';
+import { LoginPage, RegisterPage } from './pages/AuthPages';
+import { AccountPage } from './pages/AccountPage';
+import { AddressesPage } from './pages/AddressesPage';
+import { OrderDetailPage, OrdersPage } from './pages/OrdersPage';
 import { CartProvider, useCart } from './cart';
+import { AuthProvider, useAuth } from './auth';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000, refetchOnWindowFocus: false } },
@@ -17,7 +22,9 @@ const queryClient = new QueryClient({
 
 function Layout() {
   const { locale, setLocale, t } = useLanguage();
+  const auth = useAuth();
   const cart = useCart();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems = [
@@ -26,6 +33,18 @@ function Layout() {
     { to: '/branches', label: t('الفروع', 'Branches') },
     { to: '/cart', label: t('السلة', 'Cart'), count: cart.count },
   ];
+
+  const logout = async () => {
+    await auth.logout();
+    setMobileOpen(false);
+    navigate('/login', { replace: true });
+  };
+
+  const accountLinks = auth.status === 'authenticated' ? [
+    { to: '/account', label: t('حسابي', 'My Account') },
+    { to: '/account/orders', label: t('طلباتي', 'My Orders') },
+    { to: '/account/addresses', label: t('العناوين', 'Addresses') },
+  ] : [];
 
   return (
     <div className="site-shell">
@@ -49,6 +68,17 @@ function Layout() {
           ))}
         </nav>
         <div className="topbar__actions">
+          {auth.status === 'authenticated' ? (
+            <details className="account-menu">
+              <summary>{auth.customer?.name ?? t('حسابي', 'Account')}</summary>
+              <div className="account-menu__panel">
+                {accountLinks.map(item => <Link key={item.to} to={item.to}>{item.label}</Link>)}
+                <button type="button" onClick={logout}>{t('تسجيل الخروج', 'Logout')}</button>
+              </div>
+            </details>
+          ) : (
+            <Link className="auth-entry" to="/login">{t('دخول / حساب جديد', 'Login / Create Account')}</Link>
+          )}
           <button
             className="language-toggle"
             type="button"
@@ -78,6 +108,14 @@ function Layout() {
               {item.count ? <span className="cart-count">{item.count}</span> : null}
             </NavLink>
           ))}
+          {auth.status === 'authenticated' ? (
+            <>
+              {accountLinks.map(item => <NavLink key={item.to} to={item.to} onClick={() => setMobileOpen(false)}>{item.label}</NavLink>)}
+              <button className="mobile-logout" type="button" onClick={logout}>{t('تسجيل الخروج', 'Logout')}</button>
+            </>
+          ) : (
+            <NavLink to="/login" onClick={() => setMobileOpen(false)}>{t('دخول / حساب جديد', 'Login / Create Account')}</NavLink>
+          )}
         </nav>
       ) : null}
       <main id="main" tabIndex={-1}>
@@ -88,6 +126,15 @@ function Layout() {
       </footer>
     </div>
   );
+}
+
+function ProtectedRoute({ children }: { children: ReactNode }) {
+  const auth = useAuth();
+  const { t } = useLanguage();
+  const location = useLocation();
+  if (auth.status === 'checking') return <section className="state-card"><h1>{t('جارٍ تحميل الحساب', 'Loading account')}</h1></section>;
+  if (auth.status === 'unauthenticated') return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />;
+  return children;
 }
 
 function NotFound() {
@@ -102,7 +149,8 @@ function NotFound() {
   );
 }
 
-const router = createBrowserRouter([
+function createRouter() {
+  return createBrowserRouter([
   {
     element: <Layout />,
     children: [
@@ -114,18 +162,28 @@ const router = createBrowserRouter([
       { path: '/cart', element: <CartPage /> },
       { path: '/checkout', element: <CheckoutPage /> },
       { path: '/orders/:orderID', element: <ConfirmationPage /> },
+      { path: '/login', element: <LoginPage /> },
+      { path: '/register', element: <RegisterPage /> },
+      { path: '/account', element: <ProtectedRoute><AccountPage /></ProtectedRoute> },
+      { path: '/account/orders', element: <ProtectedRoute><OrdersPage /></ProtectedRoute> },
+      { path: '/account/orders/:orderId', element: <ProtectedRoute><OrderDetailPage /></ProtectedRoute> },
+      { path: '/account/addresses', element: <ProtectedRoute><AddressesPage /></ProtectedRoute> },
       { path: '*', element: <NotFound /> },
     ],
   },
-]);
+  ]);
+}
 
 export function App() {
+  const router = useMemo(() => createRouter(), []);
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
-        <CartProvider>
-          <RouterProvider router={router} />
-        </CartProvider>
+        <AuthProvider>
+          <CartProvider>
+            <RouterProvider router={router} />
+          </CartProvider>
+        </AuthProvider>
       </LanguageProvider>
     </QueryClientProvider>
   );
