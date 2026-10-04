@@ -12,6 +12,7 @@ import { BranchesPage } from './pages/BranchesPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { InventoryPage } from './pages/InventoryPage';
 import { OrdersPage } from './pages/OrdersPage';
+import { CustomersPage } from './pages/CustomersPage';
 import { ToastProvider } from './components/Toasts';
 import { SessionProvider, useSession } from './session';
 
@@ -73,6 +74,8 @@ const router = createBrowserRouter([
       { path: '/branches', element: <BranchesPage /> },
       { path: '/inventory', element: <InventoryPage /> },
       { path: '/orders', element: <OrdersPage /> },
+      { path: '/customers', element: <CustomersPage /> },
+      { path: '/customers/:customerId', element: <CustomersPage /> },
       { path: '/settings', element: <SettingsPage /> },
       { path: '*', element: <NotFound /> },
     ],

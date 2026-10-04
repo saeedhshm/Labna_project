@@ -10,6 +10,7 @@ const navigation = [
   { to: '/branches', label: 'الفروع' },
   { to: '/inventory', label: 'المخزون' },
   { to: '/orders', label: 'الطلبات' },
+  { to: '/customers', label: 'العملاء' },
   { to: '/settings', label: 'إعدادات المتجر' },
 ];
 

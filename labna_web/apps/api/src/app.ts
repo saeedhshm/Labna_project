@@ -14,6 +14,7 @@ import { cartRouter } from './cart.js';
 import { adminOrdersRouter, ordersRouter } from './orders.js';
 import { customerAuthentication } from './customer-auth.js';
 import { dashboardRouter } from './dashboard.js';
+import { adminCustomersRouter } from './admin-customers.js';
 
 export function createApp(config: Config) {
   const app = express();
@@ -43,6 +44,7 @@ export function createApp(config: Config) {
   app.use('/api/v1/admin', (_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
   app.use('/api/v1/admin/inventory', auth.requireStaff, inventoryRouter(config, auth.requireManager));
   app.use('/api/v1/admin/orders', auth.requireStaff, auth.requireManager, adminOrdersRouter(config));
+  app.use('/api/v1/admin/customers', auth.requireStaff, auth.requireManager, adminCustomersRouter(config));
   app.use('/api/v1/admin/dashboard', auth.requireStaff, auth.requireManager, dashboardRouter());
   app.use('/api/v1/admin', auth.requireStaff, auth.requireManager, catalog.admin);
   app.use('/api/v1', cartRouter());

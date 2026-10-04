@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { OrderDTO, OrderStatus } from '@labna/contracts';
+import { useSearchParams } from 'react-router-dom';
+import type { OrderStatus } from '@labna/contracts';
 import { ApiError } from '../api/client';
 import { useOrder, useOrdersList, useOrderStatusMutation, type OrderFilters } from '../api/queries';
 import { FormDialog } from '../components/Dialog';
@@ -28,11 +29,19 @@ const nextStatuses: Record<OrderStatus, OrderStatus[]> = {
 const dateTime = new Intl.DateTimeFormat('ar-EG', { dateStyle: 'medium', timeStyle: 'short' });
 
 export function OrdersPage() {
+  const [params, setParams] = useSearchParams();
   const [draft, setDraft] = useState({ q: '', status: '', from: '', to: '' });
   const [filters, setFilters] = useState<OrderFilters>({});
-  const [selected, setSelected] = useState<OrderDTO | null>(null);
+  const selectedID = params.get('order');
   const orders = useOrdersList(filters);
   const rows = orders.data?.pages.flatMap(page => page.items) ?? [];
+
+  function setSelected(orderID: string | null) {
+    const next = new URLSearchParams(params);
+    if (orderID) next.set('order', orderID);
+    else next.delete('order');
+    setParams(next, { replace: true });
+  }
 
   function applyFilters() {
     setFilters({
@@ -79,7 +88,7 @@ export function OrdersPage() {
                   <td>{order.payment.method}<br /><small>{order.payment.status}</small></td>
                   <td>{money(order.totalMinor, order.currencyCode)}</td>
                   <td>{dateTime.format(new Date(order.createdAt))}</td>
-                  <td className="table__actions"><button type="button" className="ghost" onClick={() => setSelected(order)}>التفاصيل</button></td>
+                  <td className="table__actions"><button type="button" className="ghost" onClick={() => setSelected(order.id)}>التفاصيل</button></td>
                 </tr>
               ))}</tbody>
             </table>
@@ -87,7 +96,7 @@ export function OrdersPage() {
           {orders.hasNextPage ? <button type="button" className="ghost" onClick={() => void orders.fetchNextPage()} disabled={orders.isFetchingNextPage}>{orders.isFetchingNextPage ? 'جارٍ التحميل…' : 'عرض المزيد'}</button> : <p className="hint">تم عرض كل الطلبات.</p>}
         </>
       ) : null}
-      {selected ? <OrderDialog orderID={selected.id} onClose={() => setSelected(null)} /> : null}
+      {selectedID ? <OrderDialog orderID={selectedID} onClose={() => setSelected(null)} /> : null}
     </Panel>
   );
 }

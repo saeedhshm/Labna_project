@@ -260,8 +260,10 @@ export const checkoutCustomer = z.strictObject({
   phoneNumber: z.string().regex(/^\+[1-9]\d{7,14}$/),
   email: z.email().toLowerCase().optional(),
 });
-export const customerRegisterBody = checkoutCustomer.extend({ password: z.string().min(8).max(200) });
+const customerPassword = z.string().min(8).max(200);
+export const customerRegisterBody = checkoutCustomer.extend({ password: customerPassword });
 export const customerLoginBody = z.strictObject({ email: z.email().toLowerCase(), password: z.string().min(1).max(200) });
+export const customerPasswordPatch = z.strictObject({ currentPassword: z.string().min(1).max(200), newPassword: customerPassword });
 export const customerAddressInput = checkoutAddress.extend({
   label: z.string().trim().min(1).max(80),
   recipientName: z.string().trim().min(2).max(120).optional(),
@@ -325,6 +327,41 @@ export const adminOrderQuery = pageQuery.extend({
   to: z.iso.datetime().optional(),
 }).refine(query => !query.from || !query.to || Date.parse(query.from) <= Date.parse(query.to), { path: ['to'], message: 'Invalid date range' });
 export const orderStatusPatch = z.strictObject({ status: orderStatus });
+export const adminCustomerQuery = pageQuery.extend({
+  q: z.string().trim().max(100).optional(),
+  status: z.enum(['active', 'inactive']).optional(),
+  sort: z.enum(['joinedDesc', 'joinedAsc', 'nameAsc', 'nameDesc', 'ordersDesc', 'spentDesc']).default('joinedDesc'),
+});
+export const adminCustomerSummary = z.strictObject({
+  id,
+  name: z.string(),
+  phoneNumber: z.string(),
+  email: z.email(),
+  isActive: z.boolean(),
+  ordersCount: z.number().int().min(0),
+  totalSpentMinor: money,
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+export const customerMetrics = z.strictObject({
+  totalOrders: z.number().int().min(0),
+  completedOrders: z.number().int().min(0),
+  cancelledOrders: z.number().int().min(0),
+  totalSpentMinor: money,
+  currencyCode: z.string().regex(/^[A-Z]{3}$/),
+});
+export const adminCustomerDetails = z.strictObject({
+  id,
+  name: z.string(),
+  phoneNumber: z.string(),
+  email: z.email(),
+  isActive: z.boolean(),
+  addresses: z.array(customerAddressDTO),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+  metrics: customerMetrics,
+});
+export const customerStatusPatch = z.strictObject({ isActive: z.boolean() });
 export const dashboardQuery = z.strictObject({
   from: z.iso.datetime().optional(),
   to: z.iso.datetime().optional(),
@@ -360,10 +397,16 @@ export type OrderStatus = z.infer<typeof orderStatus>;
 export type PaymentMethod = z.infer<typeof paymentMethod>;
 export type AdminOrderQuery = z.infer<typeof adminOrderQuery>;
 export type OrderStatusPatch = z.infer<typeof orderStatusPatch>;
+export type AdminCustomerQuery = z.infer<typeof adminCustomerQuery>;
+export type AdminCustomerSummary = z.infer<typeof adminCustomerSummary>;
+export type AdminCustomerDetails = z.infer<typeof adminCustomerDetails>;
+export type CustomerMetrics = z.infer<typeof customerMetrics>;
+export type CustomerStatusPatch = z.infer<typeof customerStatusPatch>;
 export type DashboardMetrics = z.infer<typeof dashboardMetrics>;
 export type DashboardQuery = z.infer<typeof dashboardQuery>;
 export type CustomerRegisterBody = z.infer<typeof customerRegisterBody>;
 export type CustomerLoginBody = z.infer<typeof customerLoginBody>;
+export type CustomerPasswordPatch = z.infer<typeof customerPasswordPatch>;
 export type CustomerAddressInput = z.infer<typeof customerAddressInput>;
 export type CustomerAddressDTO = z.infer<typeof customerAddressDTO>;
 export type CustomerDTO = z.infer<typeof customerDTO>;

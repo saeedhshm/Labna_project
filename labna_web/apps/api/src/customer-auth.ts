@@ -3,7 +3,7 @@ import { hash, verify } from '@node-rs/argon2';
 import { jwtVerify, SignJWT } from 'jose';
 import { Router, type RequestHandler, type Response } from 'express';
 import { rateLimit } from 'express-rate-limit';
-import { customerAddressInput, customerLoginBody, customerProfilePatch, customerRegisterBody, pageQuery } from '@labna/contracts';
+import { customerAddressInput, customerLoginBody, customerPasswordPatch, customerProfilePatch, customerRegisterBody, pageQuery } from '@labna/contracts';
 import type { Config } from './config.js';
 import { Customer, CustomerSession, Order } from './database.js';
 import { ApiError, pagination, respond } from './http.js';
@@ -112,6 +112,18 @@ export function customerAuthentication(config: Config) {
     const customer = await Customer.findOneAndUpdate({ id: res.locals.customer.id, isActive: true }, { $set: input }, { new: true });
     if (!customer) throw new ApiError(401, 'UNAUTHORIZED', 'Valid customer session required');
     respond(res, toDTO(customer));
+  });
+  account.patch('/me/password', async (req, res) => {
+    const input = customerPasswordPatch.parse(req.body);
+    const customer = await Customer.findOne({ id: res.locals.customer.id, isActive: true });
+    if (!customer) throw new ApiError(401, 'UNAUTHORIZED', 'Valid customer session required');
+    if (!await verify(customer.passwordHash, input.currentPassword)) throw new ApiError(401, 'INVALID_CURRENT_PASSWORD', 'Current password is incorrect');
+    if (await verify(customer.passwordHash, input.newPassword)) throw new ApiError(422, 'PASSWORD_REUSE', 'New password must be different from the current password');
+    customer.passwordHash = await hash(input.newPassword);
+    await customer.save();
+    await CustomerSession.updateMany({ customerID: customer.id, revokedAt: null }, { $set: { revokedAt: new Date() } });
+    res.clearCookie(cookieName, cookieOptions);
+    respond(res, { passwordChanged: true });
   });
   account.get('/addresses', (_req, res) => respond(res, res.locals.customer.addresses ?? []));
   account.post('/addresses', async (req, res) => {

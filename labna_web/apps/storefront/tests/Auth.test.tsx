@@ -70,13 +70,13 @@ describe('customer authentication', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Create account' }));
 
     expect(await screen.findByRole('heading', { name: 'My Account' })).toBeInTheDocument();
-    expect(screen.getByText('Customer One', { selector: 'summary' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Customer One' })).toBeInTheDocument();
     first.unmount();
 
     route('/account');
     render(<App />);
     expect(await screen.findByRole('heading', { name: 'My Account' })).toBeInTheDocument();
-    expect(screen.getByText('Customer One', { selector: 'summary' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Customer One' })).toBeInTheDocument();
     expect(requests.filter(url => url.includes('/customer/auth/refresh')).length).toBeGreaterThanOrEqual(2);
   });
 
@@ -105,14 +105,52 @@ describe('customer authentication', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('Account details saved.');
-    expect(screen.getByText('Updated Customer', { selector: 'summary' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Updated Customer' })).toBeInTheDocument();
     expect(screen.getByText('updated@example.com')).toBeInTheDocument();
     first.unmount();
 
     route('/account');
     render(<App />);
-    expect(await screen.findByText('Updated Customer', { selector: 'summary' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Updated Customer' })).toBeInTheDocument();
     expect(screen.getByDisplayValue('updated@example.com')).toBeInTheDocument();
+  });
+
+  it('opens and closes the customer account menu accessibly', async () => {
+    const addListener = vi.spyOn(document, 'addEventListener');
+    const removeListener = vi.spyOn(document, 'removeEventListener');
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/customer/auth/refresh')) return apiResponse(authPayload());
+      return apiResponse([], 200);
+    }));
+
+    route('/');
+    render(<App />);
+    const user = userEvent.setup();
+    const trigger = await screen.findByRole('button', { name: 'Customer One' });
+    expect(trigger).toHaveAttribute('aria-haspopup', 'menu');
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('menuitem', { name: 'My Account' })).toBeInTheDocument();
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(trigger);
+    await user.click(document.body);
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(trigger);
+    await user.keyboard('{Escape}');
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(trigger);
+    await user.click(screen.getByRole('menuitem', { name: 'My Account' }));
+    expect(await screen.findByRole('heading', { name: 'My Account' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Customer One' })).toHaveAttribute('aria-expanded', 'false');
+    expect(addListener.mock.calls.some(call => call[0] === 'pointerdown')).toBe(true);
+    expect(removeListener.mock.calls.some(call => call[0] === 'pointerdown')).toBe(true);
   });
 
   it('shows duplicate email errors while editing the profile', async () => {
@@ -131,6 +169,48 @@ describe('customer authentication', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('An account with this email already exists.');
+  });
+
+  it('changes a customer password and clears the authenticated session', async () => {
+    let attempts = 0;
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = init?.method ?? 'GET';
+      if (url.includes('/customer/auth/refresh')) return apiResponse(authPayload());
+      if (url.includes('/customer/me/password') && method === 'PATCH') {
+        attempts += 1;
+        const body = JSON.parse(String(init?.body));
+        if (body.currentPassword === 'wrong-password') return apiResponse({ error: { code: 'INVALID_CURRENT_PASSWORD', message: 'Current password is incorrect' } }, 401);
+        expect(body).toEqual({ currentPassword: 'password123', newPassword: 'new-password-123' });
+        return apiResponse({ passwordChanged: true });
+      }
+      return apiResponse([], 200);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    route('/account/change-password');
+    render(<App />);
+    const user = userEvent.setup();
+    expect(await screen.findByRole('heading', { name: 'Change Password' })).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Current Password'), 'password123');
+    await user.type(screen.getByLabelText('New Password'), 'new-password-123');
+    await user.type(screen.getByLabelText('Confirm New Password'), 'different-password');
+    await user.click(screen.getByRole('button', { name: 'Change Password' }));
+    expect(await screen.findByText('Passwords do not match.')).toBeInTheDocument();
+    expect(attempts).toBe(0);
+
+    await user.clear(screen.getByLabelText('Current Password'));
+    await user.type(screen.getByLabelText('Current Password'), 'wrong-password');
+    await user.clear(screen.getByLabelText('Confirm New Password'));
+    await user.type(screen.getByLabelText('Confirm New Password'), 'new-password-123');
+    await user.click(screen.getByRole('button', { name: 'Change Password' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Current password is incorrect.');
+
+    await user.clear(screen.getByLabelText('Current Password'));
+    await user.type(screen.getByLabelText('Current Password'), 'password123');
+    await user.click(screen.getByRole('button', { name: 'Change Password' }));
+    expect(await screen.findByRole('heading', { name: 'Login' })).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Password changed. Sign in with your new password.');
   });
 
   it('logs in, opens account, logs out, and blocks protected routes afterwards', async () => {

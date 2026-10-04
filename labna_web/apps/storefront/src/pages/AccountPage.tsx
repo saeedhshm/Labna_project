@@ -75,6 +75,7 @@ export function AccountPage() {
             <a href="#profile-form">{t('الملف الشخصي', 'Profile')}</a>
             <Link to="/account/addresses">{t('العناوين', 'Addresses')}</Link>
             <Link to="/account/orders">{t('طلباتي', 'My Orders')}</Link>
+            <Link to="/account/change-password">{t('تغيير كلمة المرور', 'Change Password')}</Link>
             <button type="button" onClick={logout}>{t('تسجيل الخروج', 'Logout')}</button>
           </nav>
         </aside>

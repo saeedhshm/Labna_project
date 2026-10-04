@@ -74,6 +74,7 @@ const orderSchema = new Schema({
   statusHistory: { type: [Schema.Types.Mixed], required: true, default: [] },
 }, { timestamps: true, strict: 'throw' });
 orderSchema.index({ createdAt: -1, id: 1 });
+orderSchema.index({ customerID: 1, createdAt: -1, id: 1 });
 orderSchema.index({ 'customer.phoneNumber': 1, createdAt: -1 });
 export const Order = mongoose.model('Order', orderSchema);
 // Serializes related catalog mutations so reference checks and archiving cannot race.
@@ -94,7 +95,7 @@ export const Session = mongoose.model('Session', new Schema({
   previousHashes: { type: [String], default: [] },
   expiresAt: { type: Date, required: true }, revokedAt: { type: Date, default: null },
 }).index({ expiresAt: 1 }, { expireAfterSeconds: 0 }));
-export const Customer = mongoose.model('Customer', new Schema({
+const customerSchema = new Schema({
   id: { type: String, unique: true, required: true, default: () => randomUUID() },
   name: { type: String, required: true },
   phoneNumber: { type: String, required: true },
@@ -102,7 +103,11 @@ export const Customer = mongoose.model('Customer', new Schema({
   passwordHash: { type: String, required: true },
   isActive: { type: Boolean, default: true, required: true },
   addresses: { type: [Schema.Types.Mixed], default: [] },
-}, { timestamps: true }));
+}, { timestamps: true });
+customerSchema.index({ isActive: 1, createdAt: -1, id: 1 });
+customerSchema.index({ name: 1, id: 1 });
+customerSchema.index({ phoneNumber: 1, id: 1 });
+export const Customer = mongoose.model('Customer', customerSchema);
 export const CustomerSession = mongoose.model('CustomerSession', new Schema({
   customerID: { type: String, required: true },
   refreshHash: { type: String, unique: true, required: true },

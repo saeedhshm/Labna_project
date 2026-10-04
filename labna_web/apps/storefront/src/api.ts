@@ -1,4 +1,4 @@
-import type { CartValidationRequest, CartValidationResponse, CheckoutRequest, CustomerAddressDTO, CustomerAddressInput, CustomerAuthResponse, CustomerDTO, CustomerLoginBody, CustomerProfilePatch, CustomerRegisterBody, OrderDTO } from '@labna/contracts';
+import type { CartValidationRequest, CartValidationResponse, CheckoutRequest, CustomerAddressDTO, CustomerAddressInput, CustomerAuthResponse, CustomerDTO, CustomerLoginBody, CustomerPasswordPatch, CustomerProfilePatch, CustomerRegisterBody, OrderDTO } from '@labna/contracts';
 import type { Detail, Locale, Page, ProductFilters, PublicBanner, PublicBranch, PublicCategory, PublicProduct } from './types';
 
 const apiBase = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
@@ -81,6 +81,7 @@ export const api = {
   customerLogout: (accessToken: string, signal?: AbortSignal) => request<{ data: { loggedOut: boolean } }>('/customer/auth/logout', signal, { method: 'POST', ...authHeader(accessToken) }),
   customerMe: (accessToken: string, signal?: AbortSignal) => request<{ data: CustomerDTO }>('/customer/me', signal, authHeader(accessToken)),
   customerUpdateProfile: (accessToken: string, body: CustomerProfilePatch, signal?: AbortSignal) => request<{ data: CustomerDTO }>('/customer/me', signal, json(body, accessToken, 'PATCH')),
+  customerChangePassword: (accessToken: string, body: CustomerPasswordPatch, signal?: AbortSignal) => request<{ data: { passwordChanged: boolean } }>('/customer/me/password', signal, json(body, accessToken, 'PATCH')),
   customerAddresses: (accessToken: string, signal?: AbortSignal) => request<{ data: CustomerAddressDTO[] }>('/customer/addresses', signal, authHeader(accessToken)),
   customerCreateAddress: (accessToken: string, body: CustomerAddressInput, signal?: AbortSignal) => request<{ data: CustomerAddressDTO }>('/customer/addresses', signal, json(body, accessToken)),
   customerUpdateAddress: (accessToken: string, id: string, body: Partial<CustomerAddressInput>, signal?: AbortSignal) => request<{ data: CustomerAddressDTO }>(`/customer/addresses/${encodeURIComponent(id)}`, signal, json(body, accessToken, 'PATCH')),

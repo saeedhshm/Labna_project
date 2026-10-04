@@ -16,6 +16,11 @@ function fromLocation(state: unknown) {
   return '/account';
 }
 
+function locationMessage(state: unknown) {
+  if (state && typeof state === 'object' && 'message' in state && typeof (state as { message?: unknown }).message === 'string') return (state as { message: string }).message;
+  return '';
+}
+
 function serverMessage(error: unknown, t: (ar: string, en: string) => string) {
   if (!(error instanceof ApiError)) return t('تعذر الاتصال بالخادم. حاول مرة أخرى.', 'Could not reach the server. Try again.');
   if (error.code === 'DUPLICATE_RESOURCE') return t('يوجد حساب بهذا البريد الإلكتروني بالفعل.', 'An account with this email already exists.');
@@ -33,6 +38,7 @@ export function LoginPage() {
   const [values, setValues] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState<FormErrors>({});
   const [formError, setFormError] = useState('');
+  const [notice] = useState(() => locationMessage(location.state));
   const [loading, setLoading] = useState(false);
 
   if (auth.status === 'authenticated') return <Navigate to={fromLocation(location.state)} replace />;
@@ -63,6 +69,7 @@ export function LoginPage() {
         <p className="eyebrow">{t('حسابك', 'Your account')}</p>
         <h1 id="login-title">{t('تسجيل الدخول', 'Login')}</h1>
         <p className="hint">{t('ادخل إلى حسابك لمتابعة الطلبات والعناوين لاحقًا.', 'Sign in to access customer-only pages.')}</p>
+        {notice ? <p className="form-success" role="status">{notice}</p> : null}
         {formError ? <p className="form-alert" role="alert">{formError}</p> : null}
         <form className="auth-form" onSubmit={submit} noValidate>
           <label htmlFor={fieldID(form, 'email')}>{t('البريد الإلكتروني', 'Email')}</label>

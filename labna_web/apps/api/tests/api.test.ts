@@ -2,7 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import mongoose from 'mongoose';
 import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import request from 'supertest';
-import { hash } from '@node-rs/argon2';
+import { hash, verify } from '@node-rs/argon2';
 import SwaggerParser from '@apidevtools/swagger-parser';
 import { createApp } from '../src/app.js';
 import { initializeDatabase, Staff, Inventory, models, Audit, Customer, CustomerSession } from '../src/database.js';
@@ -383,15 +383,99 @@ describe('API foundation and catalog', () => {
     expect(login.status).toBe(200);
     expect(login.body.data.customer.name).toBe('Customer Updated');
     expect((await request(app).post('/api/v1/customer/auth/login').send({ email: 'customer@example.com', password: 'wrong-password' })).status).toBe(401);
+    expect((await request(app).patch('/api/v1/customer/me/password').send({ currentPassword: 'password123', newPassword: 'new-password-123' })).status).toBe(401);
+    expect((await request(app).patch('/api/v1/customer/me/password').set('Authorization', customerBearer).send({ currentPassword: 'wrong-password', newPassword: 'new-password-123' })).body.error.code).toBe('INVALID_CURRENT_PASSWORD');
+    expect((await request(app).patch('/api/v1/customer/me/password').set('Authorization', customerBearer).send({ currentPassword: 'password123', newPassword: 'short' })).status).toBe(422);
+    expect((await request(app).patch('/api/v1/customer/me/password').set('Authorization', customerBearer).send({ currentPassword: 'password123', newPassword: 'password123' })).body.error.code).toBe('PASSWORD_REUSE');
+    const beforeHash = (await Customer.findOne({ email: 'customer@example.com' }))!.passwordHash;
+    const changed = await request(app).patch('/api/v1/customer/me/password').set('Authorization', customerBearer).send({ currentPassword: 'password123', newPassword: 'new-password-123' });
+    expect(changed.status).toBe(200);
+    expect(changed.body.data).toEqual({ passwordChanged: true });
+    expect(JSON.stringify(changed.body.data)).not.toMatch(/password|Hash|token/i);
+    const afterHash = (await Customer.findOne({ email: 'customer@example.com' }))!.passwordHash;
+    expect(afterHash).not.toBe(beforeHash);
+    expect(afterHash).not.toContain('new-password-123');
+    expect(await verify(afterHash, 'new-password-123')).toBe(true);
+    expect((await request(app).get('/api/v1/customer/me').set('Authorization', customerBearer)).status).toBe(401);
+    expect((await request(app).post('/api/v1/customer/auth/login').send({ email: 'customer@example.com', password: 'password123' })).status).toBe(401);
+    const newLogin = await request(app).post('/api/v1/customer/auth/login').send({ email: 'customer@example.com', password: 'new-password-123' });
+    expect(newLogin.status).toBe(200);
     expect((await request(app).get('/api/v1/customer/orders')).status).toBe(401);
     expect((await request(app).get('/api/v1/customer/me')).status).toBe(401);
-    const customerCookie = login.headers['set-cookie'][0].split(';')[0];
+    const customerCookie = newLogin.headers['set-cookie'][0].split(';')[0];
     expect((await request(app).post('/api/v1/customer/auth/refresh').set('Origin', config.WEB_ORIGINS[0]).set('Cookie', customerCookie)).status).toBe(200);
     const replay = await request(app).post('/api/v1/customer/auth/refresh').set('Origin', config.WEB_ORIGINS[0]).set('Cookie', customerCookie);
     expect(replay.status).toBe(401);
     expect(await CustomerSession.countDocuments({ revokedAt: { $ne: null } })).toBeGreaterThan(0);
-    expect((await request(app).post('/api/v1/customer/auth/logout').set('Authorization', customerBearer)).status).toBe(200);
+    expect((await request(app).post('/api/v1/customer/auth/logout').set('Authorization', customerBearer)).status).toBe(401);
     expect((await request(app).get('/api/v1/customer/me').set('Authorization', customerBearer)).status).toBe(401);
+  });
+
+  it('lets managers administer customers without exposing authentication secrets', async () => {
+    await createCatalog();
+    expect((await admin('products').send(product('milk-full', 3500))).status).toBe(201);
+    await Inventory.updateOne({ branchID: 'main', variantID: 'milk-full-1l' }, { $set: { onHand: 10 } });
+    const registered = await request(app).post('/api/v1/customer/auth/register').send({ name: 'Alice Buyer', phoneNumber: '+201012345678', email: 'alice@example.com', password: 'password123' });
+    const other = await request(app).post('/api/v1/customer/auth/register').send({ name: 'Bob Buyer', phoneNumber: '+201012345679', email: 'bob@example.com', password: 'password123' });
+    expect(registered.status).toBe(200);
+    expect(other.status).toBe(200);
+    const customerID = registered.body.data.customer.id;
+    const customerBearer = `Bearer ${registered.body.data.accessToken}`;
+    expect((await request(app).get('/api/v1/admin/customers').set('Authorization', customerBearer)).status).toBe(401);
+    const address = await request(app).post('/api/v1/customer/addresses').set('Authorization', customerBearer).send({ label: 'Home', recipientName: 'Alice Receiver', phoneNumber: '+201012345678', city: 'Cairo', area: 'Maadi', street: 'Road 9', building: '12', isDefault: true });
+    expect(address.status).toBe(201);
+    const orderInput = {
+      customer: { name: 'Alice Buyer', phoneNumber: '+201012345678', email: 'alice@example.com' },
+      address: { city: 'Cairo', area: 'Maadi', street: 'Road 9', building: '12' },
+      items: [{ productID: 'milk-full', variantID: 'milk-full-1l', quantity: 1 }],
+      paymentMethod: 'cash_on_delivery',
+    };
+    const completedOrder = await request(app).post('/api/v1/orders').set('Authorization', customerBearer).send(orderInput);
+    const cancelledOrder = await request(app).post('/api/v1/orders').set('Authorization', customerBearer).send(orderInput);
+    const otherOrder = await request(app).post('/api/v1/orders').set('Authorization', `Bearer ${other.body.data.accessToken}`).send({
+      ...orderInput,
+      customer: { name: 'Bob Buyer', phoneNumber: '+201012345679', email: 'bob@example.com' },
+    });
+    for (const status of ['confirmed', 'preparing', 'ready', 'out_for_delivery', 'completed']) {
+      expect((await request(app).patch(`/api/v1/admin/orders/${completedOrder.body.data.id}/status`).set('Authorization', bearer).send({ status })).status).toBe(200);
+    }
+    expect((await request(app).patch(`/api/v1/customer/orders/${cancelledOrder.body.data.id}/cancel`).set('Authorization', customerBearer)).status).toBe(200);
+
+    const list = await request(app).get('/api/v1/admin/customers').set('Authorization', bearer).query({ sort: 'spentDesc' });
+    expect(list.status).toBe(200);
+    expect(list.body.data[0]).toMatchObject({ name: 'Alice Buyer', ordersCount: 2, totalSpentMinor: 5000, isActive: true });
+    expect(JSON.stringify(list.body.data)).not.toMatch(/password|token|Hash/i);
+    const firstPage = await request(app).get('/api/v1/admin/customers').set('Authorization', bearer).query({ limit: 1, sort: 'nameAsc' });
+    expect(firstPage.body.data).toHaveLength(1);
+    expect(firstPage.body.meta.nextCursor).toBeTruthy();
+    const secondPage = await request(app).get('/api/v1/admin/customers').set('Authorization', bearer).query({ limit: 1, sort: 'nameAsc', cursor: firstPage.body.meta.nextCursor });
+    expect(secondPage.status).toBe(200);
+    expect(secondPage.body.data[0].id).not.toBe(firstPage.body.data[0].id);
+    expect((await request(app).get('/api/v1/admin/customers').set('Authorization', bearer).query({ limit: 1, sort: 'spentDesc', cursor: firstPage.body.meta.nextCursor })).status).toBe(400);
+    expect((await request(app).get('/api/v1/admin/customers').set('Authorization', bearer).query({ q: 'alice' })).body.data.map((item: { email: string }) => item.email)).toEqual(['alice@example.com']);
+    expect((await request(app).get('/api/v1/admin/customers').set('Authorization', bearer).query({ q: '+201012345679' })).body.data.map((item: { email: string }) => item.email)).toEqual(['bob@example.com']);
+
+    const detail = await request(app).get(`/api/v1/admin/customers/${customerID}`).set('Authorization', bearer);
+    expect(detail.status).toBe(200);
+    expect(detail.body.data).toMatchObject({ id: customerID, email: 'alice@example.com', metrics: { totalOrders: 2, completedOrders: 1, cancelledOrders: 1, totalSpentMinor: 5000 } });
+    expect(detail.body.data.addresses[0]).toMatchObject({ label: 'Home', recipientName: 'Alice Receiver', isDefault: true });
+    expect(JSON.stringify(detail.body.data)).not.toMatch(/password|token|Hash/i);
+    const metrics = await request(app).get(`/api/v1/admin/customers/${customerID}/metrics`).set('Authorization', bearer);
+    expect(metrics.body.data).toMatchObject({ totalOrders: 2, completedOrders: 1, cancelledOrders: 1, totalSpentMinor: 5000, currencyCode: 'EGP' });
+    const customerOrders = await request(app).get(`/api/v1/admin/customers/${customerID}/orders`).set('Authorization', bearer);
+    expect(customerOrders.body.data.map((order: { id: string }) => order.id).sort()).toEqual([completedOrder.body.data.id, cancelledOrder.body.data.id].sort());
+    expect(customerOrders.body.data.map((order: { id: string }) => order.id)).not.toContain(otherOrder.body.data.id);
+
+    const deactivated = await request(app).patch(`/api/v1/admin/customers/${customerID}/status`).set('Authorization', bearer).send({ isActive: false });
+    expect(deactivated.status).toBe(200);
+    expect(deactivated.body.data.isActive).toBe(false);
+    expect((await request(app).get('/api/v1/admin/customers').set('Authorization', bearer).query({ status: 'inactive' })).body.data.map((item: { id: string }) => item.id)).toContain(customerID);
+    expect((await request(app).get('/api/v1/customer/me').set('Authorization', customerBearer)).status).toBe(401);
+    expect((await request(app).post('/api/v1/customer/auth/login').send({ email: 'alice@example.com', password: 'password123' })).status).toBe(401);
+    const reactivated = await request(app).patch(`/api/v1/admin/customers/${customerID}/status`).set('Authorization', bearer).send({ isActive: true });
+    expect(reactivated.body.data.isActive).toBe(true);
+    expect((await request(app).post('/api/v1/customer/auth/login').send({ email: 'alice@example.com', password: 'password123' })).status).toBe(200);
+    expect((await request(app).patch(`/api/v1/admin/customers/${customerID}/status`).set('Authorization', bearer).send({ passwordHash: 'x' })).status).toBe(422);
   });
 
   it('supports search, price filters, stable pagination and stock-sensitive ETags', async () => {

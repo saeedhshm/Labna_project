@@ -8,6 +8,10 @@ import type {
   InventoryMovementQuery,
   InventoryThresholdPatch,
   AdminOrderQuery,
+  AdminCustomerDetails,
+  AdminCustomerQuery,
+  AdminCustomerSummary,
+  CustomerStatusPatch,
   DashboardMetrics,
   OrderDTO,
   OrderStatus,
@@ -22,12 +26,16 @@ export const keys = {
   products: (branchID: string | undefined, search: string) => ['admin', 'products', branchID ?? 'all', search] as const,
   inventory: (filters: InventoryFilters) => ['admin', 'inventory', filters] as const,
   inventoryMovements: (filters: MovementFilters) => ['admin', 'inventory', 'movements', filters] as const,
+  customers: (filters: CustomerFilters) => ['admin', 'customers', filters] as const,
+  customer: (id: string | null) => ['admin', 'customers', id] as const,
+  customerOrders: (id: string | null) => ['admin', 'customers', id, 'orders'] as const,
 };
 
 export type Page<T> = { items: T[]; nextCursor: string | null };
 export type InventoryFilters = Pick<InventoryListQuery, 'branchID' | 'variantID' | 'lowStock' | 'outOfStock'>;
 export type MovementFilters = Pick<InventoryMovementQuery, 'inventoryID' | 'from' | 'to'>;
 export type OrderFilters = Pick<AdminOrderQuery, 'q' | 'status' | 'from' | 'to'>;
+export type CustomerFilters = Pick<AdminCustomerQuery, 'q' | 'status' | 'sort'>;
 
 const queryString = (values: Record<string, string | number | boolean | undefined>) => {
   const params = new URLSearchParams();
@@ -116,6 +124,44 @@ export function useOrderStatusMutation() {
   return useMutation({
     mutationFn: ({ id, status }: { id: string; status: OrderStatus }) => request(`/admin/orders/${encodeURIComponent(id)}/status`, { method: 'PATCH', body: { status } }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] }),
+  });
+}
+
+export function useCustomersList(filters: CustomerFilters, pageSize = 25) {
+  return useInfiniteQuery({
+    queryKey: keys.customers(filters),
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam, signal }) => getPage<AdminCustomerSummary>(`/admin/customers?${queryString({ ...filters, limit: pageSize, cursor: pageParam })}`, signal),
+    getNextPageParam: page => page.nextCursor ?? undefined,
+  });
+}
+
+export function useCustomer(id: string | null) {
+  return useQuery({
+    queryKey: keys.customer(id),
+    queryFn: () => getOne<AdminCustomerDetails>(`/admin/customers/${encodeURIComponent(id!)}`),
+    enabled: Boolean(id),
+  });
+}
+
+export function useCustomerOrders(id: string | null, pageSize = 10) {
+  return useInfiniteQuery({
+    queryKey: keys.customerOrders(id),
+    enabled: Boolean(id),
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam, signal }) => getPage<OrderDTO>(`/admin/customers/${encodeURIComponent(id!)}/orders?${queryString({ limit: pageSize, cursor: pageParam })}`, signal),
+    getNextPageParam: page => page.nextCursor ?? undefined,
+  });
+}
+
+export function useCustomerStatusMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: CustomerStatusPatch }) => request(`/admin/customers/${encodeURIComponent(id)}/status`, { method: 'PATCH', body: payload }),
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'customers'] });
+      void queryClient.invalidateQueries({ queryKey: keys.customer(variables.id) });
+    },
   });
 }
 

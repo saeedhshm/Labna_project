@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import type { CustomerDTO, CustomerLoginBody, CustomerProfilePatch, CustomerRegisterBody } from '@labna/contracts';
+import type { CustomerDTO, CustomerLoginBody, CustomerPasswordPatch, CustomerProfilePatch, CustomerRegisterBody } from '@labna/contracts';
 import { api, ApiError } from './api';
 
 type AuthStatus = 'checking' | 'authenticated' | 'unauthenticated';
@@ -10,6 +10,7 @@ type AuthState = {
   login: (body: CustomerLoginBody) => Promise<CustomerDTO>;
   register: (body: CustomerRegisterBody) => Promise<CustomerDTO>;
   updateProfile: (body: CustomerProfilePatch) => Promise<CustomerDTO>;
+  changePassword: (body: CustomerPasswordPatch) => Promise<void>;
   reloadCustomer: () => Promise<CustomerDTO>;
   logout: () => Promise<void>;
 };
@@ -75,6 +76,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setCustomer(result.data);
       setStatus('authenticated');
       return result.data;
+    },
+    changePassword: async (body) => {
+      if (!accessToken) throw new ApiError(401, 'UNAUTHORIZED', 'Valid customer session required');
+      await api.customerChangePassword(accessToken, body);
+      setAccessToken(null);
+      setCustomer(null);
+      setStatus('unauthenticated');
     },
     reloadCustomer: async () => {
       if (!accessToken) throw new ApiError(401, 'UNAUTHORIZED', 'Valid customer session required');

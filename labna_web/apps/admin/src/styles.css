@@ -128,8 +128,9 @@ button { font: inherit; border-radius: 10px; padding: 0.55rem 1rem; cursor: poin
 button:disabled { opacity: 0.6; cursor: not-allowed; }
 .primary { background: var(--green); color: #fff; }
 .primary:hover:not(:disabled) { background: var(--green-soft); }
-.ghost { background: transparent; border-color: var(--border); color: inherit; }
+.ghost { background: transparent; border: 1px solid var(--border); border-radius: 10px; color: inherit; display: inline-flex; align-items: center; justify-content: center; padding: 0.55rem 1rem; text-decoration: none; }
 .ghost:hover:not(:disabled) { background: #f1f4f2; }
+.link-button { background: transparent; border: 0; color: inherit; padding: 0; text-decoration: underline; }
 .danger { background: var(--danger); color: #fff; }
 .danger-ghost { background: transparent; border-color: transparent; color: var(--danger); }
 .danger-ghost:hover { background: #fdeceb; }
@@ -193,6 +194,20 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 .order-status--cancelled { background: #fee2e2; color: #991b1b; }
 .order-status--completed { background: #dcfce7; color: #166534; }
 .order-status--pending { background: #fef3c7; color: #92400e; }
+
+/* Customers */
+.customer-detail-page { display: grid; gap: 1rem; }
+.customer-profile-grid { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 1rem; }
+.customer-profile-grid div { background: var(--surface-muted); border: 1px solid var(--border); border-radius: 12px; padding: 0.75rem; }
+.customer-profile-grid dt { color: var(--muted); font-size: 0.78rem; margin-bottom: 0.25rem; }
+.customer-profile-grid dd { margin: 0; font-weight: 700; }
+.metrics-grid { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.metric-card { background: #f8fbf9; border: 1px solid var(--border); border-radius: 12px; padding: 0.9rem; display: grid; gap: 0.25rem; }
+.metric-card span { color: var(--muted); font-size: 0.78rem; }
+.metric-card strong { font-size: 1.15rem; }
+.address-list { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.address-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 0.9rem; background: var(--surface-muted); }
+.address-card h3 { margin: 0 0 0.5rem; }
 
 /* Dialog */
 .dialog__backdrop {
