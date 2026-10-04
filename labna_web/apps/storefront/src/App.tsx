@@ -103,7 +103,7 @@ function Layout() {
               </button>
               <div className="account-menu__panel" role="menu" hidden={!accountOpen}>
                 {accountLinks.map(item => <Link key={item.to} to={item.to} role="menuitem" onClick={() => setAccountOpen(false)}>{item.label}</Link>)}
-                <button type="button" onClick={logout}>{t('تسجيل الخروج', 'Logout')}</button>
+                <button type="button" role="menuitem" onClick={logout}>{t('تسجيل الخروج', 'Logout')}</button>
               </div>
             </div>
           ) : (

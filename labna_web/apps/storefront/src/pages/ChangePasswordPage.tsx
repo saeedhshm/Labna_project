@@ -44,7 +44,8 @@ export function ChangePasswordPage() {
     setSaving(true);
     try {
       await auth.changePassword(parsed.data);
-      navigate('/login', { replace: true, state: { message: t('تم تغيير كلمة المرور. سجل الدخول بكلمة المرور الجديدة.', 'Password changed. Sign in with your new password.') } });
+      sessionStorage.setItem('labna.passwordChanged', '1');
+      navigate('/login?passwordChanged=1', { replace: true });
     } catch (error) {
       setFormError(serverMessage(error, t));
     } finally {

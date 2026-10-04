@@ -38,7 +38,11 @@ export function LoginPage() {
   const [values, setValues] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState<FormErrors>({});
   const [formError, setFormError] = useState('');
-  const [notice] = useState(() => locationMessage(location.state));
+  const [notice] = useState(() => {
+    const passwordChanged = new URLSearchParams(location.search).get('passwordChanged') === '1' || sessionStorage.getItem('labna.passwordChanged') === '1';
+    if (passwordChanged) sessionStorage.removeItem('labna.passwordChanged');
+    return locationMessage(location.state) || (passwordChanged ? t('تم تغيير كلمة المرور. سجل الدخول بكلمة المرور الجديدة.', 'Password changed. Sign in with your new password.') : '');
+  });
   const [loading, setLoading] = useState(false);
 
   if (auth.status === 'authenticated') return <Navigate to={fromLocation(location.state)} replace />;

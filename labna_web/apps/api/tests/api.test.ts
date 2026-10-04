@@ -391,7 +391,10 @@ describe('API foundation and catalog', () => {
     const changed = await request(app).patch('/api/v1/customer/me/password').set('Authorization', customerBearer).send({ currentPassword: 'password123', newPassword: 'new-password-123' });
     expect(changed.status).toBe(200);
     expect(changed.body.data).toEqual({ passwordChanged: true });
-    expect(JSON.stringify(changed.body.data)).not.toMatch(/password|Hash|token/i);
+    expect(changed.body.data).not.toHaveProperty('password');
+    expect(changed.body.data).not.toHaveProperty('passwordHash');
+    expect(changed.body.data).not.toHaveProperty('accessToken');
+    expect(changed.body.data).not.toHaveProperty('refreshToken');
     const afterHash = (await Customer.findOne({ email: 'customer@example.com' }))!.passwordHash;
     expect(afterHash).not.toBe(beforeHash);
     expect(afterHash).not.toContain('new-password-123');
