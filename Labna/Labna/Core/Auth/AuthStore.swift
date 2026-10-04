@@ -63,6 +63,26 @@ final class AuthStore {
         }
     }
 
+    @discardableResult
+    func updateProfile(name: String, phoneNumber: String, email: String) async -> Bool {
+        await runReturningSuccess {
+            let customer = try await service.updateProfile(
+                name: name.trimmingCharacters(in: .whitespacesAndNewlines),
+                phoneNumber: phoneNumber.trimmingCharacters(in: .whitespacesAndNewlines),
+                email: email.trimmingCharacters(in: .whitespacesAndNewlines)
+            )
+            state = .authenticated(customer)
+        }
+    }
+
+    @discardableResult
+    func changePassword(currentPassword: String, newPassword: String) async -> Bool {
+        await runReturningSuccess {
+            try await service.changePassword(currentPassword: currentPassword, newPassword: newPassword)
+            state = .guest
+        }
+    }
+
     func logout() async {
         isLoading = true
         await service.logout()
@@ -72,14 +92,21 @@ final class AuthStore {
     }
 
     private func run(_ operation: () async throws -> Void) async {
+        _ = await runReturningSuccess(operation)
+    }
+
+    private func runReturningSuccess(_ operation: () async throws -> Void) async -> Bool {
         isLoading = true
         lastError = nil
         do {
             try await operation()
+            isLoading = false
+            return true
         } catch let error as AuthError {
             if error == .expiredSession || error == .unauthorized { state = .guest }
             lastError = error
         } catch {}
         isLoading = false
+        return false
     }
 }

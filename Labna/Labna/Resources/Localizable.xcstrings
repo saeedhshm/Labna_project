@@ -2378,16 +2378,82 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Coming account features" } }
       }
     },
+    "account.changePassword" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تغيير كلمة المرور" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Change password" } }
+      }
+    },
+    "account.confirmPassword" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تأكيد كلمة المرور الجديدة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Confirm new password" } }
+      }
+    },
+    "account.currentPassword" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "كلمة المرور الحالية" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Current password" } }
+      }
+    },
+    "account.editProfile" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعديل الملف الشخصي" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Edit profile" } }
+      }
+    },
+    "account.manage" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إدارة الحساب" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Manage account" } }
+      }
+    },
+    "account.newPassword" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "كلمة المرور الجديدة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "New password" } }
+      }
+    },
     "account.ordersSoon" : {
       "localizations" : {
         "ar" : { "stringUnit" : { "state" : "translated", "value" : "الطلبات قريباً" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Orders coming soon" } }
       }
     },
+    "account.passwordInvalidatesSession" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "بعد تغيير كلمة المرور سيتم تسجيل خروجك من هذا الجهاز والأجهزة الأخرى." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Changing your password signs you out on this device and other sessions." } }
+      }
+    },
+    "account.passwordMismatch" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "كلمتا المرور غير متطابقتين." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The new passwords do not match." } }
+      }
+    },
+    "account.passwordTooShort" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "يجب أن تتكون كلمة المرور الجديدة من 8 أحرف على الأقل." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "New password must be at least 8 characters." } }
+      }
+    },
+    "account.profile" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الملف الشخصي" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Profile" } }
+      }
+    },
     "account.profileSoon" : {
       "localizations" : {
         "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعديل الملف الشخصي قريباً" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Profile editing coming soon" } }
+      }
+    },
+    "account.save" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "حفظ" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Save" } }
       }
     },
     "account.title" : {
@@ -2426,10 +2492,22 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Email or password is incorrect." } }
       }
     },
+    "auth.error.invalidCurrentPassword" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "كلمة المرور الحالية غير صحيحة." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Current password is incorrect." } }
+      }
+    },
     "auth.error.network" : {
       "localizations" : {
         "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعذر الاتصال بالخادم. حاول مرة أخرى." } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Could not reach the server. Try again." } }
+      }
+    },
+    "auth.error.passwordReuse" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "يجب أن تختلف كلمة المرور الجديدة عن الحالية." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "New password must be different from the current password." } }
       }
     },
     "auth.error.server" : {

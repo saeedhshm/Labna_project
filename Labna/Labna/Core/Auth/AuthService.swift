@@ -61,7 +61,24 @@ actor AuthService {
     }
 
     func me() async throws -> Customer {
-        try await authorizedRequest(path: "customer/me", method: "GET", decode: Customer.self)
+        let customer = try await authorizedRequest(path: "customer/me", method: "GET", decode: Customer.self)
+        try updateStoredCustomer(customer)
+        return customer
+    }
+
+    func updateProfile(name: String, phoneNumber: String, email: String) async throws -> Customer {
+        let input = CustomerProfilePatch(name: name, phoneNumber: phoneNumber, email: email)
+        let customer = try await authorizedRequest(path: "customer/me", method: "PATCH", body: input, decode: Customer.self)
+        try updateStoredCustomer(customer)
+        return customer
+    }
+
+    func changePassword(currentPassword: String, newPassword: String) async throws {
+        let input = CustomerPasswordPatch(currentPassword: currentPassword, newPassword: newPassword)
+        let response = try await authorizedRequest(path: "customer/me/password", method: "PATCH", body: input, decode: PasswordChangedResponse.self)
+        guard response.passwordChanged else { throw AuthError.invalidResponse }
+        try? storage.clear()
+        currentSession = nil
     }
 
     func validAccessToken() async throws -> String {
@@ -77,6 +94,16 @@ actor AuthService {
         } catch AuthError.unauthorized, AuthError.expiredSession {
             let token = try await refreshSession().accessToken
             return try await request(path: path, method: method, accessToken: token, decode: type)
+        }
+    }
+
+    func authorizedRequest<Body: Encodable, T: Decodable>(path: String, method: String, body: Body, decode type: T.Type) async throws -> T {
+        do {
+            let token = try await validAccessToken()
+            return try await request(path: path, method: method, accessToken: token, body: body, decode: type)
+        } catch AuthError.unauthorized, AuthError.expiredSession {
+            let token = try await refreshSession().accessToken
+            return try await request(path: path, method: method, accessToken: token, body: body, decode: type)
         }
     }
 
@@ -122,6 +149,14 @@ actor AuthService {
         return try await perform(request)
     }
 
+    private func request<Body: Encodable, T: Decodable>(path: String, method: String, accessToken: String, body: Body, decode type: T.Type) async throws -> T {
+        var request = try makeRequest(path: path, method: method)
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(body)
+        return try await perform(request)
+    }
+
     private func perform<T: Decodable>(_ request: URLRequest) async throws -> T {
         do {
             let (data, response) = try await session.data(for: request)
@@ -162,6 +197,13 @@ actor AuthService {
         )
     }
 
+    private func updateStoredCustomer(_ customer: Customer) throws {
+        guard let session = currentSession else { return }
+        let updated = AuthSession(accessToken: session.accessToken, accessTokenExpiresAt: session.accessTokenExpiresAt, refreshCookie: session.refreshCookie, customer: customer)
+        currentSession = updated
+        try storage.save(updated)
+    }
+
     private var pendingRefreshCookie: String?
 
     private func rememberRefreshCookie(from response: HTTPURLResponse) {
@@ -184,7 +226,9 @@ actor AuthService {
         let decoded = try? JSONDecoder().decode(APIErrorEnvelope.self, from: data)
         switch decoded?.error.code {
         case "INVALID_CREDENTIALS": return .invalidCredentials
+        case "INVALID_CURRENT_PASSWORD": return .invalidCurrentPassword
         case "DUPLICATE_RESOURCE": return .duplicateAccount
+        case "PASSWORD_REUSE": return .passwordReuse
         case "VALIDATION_ERROR": return .validation(decoded?.error.message ?? "Invalid input")
         case "UNAUTHORIZED": return .unauthorized
         default: return .httpStatus(status, decoded?.error.message)

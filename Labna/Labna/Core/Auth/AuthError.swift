@@ -2,7 +2,9 @@ import Foundation
 
 enum AuthError: Error, Equatable, Sendable {
     case invalidCredentials
+    case invalidCurrentPassword
     case duplicateAccount
+    case passwordReuse
     case validation(String)
     case expiredSession
     case unauthorized
@@ -15,7 +17,9 @@ enum AuthError: Error, Equatable, Sendable {
     var messageKey: String {
         switch self {
         case .invalidCredentials: "auth.error.invalidCredentials"
+        case .invalidCurrentPassword: "auth.error.invalidCurrentPassword"
         case .duplicateAccount: "auth.error.duplicateAccount"
+        case .passwordReuse: "auth.error.passwordReuse"
         case .validation: "auth.error.validation"
         case .expiredSession: "auth.error.expiredSession"
         case .unauthorized: "auth.error.unauthorized"

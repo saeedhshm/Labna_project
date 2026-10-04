@@ -104,6 +104,24 @@ final class LabnaUITests: XCTestCase {
     }
 
     @MainActor
+    func testGuestAccountNavigationShowsLoginAndRegister() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart"]
+        app.launch()
+
+        let moreTab = app.tabBars.buttons["More"]
+        XCTAssertTrue(moreTab.waitForExistence(timeout: 10))
+        moreTab.tap()
+        app.buttons["more.account"].tap()
+        XCTAssertTrue(app.navigationBars["Account"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.textFields["auth.email"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.secureTextFields["auth.password"].exists)
+        app.segmentedControls.buttons["Create account"].tap()
+        XCTAssertTrue(app.textFields["auth.name"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.textFields["auth.phone"].exists)
+    }
+
+    @MainActor
     func testHomeBannerCarouselShowsMultipleBanners() throws {
         let app = XCUIApplication()
         app.launchArguments = ["-selectedLanguage", "en", "-resetCart"]

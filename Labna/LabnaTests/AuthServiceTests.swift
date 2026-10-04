@@ -227,6 +227,90 @@ struct AuthServiceTests {
         #expect(try storage.load() == nil)
     }
 
+    @Test func updateProfilePatchesBackendAndPersistsReturnedCustomer() async throws {
+        let storage = MemoryAuthSessionStore(activeSession(access: "access-active", refresh: "refresh-active"))
+        AuthURLProtocol.setHandler { request in
+            let url = try #require(request.url)
+            if url.path.hasSuffix("/customer/me") && request.httpMethod == "GET" {
+                return customerResponse(url: url)
+            }
+            if url.path.hasSuffix("/customer/me") && request.httpMethod == "PATCH" {
+                #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer access-active")
+                #expect(request.value(forHTTPHeaderField: "Content-Type") == "application/json")
+                let body = try #require(bodyData(from: request))
+                let jsonObject = try #require(JSONSerialization.jsonObject(with: body) as? [String: String])
+                #expect(jsonObject["name"] == "Updated Customer")
+                #expect(jsonObject["phoneNumber"] == "+201099999999")
+                #expect(jsonObject["email"] == "updated@example.com")
+                return customerResponse(url: url, name: "Updated Customer", phoneNumber: "+201099999999", email: "updated@example.com")
+            }
+            return notFound(url: url)
+        }
+        defer { AuthURLProtocol.setHandler(nil) }
+        let store = AuthStore(service: service(storage: storage))
+        await store.restore()
+        let success = await store.updateProfile(name: " Updated Customer ", phoneNumber: " +201099999999 ", email: " updated@example.com ")
+        #expect(success)
+        #expect(store.customer?.email == "updated@example.com")
+        #expect(try storage.load()?.customer.name == "Updated Customer")
+    }
+
+    @Test func changePasswordMapsServerValidationErrors() async throws {
+        let storage = MemoryAuthSessionStore(activeSession(access: "access-active", refresh: "refresh-active"))
+        AuthURLProtocol.setHandler { request in
+            let url = try #require(request.url)
+            if url.path.hasSuffix("/customer/me") && request.httpMethod == "GET" {
+                return customerResponse(url: url)
+            }
+            if url.path.hasSuffix("/customer/me/password") {
+                return errorResponse(url: url, status: 401, code: "INVALID_CURRENT_PASSWORD", message: "Current password is incorrect")
+            }
+            return notFound(url: url)
+        }
+        defer { AuthURLProtocol.setHandler(nil) }
+        let firstService = service(storage: storage)
+        _ = try await firstService.restore()
+        do {
+            try await firstService.changePassword(currentPassword: "wrong", newPassword: "newPassword123")
+            Issue.record("Expected incorrect current password")
+        } catch AuthError.invalidCurrentPassword {}
+
+        AuthURLProtocol.setHandler { request in
+            let url = try #require(request.url)
+            return errorResponse(url: url, status: 422, code: "PASSWORD_REUSE", message: "New password must be different from the current password")
+        }
+        do {
+            try await firstService.changePassword(currentPassword: "password123", newPassword: "password123")
+            Issue.record("Expected password reuse error")
+        } catch AuthError.passwordReuse {}
+    }
+
+    @Test func successfulPasswordChangeClearsLocalSecureSessionAndReturnsToGuest() async throws {
+        let storage = MemoryAuthSessionStore(activeSession(access: "access-active", refresh: "refresh-active"))
+        AuthURLProtocol.setHandler { request in
+            let url = try #require(request.url)
+            if url.path.hasSuffix("/customer/me") && request.httpMethod == "GET" {
+                return customerResponse(url: url)
+            }
+            if url.path.hasSuffix("/customer/me/password") {
+                #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer access-active")
+                let body = try #require(bodyData(from: request))
+                let jsonObject = try #require(JSONSerialization.jsonObject(with: body) as? [String: String])
+                #expect(jsonObject["currentPassword"] == "password123")
+                #expect(jsonObject["newPassword"] == "newPassword123")
+                return json(url: url, headers: ["Set-Cookie": "labna_customer_refresh=; Path=/api/v1/customer/auth; HttpOnly"], body: #"{"data":{"passwordChanged":true},"meta":{"requestID":"r"}}"#)
+            }
+            return notFound(url: url)
+        }
+        defer { AuthURLProtocol.setHandler(nil) }
+        let store = AuthStore(service: service(storage: storage))
+        await store.restore()
+        let success = await store.changePassword(currentPassword: "password123", newPassword: "newPassword123")
+        #expect(success)
+        #expect(store.state == .guest)
+        #expect(try storage.load() == nil)
+    }
+
     private func activeSession(access: String, refresh: String) -> AuthSession {
         AuthSession(accessToken: access, accessTokenExpiresAt: Date().addingTimeInterval(600), refreshCookie: refresh, customer: customer())
     }
@@ -249,8 +333,8 @@ private func authResponse(url: URL, token: String, refresh: String) -> (URLRespo
     )
 }
 
-private func customerResponse(url: URL) -> (URLResponse, Data) {
-    json(url: url, body: #"{"data":{"id":"customer-1","name":"Demo Customer","phoneNumber":"+201012345678","email":"customer@example.com","addresses":[],"createdAt":"2026-01-01T00:00:00.000Z"},"meta":{"requestID":"r"}}"#)
+private func customerResponse(url: URL, name: String = "Demo Customer", phoneNumber: String = "+201012345678", email: String = "customer@example.com") -> (URLResponse, Data) {
+    json(url: url, body: "{\"data\":{\"id\":\"customer-1\",\"name\":\"\(name)\",\"phoneNumber\":\"\(phoneNumber)\",\"email\":\"\(email)\",\"addresses\":[],\"createdAt\":\"2026-01-01T00:00:00.000Z\"},\"meta\":{\"requestID\":\"r\"}}")
 }
 
 private func errorResponse(url: URL, status: Int, code: String, message: String) -> (URLResponse, Data) {
@@ -263,4 +347,22 @@ private func notFound(url: URL) -> (URLResponse, Data) {
 
 private func json(url: URL, status: Int = 200, headers: [String: String]? = nil, body: String) -> (URLResponse, Data) {
     (HTTPURLResponse(url: url, statusCode: status, httpVersion: nil, headerFields: headers)!, Data(body.utf8))
+}
+
+private func bodyData(from request: URLRequest) -> Data? {
+    if let body = request.httpBody { return body }
+    guard let stream = request.httpBodyStream else { return nil }
+    stream.open()
+    defer { stream.close() }
+    var data = Data()
+    let bufferSize = 1024
+    let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
+    defer { buffer.deallocate() }
+    while stream.hasBytesAvailable {
+        let count = stream.read(buffer, maxLength: bufferSize)
+        if count < 0 { return nil }
+        if count == 0 { break }
+        data.append(buffer, count: count)
+    }
+    return data
 }

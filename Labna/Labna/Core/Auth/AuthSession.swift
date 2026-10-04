@@ -32,3 +32,18 @@ struct CustomerAuthResponse: Decodable, Sendable {
 struct LogoutResponse: Decodable, Sendable {
     let loggedOut: Bool
 }
+
+struct CustomerProfilePatch: Encodable, Sendable {
+    let name: String?
+    let phoneNumber: String?
+    let email: String?
+}
+
+struct CustomerPasswordPatch: Encodable, Sendable {
+    let currentPassword: String
+    let newPassword: String
+}
+
+struct PasswordChangedResponse: Decodable, Sendable {
+    let passwordChanged: Bool
+}

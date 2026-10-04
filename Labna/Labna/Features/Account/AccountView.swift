@@ -17,6 +17,11 @@ struct AccountView: View {
         }
         .navigationTitle("account.title")
         .background(Color.labnaCream.opacity(0.35))
+        .task {
+            if container.auth.isAuthenticated {
+                await container.auth.refreshCustomer()
+            }
+        }
     }
 }
 
@@ -147,8 +152,23 @@ private struct AuthenticatedAccountView: View {
                 .accessibilityIdentifier("account.customer")
             }
 
+            Section("account.manage") {
+                NavigationLink {
+                    EditProfileView(customer: customer)
+                } label: {
+                    Label("account.editProfile", systemImage: "person.text.rectangle")
+                }
+                .accessibilityIdentifier("account.editProfile")
+
+                NavigationLink {
+                    ChangePasswordView()
+                } label: {
+                    Label("account.changePassword", systemImage: "lock.rotation")
+                }
+                .accessibilityIdentifier("account.changePassword")
+            }
+
             Section("account.availableLater") {
-                Label("account.profileSoon", systemImage: "person.text.rectangle")
                 Label("account.addressesSoon", systemImage: "mappin.and.ellipse")
                 Label("account.ordersSoon", systemImage: "shippingbox")
             }
@@ -170,6 +190,140 @@ private struct AuthenticatedAccountView: View {
         .scrollContentBackground(.hidden)
         .background(Color.labnaCream.opacity(0.45))
         .refreshable { await container.auth.refreshCustomer() }
+    }
+}
+
+private struct EditProfileView: View {
+    @Environment(AppContainer.self) private var container
+    @Environment(\.dismiss) private var dismiss
+    @State private var name: String
+    @State private var phoneNumber: String
+    @State private var email: String
+
+    init(customer: Customer) {
+        _name = State(initialValue: customer.name)
+        _phoneNumber = State(initialValue: customer.phoneNumber)
+        _email = State(initialValue: customer.email)
+    }
+
+    var body: some View {
+        Form {
+            Section("account.profile") {
+                AuthTextField(title: "auth.name", text: $name, identifier: "account.name", contentType: .name, keyboard: .default)
+                AuthTextField(title: "auth.phone", text: $phoneNumber, identifier: "account.phone", contentType: .telephoneNumber, keyboard: .phonePad)
+                AuthTextField(title: "auth.email", text: $email, identifier: "account.email", contentType: .emailAddress, keyboard: .emailAddress)
+            }
+
+            if let error = container.auth.lastError {
+                Section {
+                    AuthErrorLabel(error: error)
+                }
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .background(Color.labnaCream.opacity(0.45))
+        .navigationTitle("account.editProfile")
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("account.save") { save() }
+                    .disabled(container.auth.isLoading || !isValid)
+                    .accessibilityIdentifier("account.saveProfile")
+            }
+        }
+    }
+
+    private var isValid: Bool {
+        name.trimmingCharacters(in: .whitespacesAndNewlines).count >= 2 && phoneNumber.hasPrefix("+") && email.contains("@")
+    }
+
+    private func save() {
+        Task {
+            if await container.auth.updateProfile(name: name, phoneNumber: phoneNumber, email: email) {
+                dismiss()
+            }
+        }
+    }
+}
+
+private struct ChangePasswordView: View {
+    @Environment(AppContainer.self) private var container
+    @State private var currentPassword = ""
+    @State private var newPassword = ""
+    @State private var confirmPassword = ""
+    @State private var localErrorKey: LocalizedStringKey?
+
+    var body: some View {
+        Form {
+            Section("account.changePassword") {
+                SecureField("account.currentPassword", text: $currentPassword)
+                    .textContentType(.password)
+                    .accessibilityIdentifier("account.currentPassword")
+                SecureField("account.newPassword", text: $newPassword)
+                    .textContentType(.newPassword)
+                    .accessibilityIdentifier("account.newPassword")
+                SecureField("account.confirmPassword", text: $confirmPassword)
+                    .textContentType(.newPassword)
+                    .accessibilityIdentifier("account.confirmPassword")
+            }
+
+            if let localErrorKey {
+                Section {
+                    Label(localErrorKey, systemImage: "exclamationmark.circle")
+                        .font(LabnaTypography.caption)
+                        .foregroundStyle(Color.red)
+                        .accessibilityIdentifier("account.password.localError")
+                }
+            } else if let error = container.auth.lastError {
+                Section {
+                    AuthErrorLabel(error: error)
+                }
+            }
+
+            Section {
+                Button {
+                    submit()
+                } label: {
+                    if container.auth.isLoading {
+                        ProgressView()
+                    } else {
+                        Text("account.changePassword")
+                    }
+                }
+                .disabled(container.auth.isLoading || currentPassword.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty)
+                .accessibilityIdentifier("account.submitPassword")
+            } footer: {
+                Text("account.passwordInvalidatesSession")
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .background(Color.labnaCream.opacity(0.45))
+        .navigationTitle("account.changePassword")
+    }
+
+    private func submit() {
+        localErrorKey = nil
+        guard newPassword.count >= 8 else {
+            localErrorKey = "account.passwordTooShort"
+            return
+        }
+        guard newPassword == confirmPassword else {
+            localErrorKey = "account.passwordMismatch"
+            return
+        }
+        Task {
+            _ = await container.auth.changePassword(currentPassword: currentPassword, newPassword: newPassword)
+        }
+    }
+}
+
+private struct AuthErrorLabel: View {
+    let error: AuthError
+
+    var body: some View {
+        Label(LocalizedStringKey(error.messageKey), systemImage: "exclamationmark.circle")
+            .font(LabnaTypography.caption)
+            .foregroundStyle(Color.red)
+            .accessibilityIdentifier("auth.error")
     }
 }
 
