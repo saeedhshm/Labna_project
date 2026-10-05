@@ -471,6 +471,49 @@ final class LabnaUITests: XCTestCase {
         XCTAssertEqual(app.staticTexts.matching(identifier: "Default").count, 1, "The survivor inherits the default flag")
     }
 
+    /// Shows that the cart reports the server's verdict before checkout is
+    /// offered, and keeps working when the server cannot be reached.
+    ///
+    /// Skipped when the backend is not running, since validation is server driven.
+    @MainActor
+    func testCartReportsServerValidationBeforeCheckout() async throws {
+        guard await backendIsReachable() else {
+            throw XCTSkip("Backend not running on 127.0.0.1:3001")
+        }
+        let app = XCUIApplication()
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-resetAuthSession"]
+        app.launch()
+
+        app.tabBars.buttons["Products"].tap()
+        let product = app.buttons["product.milk-full"]
+        XCTAssertTrue(product.waitForExistence(timeout: 10))
+        product.tap()
+        XCTAssertTrue(app.buttons["variant.milk-full-1000"].waitForExistence(timeout: 5))
+        app.buttons["productDetails.add"].tap()
+
+        app.tabBars.buttons["Cart"].tap()
+        XCTAssertTrue(app.staticTexts["cart.product.milk-full"].waitForExistence(timeout: 10))
+
+        // The banner must settle on a server answer rather than staying pending.
+        let banner = app.descendants(matching: .any)["cart.validation.banner"]
+        XCTAssertTrue(banner.waitForExistence(timeout: 20))
+
+        // A stocked line is confirmed and the total is attributed to the server.
+        let ready = app.staticTexts["Cart checked \u{2014} prices and stock confirmed."].firstMatch
+        XCTAssertTrue(ready.waitForExistence(timeout: 20), "Cart should be confirmed by the server")
+        XCTAssertTrue(app.descendants(matching: .any)["cart.total.validated"].exists)
+        // No line-level complaint when nothing is wrong.
+        XCTAssertFalse(app.descendants(matching: .any)["cart.line.reason"].exists)
+        XCTAssertFalse(app.descendants(matching: .any)["cart.line.priceChanged"].exists)
+        // Checkout is offered only because the server agreed.
+        XCTAssertTrue(app.buttons["cart.checkout"].isEnabled)
+
+        // The confirmed total is the store's, not a locally computed guess.
+        let serverTotal = app.descendants(matching: .any)["cart.total.server"]
+        XCTAssertTrue(serverTotal.exists)
+        app.terminate()
+    }
+
     private func type(_ text: String, into field: XCUIElement) {
         XCTAssertTrue(field.waitForExistence(timeout: 5), "Missing field for \(text)")
         field.tap()
