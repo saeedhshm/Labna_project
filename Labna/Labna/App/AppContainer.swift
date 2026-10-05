@@ -52,7 +52,7 @@ final class AppContainer {
             case .localJSON:
                 remoteRepository = nil
             case .remote(let baseURL):
-                remoteRepository = BackendCatalogRepository(baseURL: baseURL)
+                remoteRepository = BackendCatalogRepository(baseURL: baseURL, locale: settings.language.apiLocale)
             }
         }
         catalogRepository = remoteRepository ?? bundledRepository

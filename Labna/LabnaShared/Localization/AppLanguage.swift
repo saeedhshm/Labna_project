@@ -17,4 +17,9 @@ enum AppLanguage: String, CaseIterable, Identifiable, Codable, Sendable {
         case .english: "language.english"
         }
     }
+
+    /// The `locale` query value the API expects. Its raw value already matches,
+    /// so this stays a single named mapping rather than a bare `rawValue` at
+    /// each call site.
+    var apiLocale: String { rawValue }
 }

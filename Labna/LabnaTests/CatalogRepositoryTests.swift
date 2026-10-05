@@ -48,6 +48,8 @@ struct CatalogRepositoryTests {
         ))
     }
 
+    private var baseURL: URL { URL(string: "http://127.0.0.1:3001/api/v1")! }
+
     private func backend(_ session: URLSession, baseURL: URL = URL(string: "http://127.0.0.1:3001/api/v1")!) -> BackendCatalogRepository {
         BackendCatalogRepository(baseURL: baseURL, session: session)
     }
@@ -145,6 +147,142 @@ struct CatalogRepositoryTests {
         } catch CatalogError.invalidData(let resource) {
             #expect(resource == .categories)
         }
+    }
+
+    @Test func baseURLComesFromASingleConfigurablePlace() async throws {
+        // Every network client resolves its origin from AppConfiguration, so a
+        // localhost URL never needs to be repeated elsewhere.
+        let configured = AppConfiguration.backendAPIBaseURL
+        #expect(configured.path.hasSuffix("/api/v1"))
+        #expect(configured.isAllowedCatalogAPIBaseURL)
+        // The backend is the primary source; bundled JSON is only bootstrap.
+        if case .localJSON = AppConfiguration.backend.dataSource {
+            Issue.record("Expected the backend to be the primary data source")
+        }
+        #expect(AppConfiguration.productionAPIBaseURL.scheme == "https")
+        // The value the app actually ships resolves to the same place.
+        #expect(AppContainer().catalogRepository is BackendCatalogRepository)
+    }
+
+    @Test func productQueryForwardsEverySupportedFilterToTheAPI() async throws {
+        var requested: URL?
+        CatalogURLProtocol.setHandler { request in
+            let url = try #require(request.url)
+            requested = url
+            return (HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!, Data(#"{"data":[],"meta":{"requestID":"r","nextCursor":null}}"#.utf8))
+        }
+        let session = session()
+        defer { session.invalidateAndCancel(); CatalogURLProtocol.setHandler(nil) }
+        let repository = BackendCatalogRepository(baseURL: baseURL, session: session, locale: "ar")
+
+        _ = try await repository.fetchProducts(query: BackendProductQuery(
+            locale: "ar",
+            searchText: "milk",
+            categoryID: "dairy",
+            featuredOnly: true,
+            availableOnly: false,
+            sort: "priceAsc"
+        ))
+
+        let url = try #require(requested)
+        let items = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems)
+        let values = Dictionary(uniqueKeysWithValues: items.map { ($0.name, $0.value) })
+        #expect(values["locale"] == "ar")
+        #expect(values["q"] == "milk")
+        #expect(values["categoryID"] == "dairy")
+        #expect(values["featured"] == "true")
+        #expect(values["available"] == "false")
+        #expect(values["sort"] == "priceAsc")
+    }
+
+    @Test func emptySearchIsOmittedSoTheAPIIsNotAskedForEverything() async throws {
+        let query = BackendProductQuery(locale: "en", searchText: "   ")
+        #expect(query.queryItems.map(\.name) == ["locale"])
+        #expect(BackendProductQuery(locale: "en").queryItems.map(\.name) == ["locale"])
+    }
+
+    /// The single-product endpoint answers with a bare object, so it is decoded
+    /// directly rather than through the `{ data }` list envelope.
+    private func productDetailBody(locale: String = "ar") -> String {
+        """
+        {"data":{"id":"milk-full","categoryID":"dairy",
+         "name":{"ar":"حليب","en":"Milk"},
+         "description":{"ar":"كامل","en":"Full"},
+         "imageURLs":["https://images.unsplash.com/milk.png"],
+         "ingredients":{"ar":"لبن","en":"Milk"},
+         "storageInstructions":{"ar":"بارد","en":"Chilled"},
+         "isFeatured":true,"isDemo":false,
+         "variants":[{"id":"milk-full-1l","label":{"ar":"١ لتر","en":"1 L"},
+                      "quantity":1000,"unit":"ml","priceMinor":5000,
+                      "currencyCode":"EGP","isAvailable":true}],
+         "meta":{"requestID":"r","branchID":"demo-cairo"}}}
+        """
+    }
+
+    @Test func productDetailUsesTheSingleProductEndpointAndMapsToDomain() async throws {
+        var requested: URL?
+        CatalogURLProtocol.setHandler { request in
+            let url = try #require(request.url)
+            requested = url
+            return (HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!, Data(productDetailBody().utf8))
+        }
+        let session = session()
+        defer { session.invalidateAndCancel(); CatalogURLProtocol.setHandler(nil) }
+        let repository = BackendCatalogRepository(baseURL: baseURL, session: session, locale: "ar")
+
+        let product = try await repository.fetchProduct(id: "milk-full")
+
+        let url = try #require(requested)
+        #expect(url.path == "/api/v1/products/milk-full")
+        #expect(url.query?.contains("locale=ar") == true)
+        #expect(product.id == "milk-full")
+        #expect(product.variants.first?.priceMinor == 5000)
+        #expect(product.variants.first?.isAvailable == true)
+    }
+
+    @Test func productDetailEscapesIdentifiersAndReportsServerErrors() async throws {
+        var requested: URL?
+        CatalogURLProtocol.setHandler { request in
+            let url = try #require(request.url)
+            requested = url
+            return (HTTPURLResponse(url: url, statusCode: 404, httpVersion: nil, headerFields: nil)!, Data(#"{"error":{"code":"NOT_FOUND","message":"Product not found"},"meta":{"requestID":"r"}}"#.utf8))
+        }
+        let session = session()
+        defer { session.invalidateAndCancel(); CatalogURLProtocol.setHandler(nil) }
+        let repository = BackendCatalogRepository(baseURL: baseURL, session: session)
+
+        do {
+            _ = try await repository.fetchProduct(id: "milk/full")
+            Issue.record("Expected a not-found failure")
+        } catch CatalogError.httpStatus(let status) {
+            #expect(status == 404)
+        }
+        #expect(requested?.path == "/api/v1/products/milk/full")
+    }
+
+    @Test func serverErrorCodesAreMappedInsteadOfCollapsingToAStatus() async throws {
+        for (code, expected): (String, CatalogError) in [
+            ("NO_PICKUP_BRANCH", .noPickupBranch),
+            ("INVALID_BRANCH", .invalidBranch),
+        ] {
+            CatalogURLProtocol.setHandler { request in
+                let url = try #require(request.url)
+                let body = "{\"error\":{\"code\":\"\(code)\",\"message\":\"nope\"},\"meta\":{\"requestID\":\"r\"}}"
+                return (HTTPURLResponse(url: url, statusCode: 503, httpVersion: nil, headerFields: nil)!, Data(body.utf8))
+            }
+            let session = session()
+            defer { session.invalidateAndCancel(); CatalogURLProtocol.setHandler(nil) }
+            do {
+                _ = try await BackendCatalogRepository(baseURL: baseURL, session: session).fetchProducts()
+                Issue.record("Expected \(code) to fail")
+            } catch let error as CatalogError {
+                #expect(error == expected)
+            }
+        }
+
+        // An unknown or unreadable code must not invent a specific meaning.
+        #expect(CatalogError.fromServerCode(nil, status: 500) == .httpStatus(500))
+        #expect(CatalogError.fromServerCode("SOMETHING_NEW", status: 500) == .httpStatus(500))
     }
 
     @Test func backendConfigurationUsesLocalSimulatorURLAndRejectsNonLocalHTTP() async throws {

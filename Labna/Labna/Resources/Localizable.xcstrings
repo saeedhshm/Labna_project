@@ -2105,6 +2105,38 @@
         }
       }
     },
+    "catalog.error.invalidBranch" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الفرع المحدد غير متاح للاستلام."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The selected pickup branch is unavailable."
+          }
+        }
+      }
+    },
+    "catalog.error.noPickupBranch" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يتم إعداد فرع استلام افتراضي."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No default pickup branch is configured."
+          }
+        }
+      }
+    },
     "catalog.offlineSavedData" : {
       "localizations" : {
         "ar" : {
