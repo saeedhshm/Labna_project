@@ -163,7 +163,13 @@ private struct AuthenticatedAccountView: View {
                 }
                 .accessibilityIdentifier("account.editProfile")
 
-                NavigationLink(value: AppDestination.addresses) {
+                NavigationLink {
+                    // Direct destination, like the rows above and below. A value
+                    // based link here would append to the enclosing tab's path
+                    // while this screen was itself pushed without one, which
+                    // leaves the row unable to open the list.
+                    AddressesView()
+                } label: {
                     Label("account.addresses", systemImage: "mappin.and.ellipse")
                 }
                 .accessibilityIdentifier("account.addresses")

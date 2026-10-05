@@ -31,6 +31,14 @@ struct LabnaApp: App {
         if ProcessInfo.processInfo.arguments.contains("-resetRecentlyViewed") {
             container.recentlyViewed.removeAll()
         }
+#if DEBUG
+        // The session lives in the Keychain, so it survives a reinstall and makes
+        // sign-in UI tests depend on whichever test ran last. UI tests pass this
+        // to start from a known guest state.
+        if ProcessInfo.processInfo.arguments.contains("-resetAuthSession") {
+            container.auth.resetLocalSession()
+        }
+#endif
         container.backgroundSync.register()
         container.backgroundSync.scheduleNextRefresh()
         _container = State(initialValue: container)

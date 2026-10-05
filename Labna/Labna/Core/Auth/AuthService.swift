@@ -125,6 +125,16 @@ actor AuthService {
         currentSession = nil
     }
 
+    /// Clears the persisted session.
+    ///
+    /// `nonisolated` so a launch-time reset can run before anything awaits this
+    /// actor. That is safe because `currentSession` is still `nil` during app
+    /// start-up; callers that already hold a live session should use
+    /// `logout()` instead so the API is told as well.
+    nonisolated func discardPersistedSession() {
+        try? storage.clear()
+    }
+
     func validAccessToken() async throws -> String {
         guard let existing = currentSession else { throw AuthError.expiredSession }
         if existing.hasUsableAccessToken { return existing.accessToken }

@@ -35,7 +35,7 @@ final class LabnaUITests: XCTestCase {
     func testLanguageSwitchNavigationAndPersistence() throws {
         let app = XCUIApplication()
         // UserDefaults launch arguments give this test a deterministic starting language.
-        app.launchArguments = ["-selectedLanguage", "en", "-resetCart"]
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-resetAuthSession"]
         app.launch()
 
         let tabs = app.tabBars.firstMatch
@@ -68,7 +68,7 @@ final class LabnaUITests: XCTestCase {
     @MainActor
     func testMoreInformationAndDemoBranches() throws {
         let app = XCUIApplication()
-        app.launchArguments = ["-selectedLanguage", "en", "-resetCart"]
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-resetAuthSession"]
         app.launch()
 
         let moreTab = app.tabBars.buttons["More"]
@@ -106,7 +106,7 @@ final class LabnaUITests: XCTestCase {
     @MainActor
     func testGuestAccountNavigationShowsLoginAndRegister() throws {
         let app = XCUIApplication()
-        app.launchArguments = ["-selectedLanguage", "en", "-resetCart"]
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-resetAuthSession"]
         app.launch()
 
         let moreTab = app.tabBars.buttons["More"]
@@ -124,7 +124,7 @@ final class LabnaUITests: XCTestCase {
     @MainActor
     func testHomeBannerCarouselShowsMultipleBanners() throws {
         let app = XCUIApplication()
-        app.launchArguments = ["-selectedLanguage", "en", "-resetCart"]
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-resetAuthSession"]
         app.launch()
 
         let firstBanner = app.buttons["banner.0.fresh-start"]
@@ -135,7 +135,7 @@ final class LabnaUITests: XCTestCase {
     @MainActor
     func testHomeSearchExpandsFromAppBar() throws {
         let app = XCUIApplication()
-        app.launchArguments = ["-selectedLanguage", "en", "-resetCart"]
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-resetAuthSession"]
         app.launch()
 
         let openSearch = app.buttons["home.search.open"]
@@ -199,7 +199,7 @@ final class LabnaUITests: XCTestCase {
     @MainActor
     func testBrowseProductAndQuickAdd() throws {
         let app = XCUIApplication()
-        app.launchArguments = ["-selectedLanguage", "en", "-resetCart"]
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-resetAuthSession"]
         app.launch()
 
         let productsTab = app.tabBars.buttons["Products"]
@@ -304,7 +304,7 @@ final class LabnaUITests: XCTestCase {
         let email = "ios-ui-\(Int(Date().timeIntervalSince1970))@example.com"
 
         let app = XCUIApplication()
-        app.launchArguments = ["-selectedLanguage", "en", "-resetCart"]
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-resetAuthSession"]
         app.launch()
 
         let moreTab = app.tabBars.buttons["More"]
@@ -315,8 +315,11 @@ final class LabnaUITests: XCTestCase {
         // Sign in through the real form. The account is created through the API
         // first because the phone keypad has no "+" key, which the E.164 rule
         // requires, so it cannot be typed on the Simulator's phone keyboard.
-        let seeded = await seedCustomer(email: email)
-        XCTAssertTrue(seeded, "Could not seed the account through the backend")
+        switch await seedCustomer(email: email) {
+        case .seeded: break
+        case .rateLimited: throw XCTSkip("The API rate limiter rejected the sign-in seed")
+        case .failed(let reason): XCTFail("Could not seed the account: " + reason)
+        }
 
         let emailField = app.textFields["auth.email"]
         XCTAssertTrue(emailField.waitForExistence(timeout: 5))
@@ -368,9 +371,137 @@ final class LabnaUITests: XCTestCase {
         XCTAssertTrue(app.textFields["auth.email"].waitForExistence(timeout: 15))
     }
 
+    /// Walks the saved-address screen end to end against the running backend:
+    /// empty state, add, set default, and delete behind a confirmation.
+    ///
+    /// Skipped when the backend is not running, so the suite still works offline.
+    @MainActor
+    func testSavedAddressManagement() async throws {
+        guard await backendIsReachable() else {
+            throw XCTSkip("Backend not running on 127.0.0.1:3001")
+        }
+        let email = "ios-ui-addr-\(Int(Date().timeIntervalSince1970))@example.com"
+        switch await seedCustomer(email: email) {
+        case .seeded: break
+        case .rateLimited: throw XCTSkip("The API rate limiter rejected the sign-in seed")
+        case .failed(let reason): XCTFail("Could not seed the account: " + reason)
+        }
+
+        let app = XCUIApplication()
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-resetAuthSession"]
+        app.launch()
+
+        app.tabBars.buttons["More"].tap()
+        app.buttons["more.account"].tap()
+
+        let emailField = app.textFields["auth.email"]
+        XCTAssertTrue(emailField.waitForExistence(timeout: 10))
+        emailField.tap()
+        emailField.typeText(email)
+        let password = app.secureTextFields["auth.password"]
+        password.tap()
+        password.typeText("password123")
+        app.buttons["auth.login.submit"].tap()
+
+        XCTAssertTrue(app.buttons["auth.logout"].waitForExistence(timeout: 20))
+        app.buttons["account.addresses"].tap()
+
+        // A brand new customer has no saved addresses.
+        XCTAssertTrue(app.staticTexts["No saved addresses"].waitForExistence(timeout: 15))
+
+        // The first address is added through the native form.
+        app.buttons["addresses.add"].tap()
+        XCTAssertTrue(app.navigationBars["Add address"].waitForExistence(timeout: 5))
+        type("Home", into: app.textFields["addresses.field.label"])
+        type("Cairo", into: app.textFields["addresses.field.city"])
+        type("Maadi", into: app.textFields["addresses.field.area"])
+        type("Street 15", into: app.textFields["addresses.field.street"])
+        type("Building 7", into: app.textFields["addresses.field.building"])
+        app.buttons["addresses.save"].tap()
+
+        // It shows up, and the API promotes the first address to default.
+        XCTAssertTrue(app.staticTexts["Home"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.descendants(matching: .any)["addresses.defaultBadge"].exists)
+        XCTAssertFalse(app.staticTexts["No saved addresses"].exists)
+
+        // A second address can take over as the default.
+        app.buttons["addresses.add"].tap()
+        XCTAssertTrue(app.navigationBars["Add address"].waitForExistence(timeout: 5))
+        type("Work", into: app.textFields["addresses.field.label"])
+        type("Giza", into: app.textFields["addresses.field.city"])
+        type("Dokki", into: app.textFields["addresses.field.area"])
+        type("Street 9", into: app.textFields["addresses.field.street"])
+        type("Building 2", into: app.textFields["addresses.field.building"])
+        app.buttons["addresses.save"].tap()
+
+        XCTAssertTrue(app.staticTexts["Work"].waitForExistence(timeout: 15))
+
+        // "Home" was saved first, so the API made it the default and the second
+        // address must not carry a badge as well.
+        XCTAssertEqual(app.staticTexts.matching(identifier: "Default").count, 1, "Exactly one address may be marked as the default")
+
+        // The default is also identifiable from the row: its own "set default"
+        // action is disabled, while the other rows offer it.
+        let setDefaultButtons = app.buttons.matching(identifier: "addresses.row.setDefault")
+        XCTAssertEqual(setDefaultButtons.count, 2)
+        XCTAssertFalse(setDefaultButtons.element(boundBy: 0).isEnabled, "Home is already the default")
+        XCTAssertTrue(setDefaultButtons.element(boundBy: 1).isEnabled)
+
+        // Hand the default over to "Work" and confirm the badge follows.
+        setDefaultButtons.element(boundBy: 1).tap()
+        let moved = NSPredicate(format: "isEnabled == true")
+        expectation(for: moved, evaluatedWith: setDefaultButtons.element(boundBy: 0))
+        waitForExpectations(timeout: 15)
+        XCTAssertFalse(setDefaultButtons.element(boundBy: 1).isEnabled, "Work is now the default")
+        XCTAssertEqual(app.staticTexts.matching(identifier: "Default").count, 1)
+
+        // Deleting asks for confirmation first, and cancelling keeps the address.
+        app.buttons.matching(identifier: "addresses.row.delete").element(boundBy: 1).tap()
+        let confirmDelete = app.buttons["Delete address"].firstMatch
+        XCTAssertTrue(confirmDelete.waitForExistence(timeout: 5), "Deleting must ask for confirmation")
+        app.buttons["Cancel"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["Work"].exists, "Cancelling must not delete the address")
+
+        // Deleting for real removes it and promotes the remaining address.
+        app.buttons.matching(identifier: "addresses.row.delete").element(boundBy: 1).tap()
+        XCTAssertTrue(confirmDelete.waitForExistence(timeout: 5))
+        confirmDelete.tap()
+        XCTAssertFalse(app.staticTexts["Work"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.staticTexts["Home"].exists)
+        XCTAssertEqual(app.staticTexts.matching(identifier: "Default").count, 1, "The survivor inherits the default flag")
+    }
+
+    private func type(_ text: String, into field: XCUIElement) {
+        XCTAssertTrue(field.waitForExistence(timeout: 5), "Missing field for \(text)")
+        field.tap()
+        field.typeText(text)
+    }
+
+    /// `URLSession.shared` keeps a cookie jar, and the Simulator shares it with
+    /// the app under test. A leftover `labna_customer_refresh` cookie would make
+    /// the API reject this cookie-authenticated request with `403
+    /// INVALID_ORIGIN`, so seeding uses a cookie-less session like the app does.
+    private static let cookieLessSession: URLSession = {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.httpCookieStorage = nil
+        configuration.httpShouldSetCookies = false
+        configuration.httpCookieAcceptPolicy = .never
+        configuration.timeoutIntervalForRequest = 20
+        return URLSession(configuration: configuration)
+    }()
+
+    /// Outcome of seeding the account a test signs in with.
+    private enum SeedResult {
+        case seeded
+        /// The API throttles its auth router, which is an environment limit
+        /// rather than a product failure.
+        case rateLimited
+        case failed(String)
+    }
+
     /// Creates the account this test signs in with, using the same public
     /// registration endpoint the app uses.
-    private func seedCustomer(email: String) async -> Bool {
+    private func seedCustomer(email: String) async -> SeedResult {
         struct Registration: Encodable {
             let name = "UI Account Tester"
             let phoneNumber = "+201012345678"
@@ -379,14 +510,21 @@ final class LabnaUITests: XCTestCase {
         }
         var request = URLRequest(url: URL(string: "http://127.0.0.1:3001/api/v1/customer/auth/register")!)
         request.httpMethod = "POST"
+        request.timeoutInterval = 20
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try? JSONEncoder().encode(Registration(email: email))
         do {
-            let (_, response) = try await URLSession.shared.data(for: request)
-            guard let http = response as? HTTPURLResponse else { return false }
-            return (200..<300).contains(http.statusCode)
+            let (_, response) = try await Self.cookieLessSession.data(for: request)
+            guard let http = response as? HTTPURLResponse else {
+                return .failed("no HTTP response")
+            }
+            if http.statusCode == 429 { return .rateLimited }
+            guard (200..<300).contains(http.statusCode) else {
+                return .failed("HTTP \(http.statusCode)")
+            }
+            return .seeded
         } catch {
-            return false
+            return .failed("\(error)")
         }
     }
 

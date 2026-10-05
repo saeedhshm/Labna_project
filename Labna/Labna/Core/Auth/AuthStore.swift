@@ -91,6 +91,17 @@ final class AuthStore {
         isLoading = false
     }
 
+    /// Drops the locally held session without contacting the API.
+    ///
+    /// Used by UI tests that need a known guest state: the Keychain outlives a
+    /// reinstall, so a persisted session would otherwise make them depend on
+    /// whichever test happened to run last.
+    func resetLocalSession() {
+        service.discardPersistedSession()
+        state = .guest
+        lastError = nil
+    }
+
     /// Called by dependent stores when the backend rejects the session after a
     /// refresh attempt, so the account screen returns to the sign-in form.
     func markSessionExpired() {
