@@ -93,9 +93,12 @@ private struct AuthFormView: View {
     }
 
     private var isValid: Bool {
-        let hasLoginFields = email.contains("@") && !password.isEmpty
-        if mode == .login { return hasLoginFields }
-        return hasLoginFields && name.trimmingCharacters(in: .whitespacesAndNewlines).count >= 2 && phoneNumber.hasPrefix("+") && password.count >= 8
+        let hasEmail = email.contains("@")
+        guard hasEmail, !password.isEmpty else { return false }
+        if mode == .login { return true }
+        // Reuses the profile rules so registration and editing cannot drift apart.
+        let profile = ProfileDraft(name: name, phoneNumber: phoneNumber, email: email)
+        return profile.isValid && password.count >= PasswordChangeDraft.minimumLength
     }
 
     private func submit() {
@@ -200,22 +203,19 @@ private struct AuthenticatedAccountView: View {
 private struct EditProfileView: View {
     @Environment(AppContainer.self) private var container
     @Environment(\.dismiss) private var dismiss
-    @State private var name: String
-    @State private var phoneNumber: String
-    @State private var email: String
+    @State private var draft: ProfileDraft
+    @State private var didValidate = false
 
     init(customer: Customer) {
-        _name = State(initialValue: customer.name)
-        _phoneNumber = State(initialValue: customer.phoneNumber)
-        _email = State(initialValue: customer.email)
+        _draft = State(initialValue: ProfileDraft(customer: customer))
     }
 
     var body: some View {
         Form {
             Section("account.profile") {
-                AuthTextField(title: "auth.name", text: $name, identifier: "account.name", contentType: .name, keyboard: .default)
-                AuthTextField(title: "auth.phone", text: $phoneNumber, identifier: "account.phone", contentType: .telephoneNumber, keyboard: .phonePad)
-                AuthTextField(title: "auth.email", text: $email, identifier: "account.email", contentType: .emailAddress, keyboard: .emailAddress)
+                field(.name, "auth.name", identifier: "account.name", contentType: .name, keyboard: .default)
+                field(.phoneNumber, "auth.phone", identifier: "account.phone", contentType: .telephoneNumber, keyboard: .phonePad)
+                field(.email, "auth.email", identifier: "account.email", contentType: .emailAddress, keyboard: .emailAddress)
             }
 
             if let error = container.auth.lastError {
@@ -228,21 +228,68 @@ private struct EditProfileView: View {
         .background(Color.labnaCream.opacity(0.45))
         .navigationTitle("account.editProfile")
         .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("account.cancel") { dismiss() }
+                    .accessibilityIdentifier("account.cancelProfile")
+            }
             ToolbarItem(placement: .confirmationAction) {
                 Button("account.save") { save() }
-                    .disabled(container.auth.isLoading || !isValid)
+                    .disabled(container.auth.isLoading || !draft.isValid)
                     .accessibilityIdentifier("account.saveProfile")
             }
         }
     }
 
-    private var isValid: Bool {
-        name.trimmingCharacters(in: .whitespacesAndNewlines).count >= 2 && phoneNumber.hasPrefix("+") && email.contains("@")
+    @ViewBuilder
+    private func field(
+        _ field: ProfileDraft.Field,
+        _ title: LocalizedStringKey,
+        identifier: String,
+        contentType: UITextContentType,
+        keyboard: UIKeyboardType
+    ) -> some View {
+        let binding = Binding(
+            get: { text(for: field) },
+            set: { set($0, for: field) }
+        )
+        AuthTextField(title: title, text: binding, identifier: identifier, contentType: contentType, keyboard: keyboard)
+        if let messageKey = errorKey(for: field) {
+            AuthErrorLabel(error: .validation(messageKey))
+                .accessibilityIdentifier("account.field.\(field.rawValue).error")
+        }
+    }
+
+    private func text(for field: ProfileDraft.Field) -> String {
+        switch field {
+        case .name: draft.name
+        case .phoneNumber: draft.phoneNumber
+        case .email: draft.email
+        }
+    }
+
+    private func set(_ value: String, for field: ProfileDraft.Field) {
+        switch field {
+        case .name: draft.name = value
+        case .phoneNumber: draft.phoneNumber = value
+        case .email: draft.email = value
+        }
+    }
+
+    private func errorKey(for field: ProfileDraft.Field) -> String? {
+        guard didValidate else { return nil }
+        return draft.validationErrors()[field]
     }
 
     private func save() {
+        didValidate = true
+        guard draft.isValid else { return }
+        let input = draft.input()
         Task {
-            if await container.auth.updateProfile(name: name, phoneNumber: phoneNumber, email: email) {
+            if await container.auth.updateProfile(
+                name: input.name ?? "",
+                phoneNumber: input.phoneNumber ?? "",
+                email: input.email ?? ""
+            ) {
                 dismiss()
             }
         }
@@ -306,16 +353,18 @@ private struct ChangePasswordView: View {
 
     private func submit() {
         localErrorKey = nil
-        guard newPassword.count >= 8 else {
-            localErrorKey = "account.passwordTooShort"
-            return
-        }
-        guard newPassword == confirmPassword else {
-            localErrorKey = "account.passwordMismatch"
+        if let problem = PasswordChangeDraft.validate(newPassword: newPassword, confirmation: confirmPassword) {
+            localErrorKey = problem.messageKey
             return
         }
         Task {
+            // On success the API revokes every session, so the store clears local
+            // secure state and the account screen falls back to the login form.
+            // The typed passwords are dropped either way and never persisted.
             _ = await container.auth.changePassword(currentPassword: currentPassword, newPassword: newPassword)
+            currentPassword = ""
+            newPassword = ""
+            confirmPassword = ""
         }
     }
 }
@@ -324,10 +373,21 @@ private struct AuthErrorLabel: View {
     let error: AuthError
 
     var body: some View {
-        Label(LocalizedStringKey(error.messageKey), systemImage: "exclamationmark.circle")
-            .font(LabnaTypography.caption)
-            .foregroundStyle(Color.red)
-            .accessibilityIdentifier("auth.error")
+        Label {
+            // A `.validation` payload is either a message key (used by the field
+            // rules in `ProfileDraft`) or plain server text, so both are resolved
+            // here rather than showing a raw key to the user.
+            if case .validation(let payload) = error, payload.hasPrefix("profile.error.") {
+                Text(LocalizedStringKey(payload))
+            } else {
+                Text(LocalizedStringKey(error.messageKey))
+            }
+        } icon: {
+            Image(systemName: "exclamationmark.circle")
+        }
+        .font(LabnaTypography.caption)
+        .foregroundStyle(Color.red)
+        .accessibilityIdentifier("auth.error")
     }
 }
 

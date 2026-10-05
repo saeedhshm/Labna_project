@@ -291,4 +291,116 @@ final class LabnaUITests: XCTestCase {
             XCUIApplication().launch()
         }
     }
+
+    /// Registers a real customer through the running backend, then walks the
+    /// authenticated account screen, the profile editor and the password form.
+    ///
+    /// Skipped when the backend is not running, so the suite still works offline.
+    @MainActor
+    func testAuthenticatedAccountProfileAndPasswordScreens() async throws {
+        guard await backendIsReachable() else {
+            throw XCTSkip("Backend not running on 127.0.0.1:3001")
+        }
+        let email = "ios-ui-\(Int(Date().timeIntervalSince1970))@example.com"
+
+        let app = XCUIApplication()
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart"]
+        app.launch()
+
+        let moreTab = app.tabBars.buttons["More"]
+        XCTAssertTrue(moreTab.waitForExistence(timeout: 10))
+        moreTab.tap()
+        app.buttons["more.account"].tap()
+
+        // Sign in through the real form. The account is created through the API
+        // first because the phone keypad has no "+" key, which the E.164 rule
+        // requires, so it cannot be typed on the Simulator's phone keyboard.
+        let seeded = await seedCustomer(email: email)
+        XCTAssertTrue(seeded, "Could not seed the account through the backend")
+
+        let emailField = app.textFields["auth.email"]
+        XCTAssertTrue(emailField.waitForExistence(timeout: 5))
+        emailField.tap()
+        emailField.typeText(email)
+        let password = app.secureTextFields["auth.password"]
+        password.tap()
+        password.typeText("password123")
+        app.buttons["auth.login.submit"].tap()
+
+        // The authenticated screen must show the backend's profile, not a guess.
+        XCTAssertTrue(app.descendants(matching: .any)["account.customer"].waitForExistence(timeout: 20))
+        XCTAssertTrue(app.staticTexts["UI Account Tester"].exists)
+        XCTAssertTrue(app.staticTexts[email.lowercased()].exists)
+        XCTAssertTrue(app.buttons["auth.logout"].exists)
+
+        // Profile editor opens pre-filled from the loaded customer.
+        app.buttons["account.editProfile"].tap()
+        XCTAssertTrue(app.navigationBars["Edit profile"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.textFields["account.name"].exists)
+        XCTAssertTrue(app.textFields["account.phone"].exists)
+        XCTAssertTrue(app.textFields["account.email"].exists)
+        XCTAssertTrue(app.buttons["account.saveProfile"].isEnabled)
+
+        // Change password exposes all three secure fields.
+        app.navigationBars.buttons.firstMatch.tap()
+        app.buttons["account.changePassword"].tap()
+        XCTAssertTrue(app.navigationBars["Change password"].waitForExistence(timeout: 5))
+        let current = app.secureTextFields["account.currentPassword"]
+        let new = app.secureTextFields["account.newPassword"]
+        let confirm = app.secureTextFields["account.confirmPassword"]
+        XCTAssertTrue(current.exists)
+        XCTAssertTrue(new.exists)
+        XCTAssertTrue(confirm.exists)
+
+        // A mismatched confirmation is caught before any request is sent.
+        current.tap()
+        current.typeText("password123")
+        new.tap()
+        new.typeText("brandNewPassword456")
+        confirm.tap()
+        confirm.typeText("brandNewPassword457")
+        app.buttons["account.submitPassword"].tap()
+        XCTAssertTrue(app.staticTexts["The new passwords do not match."].waitForExistence(timeout: 5))
+
+        // Signing out returns to the guest form.
+        app.navigationBars.buttons.firstMatch.tap()
+        app.buttons["auth.logout"].tap()
+        XCTAssertTrue(app.textFields["auth.email"].waitForExistence(timeout: 15))
+    }
+
+    /// Creates the account this test signs in with, using the same public
+    /// registration endpoint the app uses.
+    private func seedCustomer(email: String) async -> Bool {
+        struct Registration: Encodable {
+            let name = "UI Account Tester"
+            let phoneNumber = "+201012345678"
+            let email: String
+            let password = "password123"
+        }
+        var request = URLRequest(url: URL(string: "http://127.0.0.1:3001/api/v1/customer/auth/register")!)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONEncoder().encode(Registration(email: email))
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse else { return false }
+            return (200..<300).contains(http.statusCode)
+        } catch {
+            return false
+        }
+    }
+
+    /// The profile and password screens need a live backend, since registration
+    /// and validation are server-driven.
+    private func backendIsReachable() async -> Bool {
+        var request = URLRequest(url: URL(string: "http://127.0.0.1:3001/health/ready")!)
+        request.timeoutInterval = 3
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse else { return false }
+            return (200..<300).contains(http.statusCode)
+        } catch {
+            return false
+        }
+    }
 }
