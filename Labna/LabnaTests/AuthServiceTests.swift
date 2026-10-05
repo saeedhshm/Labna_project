@@ -63,14 +63,19 @@ private final class MemoryAuthSessionStore: AuthSessionStoring, @unchecked Senda
 @MainActor
 @Suite(.serialized)
 struct AuthServiceTests {
-    private func session() -> URLSession {
+    private func session(cookieStorage: HTTPCookieStorage? = nil) -> URLSession {
         let config = URLSessionConfiguration.ephemeral
         config.protocolClasses = [AuthURLProtocol.self]
+        if let cookieStorage {
+            config.httpCookieStorage = cookieStorage
+            config.httpCookieAcceptPolicy = .always
+            config.httpShouldSetCookies = true
+        }
         return URLSession(configuration: config)
     }
 
-    private func service(storage: MemoryAuthSessionStore = MemoryAuthSessionStore()) -> AuthService {
-        AuthService(baseURL: URL(string: "http://127.0.0.1:3001/api/v1")!, session: session(), storage: storage)
+    private func service(storage: MemoryAuthSessionStore = MemoryAuthSessionStore(), cookieStorage: HTTPCookieStorage? = nil) -> AuthService {
+        AuthService(baseURL: URL(string: "http://127.0.0.1:3001/api/v1")!, session: session(cookieStorage: cookieStorage), storage: storage, cookieStorage: cookieStorage)
     }
 
     @Test func loginStoresSessionAndLoadsMe() async throws {
@@ -93,6 +98,155 @@ struct AuthServiceTests {
         #expect(customer.email == "customer@example.com")
         let me = try await service.me()
         #expect(me == customer)
+    }
+
+    /// The API rejects a cookie-carrying `/customer/auth/*` request without an
+    /// allow-listed `Origin` (403 `INVALID_ORIGIN`), which `URLSession` never
+    /// adds on its own. Refresh and logout are therefore dead without it.
+    @Test func cookieAuthenticatedRequestsCarryAnOriginHeader() async throws {
+        var refreshHeaders: [String: String] = [:]
+        var logoutHeaders: [String: String] = [:]
+        AuthURLProtocol.setHandler { request in
+            let url = try #require(request.url)
+            let path = url.path
+            if path.hasSuffix("/customer/auth/refresh") {
+                refreshHeaders = request.allHTTPHeaderFields ?? [:]
+                return json(url: url, body: #"{"data":{"accessToken":"access-rotated","expiresIn":900,"customer":{"id":"customer-1","name":"Demo Customer","phoneNumber":"+201012345678","email":"customer@example.com","addresses":[],"createdAt":"2026-01-01T00:00:00.000Z"}},"meta":{"requestID":"r"}}"#)
+            }
+            if path.hasSuffix("/customer/auth/logout") {
+                logoutHeaders = request.allHTTPHeaderFields ?? [:]
+                return json(url: url, body: #"{"data":{"loggedOut":true},"meta":{"requestID":"r"}}"#)
+            }
+            return notFound(url: url)
+        }
+        defer { AuthURLProtocol.setHandler(nil) }
+
+        let storage = MemoryAuthSessionStore(expiredSession(refresh: "refresh-old"))
+        let service = service(storage: storage)
+
+        _ = try await service.refreshForTesting()
+        #expect(refreshHeaders["Origin"] == AppConfiguration.customerAuthOrigin)
+        #expect(refreshHeaders["Cookie"] == "labna_customer_refresh=refresh-old")
+
+        // Logout must run against the session refresh just produced, not the
+        // stale bootstrap token.
+        _ = try await service.logoutForTesting()
+        #expect(logoutHeaders["Origin"] == AppConfiguration.customerAuthOrigin)
+        #expect(logoutHeaders["Cookie"] == "labna_customer_refresh=refresh-old")
+        #expect(logoutHeaders["Authorization"] == "Bearer access-rotated")
+    }
+
+    @Test func theAuthSessionNeverReliesOnTheSharedCookieJar() {
+        // The refresh token lives in the Keychain and is replayed by hand, so a
+        // cookie the jar auto-attaches could not satisfy the Origin guard and
+        // would be sent twice for refresh.
+        let configuration = URLSessionConfiguration.default
+        #expect(AuthService.defaultSession().configuration.httpShouldSetCookies == false)
+        #expect(AuthService.defaultSession().configuration.httpCookieStorage == nil)
+        _ = configuration
+    }
+
+    @Test func aNetworkFailureDuringRefreshKeepsTheStoredSession() async throws {
+        let storage = MemoryAuthSessionStore(expiredSession(refresh: "refresh-good"))
+        AuthURLProtocol.setHandler { _ in throw URLError(.notConnectedToInternet) }
+        defer { AuthURLProtocol.setHandler(nil) }
+        let store = AuthStore(service: service(storage: storage))
+
+        // Being offline says nothing about the 30-day refresh session, so the
+        // user must stay signed in rather than being silently logged out.
+        await store.restore()
+        #expect(store.isAuthenticated)
+        #expect(try storage.load() != nil)
+        #expect(try storage.load()?.refreshCookie == "refresh-good")
+    }
+
+    @Test func logoutClearsLocalStateEvenWhenTheServerCannotBeReached() async throws {
+        let storage = MemoryAuthSessionStore(activeSession(access: "access-active", refresh: "refresh-active"))
+        AuthURLProtocol.setHandler { request in
+            let url = try #require(request.url)
+            if url.path.hasSuffix("/customer/me") { return customerResponse(url: url) }
+            throw URLError(.notConnectedToInternet)
+        }
+        defer { AuthURLProtocol.setHandler(nil) }
+        let store = AuthStore(service: service(storage: storage))
+        await store.restore()
+        #expect(store.isAuthenticated)
+
+        await store.logout()
+        // A user who asked to sign out must never be stranded signed in.
+        #expect(store.state == .guest)
+        #expect(try storage.load() == nil)
+    }
+
+    @Test func onlyDefinitiveRejectionsEndTheSession() {
+        // A 30-day refresh token must survive anything the API did not refuse.
+        #expect(AuthError.unauthorized.terminatesSession)
+        #expect(AuthError.expiredSession.terminatesSession)
+        #expect(AuthError.invalidCredentials.terminatesSession)
+        #expect(!(AuthError.network(.notConnectedToInternet).terminatesSession))
+        #expect(!(AuthError.network(.timedOut).terminatesSession))
+        #expect(!(AuthError.httpStatus(403, nil).terminatesSession))
+        #expect(!(AuthError.httpStatus(500, nil).terminatesSession))
+        #expect(!(AuthError.invalidResponse.terminatesSession))
+        #expect(!(AuthError.validation("x").terminatesSession))
+    }
+
+    @Test func aRefreshCookieFromAnotherHostIsNeverAccepted() async throws {
+        let cookieStorage = HTTPCookieStorage()
+        // Same cookie name, unrelated host: accepting it would hand this app a
+        // token that belongs somewhere else entirely.
+        let foreign = try #require(HTTPCookie(properties: [
+            .domain: "example.invalid",
+            .path: "/api/v1/customer/auth",
+            .name: "labna_customer_refresh",
+            .value: "not-ours",
+            .secure: "FALSE",
+        ]))
+        cookieStorage.setCookie(foreign)
+        defer { cookieStorage.deleteCookie(foreign) }
+
+        AuthURLProtocol.setHandler { request in
+            let url = try #require(request.url)
+            if url.path.hasSuffix("/customer/auth/login") {
+                // No cookie for our host and none in the response, so login
+                // must fail loudly rather than persist someone else's token.
+                return json(url: url, body: #"{"data":{"accessToken":"access","expiresIn":900,"customer":{"id":"customer-1","name":"Demo Customer","phoneNumber":"+201012345678","email":"customer@example.com","addresses":[],"createdAt":"2026-01-01T00:00:00.000Z"}},"meta":{"requestID":"r"}}"#)
+            }
+            return notFound(url: url)
+        }
+        defer { AuthURLProtocol.setHandler(nil) }
+
+        do {
+            _ = try await service(cookieStorage: cookieStorage).login(email: "customer@example.com", password: "password123")
+            Issue.record("Expected login to fail without our own refresh cookie")
+        } catch AuthError.invalidResponse {}
+    }
+
+    @Test func loginUsesStoredRefreshCookieWhenHeaderIsUnavailable() async throws {
+        let cookieStorage = HTTPCookieStorage.shared
+        cookieStorage.cookies?.filter { $0.name == "labna_customer_refresh" }.forEach(cookieStorage.deleteCookie)
+        let cookie = try #require(HTTPCookie(properties: [
+            .domain: "127.0.0.1",
+            .path: "/api/v1/customer/auth",
+            .name: "labna_customer_refresh",
+            .value: "refresh-from-storage",
+            .secure: "FALSE",
+        ]))
+        cookieStorage.setCookie(cookie)
+        defer { cookieStorage.deleteCookie(cookie) }
+        AuthURLProtocol.setHandler { request in
+            let url = try #require(request.url)
+            if url.path.hasSuffix("/customer/auth/login") {
+                #expect(cookieStorage.cookies?.contains(where: { $0.name == "labna_customer_refresh" }) == true)
+                return json(url: url, body: #"{"data":{"accessToken":"access-login","expiresIn":900,"customer":{"id":"customer-1","name":"Demo Customer","phoneNumber":"+201012345678","email":"customer@example.com","addresses":[],"createdAt":"2026-01-01T00:00:00.000Z"}},"meta":{"requestID":"r"}}"#)
+            }
+            return notFound(url: url)
+        }
+        defer { AuthURLProtocol.setHandler(nil) }
+
+        let storage = MemoryAuthSessionStore()
+        _ = try await service(storage: storage, cookieStorage: cookieStorage).login(email: "customer@example.com", password: "password123")
+        #expect(try storage.load()?.refreshCookie == "refresh-from-storage")
     }
 
     @Test func registerMapsDuplicateAndValidationFailures() async throws {

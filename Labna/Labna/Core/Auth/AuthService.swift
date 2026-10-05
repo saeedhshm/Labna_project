@@ -4,15 +4,47 @@ actor AuthService {
     private let baseURL: URL
     private let session: URLSession
     private let storage: any AuthSessionStoring
+    private let cookieStorage: HTTPCookieStorage?
     private var currentSession: AuthSession?
     private var refreshTask: Task<AuthSession, Error>?
     private let refreshCookieName = "labna_customer_refresh"
 
-    init(baseURL: URL, session: URLSession = .shared, storage: any AuthSessionStoring = KeychainAuthSessionStore()) {
+    init(
+        baseURL: URL,
+        session: URLSession = .shared,
+        storage: any AuthSessionStoring = KeychainAuthSessionStore(),
+        cookieStorage: HTTPCookieStorage? = nil
+    ) {
         self.baseURL = baseURL
         self.session = session
         self.storage = storage
+        self.cookieStorage = cookieStorage ?? session.configuration.httpCookieStorage ?? .shared
     }
+
+    /// The backend's CSRF guard rejects any `/customer/auth/*` request that
+    /// carries the refresh cookie without an allow-listed `Origin`
+    /// (`customer-auth.ts` in the API). Browsers send `Origin` automatically, so
+    /// the storefront never hits this, but `URLSession` does not — which would
+    /// make refresh and logout fail with `403 INVALID_ORIGIN` on a native client.
+    ///
+    /// The refresh token is kept in the Keychain and replayed by hand, so the
+    /// cookie jar is disabled on this session: that keeps a stale cookie from
+    /// being attached behind our back, and lets `Origin` be the single source of
+    /// the cookie-authenticated request.
+    private static func makeAuthSession() -> URLSession {
+        let configuration = URLSessionConfiguration.default
+        configuration.httpShouldSetCookies = false
+        configuration.httpCookieAcceptPolicy = .never
+        configuration.httpCookieStorage = nil
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        return URLSession(configuration: configuration)
+    }
+
+    /// The session used for the cookie-authenticated auth endpoints.
+    ///
+    /// Defaults to a cookie-less session so the refresh token only ever travels
+    /// when we attach it explicitly alongside `Origin`.
+    static func defaultSession() -> URLSession { makeAuthSession() }
 
     func restore() async throws -> Customer? {
         currentSession = try storage.load()
@@ -50,14 +82,26 @@ actor AuthService {
     }
 
     func logout() async {
+        _ = try? await logoutWithResult()
+    }
+
+    /// Revokes the session server-side, then always clears local state.
+    ///
+    /// Sent directly rather than through `authorizedRequest`: the endpoint
+    /// identifies the session from the access token, and the cookie has to
+    /// travel with an `Origin` to clear the API's CSRF guard.
+    private func logoutWithResult() async throws -> LogoutResponse? {
         defer {
             try? storage.clear()
             currentSession = nil
         }
-        guard currentSession != nil else { return }
-        do {
-            _ = try await authorizedRequest(path: "customer/auth/logout", method: "POST", decode: LogoutResponse.self)
-        } catch {}
+        guard let session = currentSession else { return nil }
+        return try await sendAuth(
+            path: "customer/auth/logout",
+            body: Optional<String>.none,
+            refreshCookie: session.refreshCookie,
+            accessToken: session.accessToken
+        )
     }
 
     func me() async throws -> Customer {
@@ -114,6 +158,20 @@ actor AuthService {
         return response.addresses
     }
 
+    // MARK: - Test seams
+
+    /// Exposes the internal refresh so tests can assert on the headers it sends
+    /// without going through a full restore cycle.
+    func refreshForTesting() async throws -> AuthSession {
+        currentSession = try storage.load()
+        return try await refreshSession()
+    }
+
+    /// Exposes the logout request so its headers can be asserted directly.
+    func logoutForTesting() async throws {
+        try await logoutWithResult()
+    }
+
     private func addressPath(_ id: String) -> String {
         let escaped = id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? id
         return "customer/addresses/\(escaped)"
@@ -147,8 +205,14 @@ actor AuthService {
         do {
             return try await task.value
         } catch {
-            try? storage.clear()
-            currentSession = nil
+            // Only a definitive rejection ends the session. A transport failure
+            // says nothing about whether the server still considers the refresh
+            // token valid, and it stays valid for 30 days, so wiping the
+            // Keychain copy here would sign the user out for being offline.
+            if (error as? AuthError)?.terminatesSession == true {
+                try? storage.clear()
+                currentSession = nil
+            }
             throw error
         }
     }
@@ -162,11 +226,23 @@ actor AuthService {
         return next
     }
 
-    private func sendAuth<Body: Encodable, T: Decodable>(path: String, body: Body, refreshCookie: String? = nil) async throws -> T {
+    private func sendAuth<Body: Encodable, T: Decodable>(
+        path: String,
+        body: Body,
+        refreshCookie: String? = nil,
+        accessToken: String? = nil
+    ) async throws -> T {
         try Task.checkCancellation()
         var request = try makeRequest(path: path, method: "POST")
+        if let accessToken {
+            request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        }
         if let refreshCookie {
             request.setValue("\(refreshCookieName)=\(refreshCookie)", forHTTPHeaderField: "Cookie")
+            // Required by the API's CSRF guard whenever the refresh cookie is
+            // present. Without it the backend answers 403 INVALID_ORIGIN and
+            // refresh can never succeed from a native client.
+            request.setValue(AppConfiguration.customerAuthOrigin, forHTTPHeaderField: "Origin")
         }
         if Body.self != Optional<String>.self {
             request.httpBody = try JSONEncoder().encode(body)
@@ -219,7 +295,7 @@ actor AuthService {
     }
 
     private func makeSession(from response: CustomerAuthResponse) throws -> AuthSession {
-        guard let refreshCookie = pendingRefreshCookie ?? currentSession?.refreshCookie else { throw AuthError.invalidResponse }
+        guard let refreshCookie = pendingRefreshCookie ?? storedRefreshCookie() ?? currentSession?.refreshCookie else { throw AuthError.invalidResponse }
         pendingRefreshCookie = nil
         return AuthSession(
             accessToken: response.accessToken,
@@ -238,6 +314,12 @@ actor AuthService {
 
     private var pendingRefreshCookie: String?
 
+    /// Captures the refresh cookie the API issues on login, register and refresh.
+    ///
+    /// The header is read first because it is authoritative, and the parsed jar
+    /// is only a fallback for the case where `URLSession` has already consumed
+    /// it. Splitting is done on the cookie's own `;` separators rather than on
+    /// commas, because `Expires=Wed, 09 Jun 2027 …` legitimately contains them.
     private func rememberRefreshCookie(from response: HTTPURLResponse) {
         let headers = response.allHeaderFields
         let values = headers.compactMap { key, value -> String? in
@@ -245,13 +327,26 @@ actor AuthService {
             return String(describing: value)
         }
         for header in values {
-            for cookie in header.components(separatedBy: ",") {
-                let trimmed = cookie.trimmingCharacters(in: .whitespacesAndNewlines)
+            for field in header.components(separatedBy: ";") {
+                let trimmed = field.trimmingCharacters(in: .whitespacesAndNewlines)
                 guard trimmed.hasPrefix("\(refreshCookieName)=") else { continue }
-                let value = trimmed.dropFirst(refreshCookieName.count + 1).split(separator: ";", maxSplits: 1).first.map(String.init) ?? ""
+                let value = String(trimmed.dropFirst(refreshCookieName.count + 1))
                 if !value.isEmpty { pendingRefreshCookie = value }
             }
         }
+    }
+
+    /// Reads a refresh cookie the `URLSession` already parsed.
+    ///
+    /// The lookup is scoped to this API's own host on purpose: scanning the whole
+    /// jar would accept a same-named cookie belonging to an unrelated site.
+    private func storedRefreshCookie() -> String? {
+        guard let cookieStorage, let host = baseURL.host else { return nil }
+        return cookieStorage.cookies?.first { cookie in
+            cookie.name == refreshCookieName
+                && cookie.domain == host
+                && cookie.path.hasPrefix("/api/v1/customer/auth")
+        }?.value
     }
 
     private func mapHTTPError(status: Int, data: Data) -> AuthError {

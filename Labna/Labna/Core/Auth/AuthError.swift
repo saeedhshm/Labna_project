@@ -30,6 +30,23 @@ enum AuthError: Error, Equatable, Sendable {
     }
 }
 
+extension AuthError {
+    /// Whether this failure means the session is definitively over, as opposed
+    /// to a transport problem that leaves the server-side session intact.
+    ///
+    /// The refresh token outlives the 15-minute access token by 30 days, so only
+    /// an explicit rejection from the API may discard it.
+    var terminatesSession: Bool {
+        switch self {
+        case .unauthorized, .expiredSession, .invalidCredentials:
+            true
+        case .invalidCurrentPassword, .duplicateAccount, .passwordReuse, .validation,
+                .network, .httpStatus, .invalidResponse, .invalidData, .invalidBaseURL:
+            false
+        }
+    }
+}
+
 struct APIErrorEnvelope: Decodable {
     struct APIErrorBody: Decodable {
         let code: String

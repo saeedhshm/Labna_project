@@ -40,7 +40,7 @@ struct KeychainAuthSessionStore: AuthSessionStoring {
             let addStatus = SecItemAdd(query as CFDictionary, nil)
             guard addStatus == errSecSuccess else { throw AuthError.invalidData }
         } else if status != errSecSuccess {
-            throw AuthError.invalidData
+            try replaceStoredSession(data)
         }
     }
 
@@ -55,5 +55,14 @@ struct KeychainAuthSessionStore: AuthSessionStoring {
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
         ]
+    }
+
+    private func replaceStoredSession(_ data: Data) throws {
+        _ = SecItemDelete(baseQuery as CFDictionary)
+        var query = baseQuery
+        query[kSecValueData as String] = data
+        query[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        let status = SecItemAdd(query as CFDictionary, nil)
+        guard status == errSecSuccess else { throw AuthError.invalidData }
     }
 }

@@ -72,7 +72,10 @@ final class AppContainer {
         favorites = FavoritesStore(modelContainer: selectedContainer)
         recentlyViewed = RecentlyViewedStore(modelContainer: selectedContainer)
         let authBaseURL: URL = apiBaseURL
-        let resolvedAuthService = authService ?? AuthService(baseURL: authBaseURL)
+        // The auth session is cookie-less on purpose: the refresh token is held
+        // in the Keychain and replayed by hand, so the API's `Origin` CSRF guard
+        // is satisfied deliberately rather than by the shared cookie jar.
+        let resolvedAuthService = authService ?? AuthService(baseURL: authBaseURL, session: AuthService.defaultSession())
         let authStore = AuthStore(service: resolvedAuthService)
         auth = authStore
         // Shares the session actor so address calls refresh the same token.

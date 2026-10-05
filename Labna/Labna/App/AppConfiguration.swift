@@ -42,4 +42,25 @@ struct AppConfiguration {
 
     static let backend = AppConfiguration(dataSource: .remote(baseURL: backendAPIBaseURL))
     static let mock = AppConfiguration(dataSource: .localJSON)
+
+    /// The `Origin` sent with cookie-authenticated customer auth requests.
+    ///
+    /// The API refuses any `/customer/auth/*` request that carries the refresh
+    /// cookie unless it also carries an allow-listed `Origin`
+    /// (`INVALID_ORIGIN`, 403). Browsers add that header on their own, which is
+    /// why the storefront never sees this, but `URLSession` does not. The app
+    /// therefore declares one explicitly, matched to `WEB_ORIGINS` in the
+    /// backend's `.env`.
+    ///
+    /// Override with the `LABNA_API_ORIGIN` environment variable to match a
+    /// different `WEB_ORIGINS` list.
+    static var customerAuthOrigin: String {
+        if let value = ProcessInfo.processInfo.environment["LABNA_API_ORIGIN"], !value.isEmpty {
+            return value
+        }
+        return defaultCustomerAuthOrigin
+    }
+
+    /// Matches the development entry in the backend's `WEB_ORIGINS`.
+    static let defaultCustomerAuthOrigin = "http://localhost:5174"
 }
