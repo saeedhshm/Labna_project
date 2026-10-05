@@ -160,6 +160,11 @@ private struct AuthenticatedAccountView: View {
                 }
                 .accessibilityIdentifier("account.editProfile")
 
+                NavigationLink(value: AppDestination.addresses) {
+                    Label("account.addresses", systemImage: "mappin.and.ellipse")
+                }
+                .accessibilityIdentifier("account.addresses")
+
                 NavigationLink {
                     ChangePasswordView()
                 } label: {
@@ -169,7 +174,6 @@ private struct AuthenticatedAccountView: View {
             }
 
             Section("account.availableLater") {
-                Label("account.addressesSoon", systemImage: "mappin.and.ellipse")
                 Label("account.ordersSoon", systemImage: "shippingbox")
             }
             .foregroundStyle(Color.labnaMuted)

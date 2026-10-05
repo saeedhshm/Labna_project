@@ -91,6 +91,28 @@ final class AuthStore {
         isLoading = false
     }
 
+    /// Called by dependent stores when the backend rejects the session after a
+    /// refresh attempt, so the account screen returns to the sign-in form.
+    func markSessionExpired() {
+        guard case .authenticated = state else { return }
+        state = .guest
+        lastError = .expiredSession
+    }
+
+    /// Keeps the signed-in customer's address book in step with the address
+    /// store without another round trip, so checkout can read it straight away.
+    func updateAddresses(_ addresses: [CustomerAddress]) {
+        guard case .authenticated(let customer) = state, customer.addresses != addresses else { return }
+        state = .authenticated(Customer(
+            id: customer.id,
+            name: customer.name,
+            phoneNumber: customer.phoneNumber,
+            email: customer.email,
+            addresses: addresses,
+            createdAt: customer.createdAt
+        ))
+    }
+
     private func run(_ operation: () async throws -> Void) async {
         _ = await runReturningSuccess(operation)
     }

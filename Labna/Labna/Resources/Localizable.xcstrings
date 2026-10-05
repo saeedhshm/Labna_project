@@ -2366,10 +2366,10 @@
         }
       }
     },
-    "account.addressesSoon" : {
+    "account.addresses" : {
       "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "العناوين قريباً" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Addresses coming soon" } }
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "العناوين المحفوظة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Saved addresses" } }
       }
     },
     "account.availableLater" : {
@@ -2460,6 +2460,264 @@
       "localizations" : {
         "ar" : { "stringUnit" : { "state" : "translated", "value" : "الحساب" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Account" } }
+      }
+    },
+    "addresses.add" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إضافة عنوان" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add address" } }
+      }
+    },
+    "addresses.apartment" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الشقة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Apartment" } }
+      }
+    },
+    "addresses.area" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "المنطقة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Area" } }
+      }
+    },
+    "addresses.building" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "المبنى" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Building" } }
+      }
+    },
+    "addresses.cancel" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إلغاء" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } }
+      }
+    },
+    "addresses.city" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "المدينة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "City" } }
+      }
+    },
+    "addresses.default" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "افتراضي" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Default" } }
+      }
+    },
+    "addresses.defaultUpdated" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تم تحديث العنوان الافتراضي." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Default address updated." } }
+      }
+    },
+    "addresses.delete" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "حذف" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete" } }
+      }
+    },
+    "addresses.delete.confirmAction" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "حذف العنوان" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete address" } }
+      }
+    },
+    "addresses.delete.confirmMessage" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "سيتم حذف هذا العنوان من حسابك." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This address will be removed from your account." } }
+      }
+    },
+    "addresses.delete.confirmTitle" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "حذف العنوان؟" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete address?" } }
+      }
+    },
+    "addresses.deleted" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تم حذف العنوان." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Address deleted." } }
+      }
+    },
+    "addresses.edit" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعديل" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Edit" } }
+      }
+    },
+    "addresses.empty.message" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أضف عنوانًا ليصبح جاهزًا للاستخدام عند إتمام الطلب." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add an address so it is ready when you check out." } }
+      }
+    },
+    "addresses.empty.title" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "لا توجد عناوين محفوظة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No saved addresses" } }
+      }
+    },
+    "addresses.error.buildingRange" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل رقم المبنى من 1 إلى 50 حرفًا." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter a building number between 1 and 50 characters." } }
+      }
+    },
+    "addresses.error.cityAreaRange" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل من حرفين إلى 100 حرف." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter between 2 and 100 characters." } }
+      }
+    },
+    "addresses.error.labelRange" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل اسم العنوان من 1 إلى 80 حرفًا." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter an address label between 1 and 80 characters." } }
+      }
+    },
+    "addresses.error.notesMax" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل 500 حرف كحد أقصى للملاحظات." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter at most 500 characters for the notes." } }
+      }
+    },
+    "addresses.error.optionalMax" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل 50 حرفًا كحد أقصى." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter at most 50 characters." } }
+      }
+    },
+    "addresses.error.phoneInvalid" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل رقم هاتف دولي يبدأ بعلامة +." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter an international phone number starting with +." } }
+      }
+    },
+    "addresses.error.recipientRange" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل اسم المستلم من حرفين إلى 120 حرفًا." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter a recipient name between 2 and 120 characters." } }
+      }
+    },
+    "addresses.error.streetRange" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل اسم الشارع من 3 إلى 200 حرف." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter a street between 3 and 200 characters." } }
+      }
+    },
+    "addresses.floor" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الدور" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Floor" } }
+      }
+    },
+    "addresses.form.addTitle" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إضافة عنوان" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add address" } }
+      }
+    },
+    "addresses.form.editTitle" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعديل العنوان" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Edit address" } }
+      }
+    },
+    "addresses.kbDone" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تم" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Done" } }
+      }
+    },
+    "addresses.label" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "اسم العنوان" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Address label" } }
+      }
+    },
+    "addresses.loading" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "جارٍ تحميل العناوين..." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Loading addresses..." } }
+      }
+    },
+    "addresses.makeDefault" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "اجعله العنوان الافتراضي" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Make default address" } }
+      }
+    },
+    "addresses.makeDefaultHint" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "سيُقترح هذا العنوان تلقائيًا عند إتمام الطلب لاحقًا." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This address will be suggested automatically at checkout later." } }
+      }
+    },
+    "addresses.notes" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "ملاحظات إضافية" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Additional notes" } }
+      }
+    },
+    "addresses.phoneNumber" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "رقم الهاتف" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Phone number" } }
+      }
+    },
+    "addresses.recipientName" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "اسم المستلم" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Recipient name" } }
+      }
+    },
+    "addresses.save" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "حفظ" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Save" } }
+      }
+    },
+    "addresses.saved" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تم حفظ العنوان." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Address saved." } }
+      }
+    },
+    "addresses.section.contact" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "بيانات التواصل" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Contact details" } }
+      }
+    },
+    "addresses.section.details" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تفاصيل العنوان" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Address details" } }
+      }
+    },
+    "addresses.section.notes" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "ملاحظات إضافية" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Additional notes" } }
+      }
+    },
+    "addresses.setDefault" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعيين كافتراضي" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Set as default" } }
+      }
+    },
+    "addresses.street" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الشارع" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Street" } }
+      }
+    },
+    "addresses.title" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "العناوين" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Addresses" } }
       }
     },
     "auth.email" : {

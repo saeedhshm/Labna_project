@@ -11,6 +11,7 @@ enum AppDestination: Hashable {
     case favorites
     case recentlyViewed
     case branches
+    case addresses
     case about
     case contact
 }

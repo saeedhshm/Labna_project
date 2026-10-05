@@ -16,6 +16,7 @@ final class AppContainer {
     let favorites: FavoritesStore
     let recentlyViewed: RecentlyViewedStore
     let auth: AuthStore
+    let addresses: AddressesStore
     let modelContainer: ModelContainer
     let router: AppRouter
     let deepLinks: DeepLinkCoordinator
@@ -64,7 +65,11 @@ final class AppContainer {
         case .localJSON: AppConfiguration.backendAPIBaseURL
         case .remote(let baseURL): baseURL
         }
-        auth = AuthStore(service: authService ?? AuthService(baseURL: authBaseURL))
+        let resolvedAuthService = authService ?? AuthService(baseURL: authBaseURL)
+        let authStore = AuthStore(service: resolvedAuthService)
+        auth = authStore
+        // Shares the session actor so address calls refresh the same token.
+        addresses = AddressesStore(service: resolvedAuthService, auth: authStore)
         router = AppRouter()
         deepLinks = DeepLinkCoordinator(router: router)
         let publisher = widgetPublisher ?? WidgetSnapshotPublisher(

@@ -87,6 +87,38 @@ actor AuthService {
         return try await refreshSession().accessToken
     }
 
+    // MARK: - Saved addresses
+
+    func addresses() async throws -> [CustomerAddress] {
+        try await authorizedRequest(path: "customer/addresses", decode: [CustomerAddress].self)
+    }
+
+    func createAddress(_ input: CustomerAddressInput) async throws -> CustomerAddress {
+        try await authorizedRequest(path: "customer/addresses", method: "POST", body: input, decode: CustomerAddress.self)
+    }
+
+    func updateAddress(id: String, input: CustomerAddressInput) async throws -> CustomerAddress {
+        try await authorizedRequest(path: addressPath(id), method: "PATCH", body: input, decode: CustomerAddress.self)
+    }
+
+    func setDefaultAddress(id: String) async throws -> CustomerAddress {
+        try await authorizedRequest(path: "\(addressPath(id))/default", method: "PATCH", decode: CustomerAddress.self)
+    }
+
+    func deleteAddress(id: String) async throws -> [CustomerAddress] {
+        struct DeletedAddresses: Decodable {
+            let deleted: Bool
+            let addresses: [CustomerAddress]
+        }
+        let response: DeletedAddresses = try await authorizedRequest(path: addressPath(id), method: "DELETE", decode: DeletedAddresses.self)
+        return response.addresses
+    }
+
+    private func addressPath(_ id: String) -> String {
+        let escaped = id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? id
+        return "customer/addresses/\(escaped)"
+    }
+
     func authorizedRequest<T: Decodable>(path: String, method: String = "GET", decode type: T.Type) async throws -> T {
         do {
             let token = try await validAccessToken()
