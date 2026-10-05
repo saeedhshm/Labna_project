@@ -13,6 +13,7 @@ final class AppContainer {
     let backgroundSync: CatalogBackgroundSync
     let catalog: CatalogStore
     let cart: CartStore
+    let cartValidation: CartValidationStore
     let favorites: FavoritesStore
     let recentlyViewed: RecentlyViewedStore
     let auth: AuthStore
@@ -36,6 +37,12 @@ final class AppContainer {
         self.configuration = configuration
         let selectedContainer = modelContainer ?? PersistenceContainer.make()
         self.modelContainer = selectedContainer
+        // The bundled-only preview configuration still needs a real API URL for
+        // cart validation and auth, so it always falls back to the backend base URL.
+        let apiBaseURL: URL = switch configuration.dataSource {
+        case .localJSON: AppConfiguration.backendAPIBaseURL
+        case .remote(let baseURL): baseURL
+        }
         let bundledRepository: any CatalogRepository = JSONCatalogRepository(source: LocalJSONDataSource())
         let remoteRepository: (any CatalogRepository)?
         if let repository {
@@ -59,12 +66,12 @@ final class AppContainer {
         backgroundSync = CatalogBackgroundSync(syncService: catalogSync)
         catalog = CatalogStore(syncService: catalogSync)
         cart = CartStore(modelContainer: selectedContainer)
+        // Checkout readiness always comes from the backend, never from the
+        // locally cached catalog, so it shares the resolved API base URL.
+        cartValidation = CartValidationStore(service: CartValidationService(baseURL: apiBaseURL), cart: cart)
         favorites = FavoritesStore(modelContainer: selectedContainer)
         recentlyViewed = RecentlyViewedStore(modelContainer: selectedContainer)
-        let authBaseURL: URL = switch configuration.dataSource {
-        case .localJSON: AppConfiguration.backendAPIBaseURL
-        case .remote(let baseURL): baseURL
-        }
+        let authBaseURL: URL = apiBaseURL
         let resolvedAuthService = authService ?? AuthService(baseURL: authBaseURL)
         let authStore = AuthStore(service: resolvedAuthService)
         auth = authStore

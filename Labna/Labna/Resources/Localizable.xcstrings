@@ -162,6 +162,263 @@
         }
       }
     },
+    "account.addresses" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العناوين المحفوظة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved addresses"
+          }
+        }
+      }
+    },
+    "account.availableLater" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ميزات الحساب القادمة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coming account features"
+          }
+        }
+      }
+    },
+    "account.changePassword" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيير كلمة المرور"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change password"
+          }
+        }
+      }
+    },
+    "account.confirmPassword" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تأكيد كلمة المرور الجديدة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirm new password"
+          }
+        }
+      }
+    },
+    "account.currentPassword" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كلمة المرور الحالية"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current password"
+          }
+        }
+      }
+    },
+    "account.editProfile" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعديل الملف الشخصي"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit profile"
+          }
+        }
+      }
+    },
+    "account.manage" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إدارة الحساب"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manage account"
+          }
+        }
+      }
+    },
+    "account.newPassword" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كلمة المرور الجديدة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New password"
+          }
+        }
+      }
+    },
+    "account.ordersSoon" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الطلبات قريباً"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orders coming soon"
+          }
+        }
+      }
+    },
+    "account.passwordInvalidatesSession" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بعد تغيير كلمة المرور سيتم تسجيل خروجك من هذا الجهاز والأجهزة الأخرى."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changing your password signs you out on this device and other sessions."
+          }
+        }
+      }
+    },
+    "account.passwordMismatch" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كلمتا المرور غير متطابقتين."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The new passwords do not match."
+          }
+        }
+      }
+    },
+    "account.passwordTooShort" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يجب أن تتكون كلمة المرور الجديدة من 8 أحرف على الأقل."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New password must be at least 8 characters."
+          }
+        }
+      }
+    },
+    "account.profile" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الملف الشخصي"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profile"
+          }
+        }
+      }
+    },
+    "account.profileSoon" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعديل الملف الشخصي قريباً"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profile editing coming soon"
+          }
+        }
+      }
+    },
+    "account.save" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حفظ"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
+          }
+        }
+      }
+    },
+    "account.title" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الحساب"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Account"
+          }
+        }
+      }
+    },
     "action.close" : {
       "localizations" : {
         "ar" : {
@@ -174,6 +431,1083 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Close"
+          }
+        }
+      }
+    },
+    "addresses.add" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إضافة عنوان"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add address"
+          }
+        }
+      }
+    },
+    "addresses.apartment" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الشقة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apartment"
+          }
+        }
+      }
+    },
+    "addresses.area" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المنطقة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Area"
+          }
+        }
+      }
+    },
+    "addresses.building" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المبنى"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Building"
+          }
+        }
+      }
+    },
+    "addresses.cancel" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إلغاء"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "addresses.city" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المدينة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "City"
+          }
+        }
+      }
+    },
+    "addresses.default" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "افتراضي"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Default"
+          }
+        }
+      }
+    },
+    "addresses.defaultUpdated" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم تحديث العنوان الافتراضي."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Default address updated."
+          }
+        }
+      }
+    },
+    "addresses.delete" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        }
+      }
+    },
+    "addresses.delete.confirmAction" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف العنوان"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete address"
+          }
+        }
+      }
+    },
+    "addresses.delete.confirmMessage" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سيتم حذف هذا العنوان من حسابك."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This address will be removed from your account."
+          }
+        }
+      }
+    },
+    "addresses.delete.confirmTitle" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف العنوان؟"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete address?"
+          }
+        }
+      }
+    },
+    "addresses.deleted" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم حذف العنوان."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Address deleted."
+          }
+        }
+      }
+    },
+    "addresses.edit" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعديل"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        }
+      }
+    },
+    "addresses.empty.message" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أضف عنوانًا ليصبح جاهزًا للاستخدام عند إتمام الطلب."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add an address so it is ready when you check out."
+          }
+        }
+      }
+    },
+    "addresses.empty.title" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا توجد عناوين محفوظة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No saved addresses"
+          }
+        }
+      }
+    },
+    "addresses.error.buildingRange" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدخل رقم المبنى من 1 إلى 50 حرفًا."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter a building number between 1 and 50 characters."
+          }
+        }
+      }
+    },
+    "addresses.error.cityAreaRange" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدخل من حرفين إلى 100 حرف."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter between 2 and 100 characters."
+          }
+        }
+      }
+    },
+    "addresses.error.labelRange" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدخل اسم العنوان من 1 إلى 80 حرفًا."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter an address label between 1 and 80 characters."
+          }
+        }
+      }
+    },
+    "addresses.error.notesMax" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدخل 500 حرف كحد أقصى للملاحظات."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter at most 500 characters for the notes."
+          }
+        }
+      }
+    },
+    "addresses.error.optionalMax" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدخل 50 حرفًا كحد أقصى."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter at most 50 characters."
+          }
+        }
+      }
+    },
+    "addresses.error.phoneInvalid" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدخل رقم هاتف دولي يبدأ بعلامة +."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter an international phone number starting with +."
+          }
+        }
+      }
+    },
+    "addresses.error.recipientRange" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدخل اسم المستلم من حرفين إلى 120 حرفًا."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter a recipient name between 2 and 120 characters."
+          }
+        }
+      }
+    },
+    "addresses.error.streetRange" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدخل اسم الشارع من 3 إلى 200 حرف."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter a street between 3 and 200 characters."
+          }
+        }
+      }
+    },
+    "addresses.floor" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الدور"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Floor"
+          }
+        }
+      }
+    },
+    "addresses.form.addTitle" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إضافة عنوان"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add address"
+          }
+        }
+      }
+    },
+    "addresses.form.editTitle" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعديل العنوان"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit address"
+          }
+        }
+      }
+    },
+    "addresses.kbDone" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
+          }
+        }
+      }
+    },
+    "addresses.label" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسم العنوان"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Address label"
+          }
+        }
+      }
+    },
+    "addresses.loading" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ تحميل العناوين..."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading addresses..."
+          }
+        }
+      }
+    },
+    "addresses.makeDefault" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اجعله العنوان الافتراضي"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Make default address"
+          }
+        }
+      }
+    },
+    "addresses.makeDefaultHint" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سيُقترح هذا العنوان تلقائيًا عند إتمام الطلب لاحقًا."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This address will be suggested automatically at checkout later."
+          }
+        }
+      }
+    },
+    "addresses.notes" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ملاحظات إضافية"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Additional notes"
+          }
+        }
+      }
+    },
+    "addresses.phoneNumber" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رقم الهاتف"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phone number"
+          }
+        }
+      }
+    },
+    "addresses.recipientName" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسم المستلم"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recipient name"
+          }
+        }
+      }
+    },
+    "addresses.save" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حفظ"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
+          }
+        }
+      }
+    },
+    "addresses.saved" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم حفظ العنوان."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Address saved."
+          }
+        }
+      }
+    },
+    "addresses.section.contact" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بيانات التواصل"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contact details"
+          }
+        }
+      }
+    },
+    "addresses.section.details" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تفاصيل العنوان"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Address details"
+          }
+        }
+      }
+    },
+    "addresses.section.notes" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ملاحظات إضافية"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Additional notes"
+          }
+        }
+      }
+    },
+    "addresses.setDefault" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعيين كافتراضي"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set as default"
+          }
+        }
+      }
+    },
+    "addresses.street" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الشارع"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Street"
+          }
+        }
+      }
+    },
+    "addresses.title" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العناوين"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Addresses"
+          }
+        }
+      }
+    },
+    "auth.email" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "البريد الإلكتروني"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Email"
+          }
+        }
+      }
+    },
+    "auth.error.configuration" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إعدادات الاتصال غير صحيحة."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The connection configuration is invalid."
+          }
+        }
+      }
+    },
+    "auth.error.duplicateAccount" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يوجد حساب بهذا البريد الإلكتروني بالفعل."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An account with this email already exists."
+          }
+        }
+      }
+    },
+    "auth.error.expiredSession" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انتهت الجلسة. سجّل الدخول مرة أخرى."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your session expired. Please sign in again."
+          }
+        }
+      }
+    },
+    "auth.error.invalidCredentials" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "البريد الإلكتروني أو كلمة المرور غير صحيحة."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Email or password is incorrect."
+          }
+        }
+      }
+    },
+    "auth.error.invalidCurrentPassword" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كلمة المرور الحالية غير صحيحة."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current password is incorrect."
+          }
+        }
+      }
+    },
+    "auth.error.network" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذر الاتصال بالخادم. حاول مرة أخرى."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not reach the server. Try again."
+          }
+        }
+      }
+    },
+    "auth.error.passwordReuse" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يجب أن تختلف كلمة المرور الجديدة عن الحالية."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New password must be different from the current password."
+          }
+        }
+      }
+    },
+    "auth.error.server" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الخدمة غير متاحة حالياً."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The service is unavailable right now."
+          }
+        }
+      }
+    },
+    "auth.error.unauthorized" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يلزم تسجيل الدخول للمتابعة."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Please sign in to continue."
+          }
+        }
+      }
+    },
+    "auth.error.validation" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "راجع البيانات المدخلة وحاول مرة أخرى."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check the entered details and try again."
+          }
+        }
+      }
+    },
+    "auth.login.action" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تسجيل الدخول"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in"
+          }
+        }
+      }
+    },
+    "auth.login.subtitle" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ادخل إلى حسابك لمتابعة طلباتك لاحقاً."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in to keep your Labna account ready for future orders."
+          }
+        }
+      }
+    },
+    "auth.login.title" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تسجيل الدخول"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in"
+          }
+        }
+      }
+    },
+    "auth.logout" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تسجيل الخروج"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign out"
+          }
+        }
+      }
+    },
+    "auth.mode" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وضع الحساب"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Account mode"
+          }
+        }
+      }
+    },
+    "auth.name" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الاسم"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name"
+          }
+        }
+      }
+    },
+    "auth.password" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كلمة المرور"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Password"
+          }
+        }
+      }
+    },
+    "auth.phone" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رقم الهاتف"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phone number"
+          }
+        }
+      }
+    },
+    "auth.register.action" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إنشاء الحساب"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create account"
+          }
+        }
+      }
+    },
+    "auth.register.subtitle" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أنشئ حساب لبنة لحفظ بياناتك بأمان."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create a Labna account so your details are ready later."
+          }
+        }
+      }
+    },
+    "auth.register.title" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حساب جديد"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create account"
+          }
+        }
+      }
+    },
+    "auth.restoring" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ استعادة الجلسة..."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restoring session..."
           }
         }
       }
@@ -386,6 +1720,38 @@
         }
       }
     },
+    "cart.availableUnits %lld" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld وحدة متاحة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld units available"
+          }
+        }
+      }
+    },
+    "cart.insufficientStock" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الكمية المطلوبة غير متوفرة في المخزون."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The requested quantity is not available in stock."
+          }
+        }
+      }
+    },
     "cart.persistenceError" : {
       "localizations" : {
         "ar" : {
@@ -559,6 +1925,134 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Units"
+          }
+        }
+      }
+    },
+    "cart.validation.blocked" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "توجد مشاكل في السلة يجب حلها قبل إتمام الطلب."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Some cart items must be fixed before checkout."
+          }
+        }
+      }
+    },
+    "cart.validation.checking" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ التحقق من السلة مع المتجر..."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checking your cart with the store..."
+          }
+        }
+      }
+    },
+    "cart.validation.failed" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر التحقق من السلة. حاول مجددًا."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The cart could not be checked. Try again."
+          }
+        }
+      }
+    },
+    "cart.validation.noPickupBranch" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يتم إعداد فرع استلام افتراضي."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No default pickup branch is configured."
+          }
+        }
+      }
+    },
+    "cart.validation.offline" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر الوصول للمتجر. السلة محفوظة على هذا الجهاز فقط."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The store is unreachable. The cart is saved on this device only."
+          }
+        }
+      }
+    },
+    "cart.validation.pending" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السلة لم يتم التحقق منها بعد."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The cart has not been checked yet."
+          }
+        }
+      }
+    },
+    "cart.validation.ready" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم التحقق من السلة—all prices and stock confirmed."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cart checked — prices and stock confirmed."
+          }
+        }
+      }
+    },
+    "cart.validation.serverTotal" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإجمالي مؤكَّد من المتجر."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total confirmed by the store."
           }
         }
       }
@@ -1223,86 +2717,6 @@
         }
       }
     },
-    "recentlyViewed.browseProducts" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تصفح المنتجات"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Browse products"
-          }
-        }
-      }
-    },
-    "recentlyViewed.empty.message" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "افتح تفاصيل أي منتج ليظهر هنا لاحقًا."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Open any product details to see it here later."
-          }
-        }
-      }
-    },
-    "recentlyViewed.empty.title" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "لا توجد منتجات شوهدت مؤخرًا"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No recently viewed products"
-          }
-        }
-      }
-    },
-    "recentlyViewed.title" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "شوهدت مؤخرًا"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recently viewed"
-          }
-        }
-      }
-    },
-    "recentlyViewed.viewAll" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "عرض الكل"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "View all"
-          }
-        }
-      }
-    },
     "gallery.buttons" : {
       "localizations" : {
         "ar" : {
@@ -1898,6 +3312,86 @@
         }
       }
     },
+    "recentlyViewed.browseProducts" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تصفح المنتجات"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Browse products"
+          }
+        }
+      }
+    },
+    "recentlyViewed.empty.message" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "افتح تفاصيل أي منتج ليظهر هنا لاحقًا."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open any product details to see it here later."
+          }
+        }
+      }
+    },
+    "recentlyViewed.empty.title" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا توجد منتجات شوهدت مؤخرًا"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No recently viewed products"
+          }
+        }
+      }
+    },
+    "recentlyViewed.title" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "شوهدت مؤخرًا"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recently viewed"
+          }
+        }
+      }
+    },
+    "recentlyViewed.viewAll" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عرض الكل"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "View all"
+          }
+        }
+      }
+    },
     "search.clear" : {
       "localizations" : {
         "ar" : {
@@ -2364,498 +3858,6 @@
             "value" : "Tuesday"
           }
         }
-      }
-    },
-    "account.addresses" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "العناوين المحفوظة" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Saved addresses" } }
-      }
-    },
-    "account.availableLater" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "ميزات الحساب القادمة" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Coming account features" } }
-      }
-    },
-    "account.changePassword" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تغيير كلمة المرور" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Change password" } }
-      }
-    },
-    "account.confirmPassword" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تأكيد كلمة المرور الجديدة" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Confirm new password" } }
-      }
-    },
-    "account.currentPassword" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "كلمة المرور الحالية" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Current password" } }
-      }
-    },
-    "account.editProfile" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعديل الملف الشخصي" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Edit profile" } }
-      }
-    },
-    "account.manage" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إدارة الحساب" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Manage account" } }
-      }
-    },
-    "account.newPassword" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "كلمة المرور الجديدة" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "New password" } }
-      }
-    },
-    "account.ordersSoon" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الطلبات قريباً" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Orders coming soon" } }
-      }
-    },
-    "account.passwordInvalidatesSession" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "بعد تغيير كلمة المرور سيتم تسجيل خروجك من هذا الجهاز والأجهزة الأخرى." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Changing your password signs you out on this device and other sessions." } }
-      }
-    },
-    "account.passwordMismatch" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "كلمتا المرور غير متطابقتين." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "The new passwords do not match." } }
-      }
-    },
-    "account.passwordTooShort" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "يجب أن تتكون كلمة المرور الجديدة من 8 أحرف على الأقل." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "New password must be at least 8 characters." } }
-      }
-    },
-    "account.profile" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الملف الشخصي" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Profile" } }
-      }
-    },
-    "account.profileSoon" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعديل الملف الشخصي قريباً" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Profile editing coming soon" } }
-      }
-    },
-    "account.save" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "حفظ" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Save" } }
-      }
-    },
-    "account.title" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الحساب" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Account" } }
-      }
-    },
-    "addresses.add" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إضافة عنوان" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add address" } }
-      }
-    },
-    "addresses.apartment" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الشقة" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Apartment" } }
-      }
-    },
-    "addresses.area" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "المنطقة" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Area" } }
-      }
-    },
-    "addresses.building" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "المبنى" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Building" } }
-      }
-    },
-    "addresses.cancel" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إلغاء" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } }
-      }
-    },
-    "addresses.city" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "المدينة" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "City" } }
-      }
-    },
-    "addresses.default" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "افتراضي" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Default" } }
-      }
-    },
-    "addresses.defaultUpdated" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تم تحديث العنوان الافتراضي." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Default address updated." } }
-      }
-    },
-    "addresses.delete" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "حذف" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete" } }
-      }
-    },
-    "addresses.delete.confirmAction" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "حذف العنوان" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete address" } }
-      }
-    },
-    "addresses.delete.confirmMessage" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "سيتم حذف هذا العنوان من حسابك." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "This address will be removed from your account." } }
-      }
-    },
-    "addresses.delete.confirmTitle" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "حذف العنوان؟" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete address?" } }
-      }
-    },
-    "addresses.deleted" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تم حذف العنوان." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Address deleted." } }
-      }
-    },
-    "addresses.edit" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعديل" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Edit" } }
-      }
-    },
-    "addresses.empty.message" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أضف عنوانًا ليصبح جاهزًا للاستخدام عند إتمام الطلب." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add an address so it is ready when you check out." } }
-      }
-    },
-    "addresses.empty.title" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "لا توجد عناوين محفوظة" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "No saved addresses" } }
-      }
-    },
-    "addresses.error.buildingRange" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل رقم المبنى من 1 إلى 50 حرفًا." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter a building number between 1 and 50 characters." } }
-      }
-    },
-    "addresses.error.cityAreaRange" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل من حرفين إلى 100 حرف." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter between 2 and 100 characters." } }
-      }
-    },
-    "addresses.error.labelRange" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل اسم العنوان من 1 إلى 80 حرفًا." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter an address label between 1 and 80 characters." } }
-      }
-    },
-    "addresses.error.notesMax" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل 500 حرف كحد أقصى للملاحظات." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter at most 500 characters for the notes." } }
-      }
-    },
-    "addresses.error.optionalMax" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل 50 حرفًا كحد أقصى." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter at most 50 characters." } }
-      }
-    },
-    "addresses.error.phoneInvalid" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل رقم هاتف دولي يبدأ بعلامة +." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter an international phone number starting with +." } }
-      }
-    },
-    "addresses.error.recipientRange" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل اسم المستلم من حرفين إلى 120 حرفًا." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter a recipient name between 2 and 120 characters." } }
-      }
-    },
-    "addresses.error.streetRange" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل اسم الشارع من 3 إلى 200 حرف." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter a street between 3 and 200 characters." } }
-      }
-    },
-    "addresses.floor" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الدور" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Floor" } }
-      }
-    },
-    "addresses.form.addTitle" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إضافة عنوان" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add address" } }
-      }
-    },
-    "addresses.form.editTitle" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعديل العنوان" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Edit address" } }
-      }
-    },
-    "addresses.kbDone" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تم" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Done" } }
-      }
-    },
-    "addresses.label" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "اسم العنوان" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Address label" } }
-      }
-    },
-    "addresses.loading" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "جارٍ تحميل العناوين..." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Loading addresses..." } }
-      }
-    },
-    "addresses.makeDefault" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "اجعله العنوان الافتراضي" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Make default address" } }
-      }
-    },
-    "addresses.makeDefaultHint" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "سيُقترح هذا العنوان تلقائيًا عند إتمام الطلب لاحقًا." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "This address will be suggested automatically at checkout later." } }
-      }
-    },
-    "addresses.notes" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "ملاحظات إضافية" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Additional notes" } }
-      }
-    },
-    "addresses.phoneNumber" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "رقم الهاتف" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Phone number" } }
-      }
-    },
-    "addresses.recipientName" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "اسم المستلم" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Recipient name" } }
-      }
-    },
-    "addresses.save" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "حفظ" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Save" } }
-      }
-    },
-    "addresses.saved" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تم حفظ العنوان." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Address saved." } }
-      }
-    },
-    "addresses.section.contact" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "بيانات التواصل" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Contact details" } }
-      }
-    },
-    "addresses.section.details" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تفاصيل العنوان" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Address details" } }
-      }
-    },
-    "addresses.section.notes" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "ملاحظات إضافية" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Additional notes" } }
-      }
-    },
-    "addresses.setDefault" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعيين كافتراضي" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Set as default" } }
-      }
-    },
-    "addresses.street" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الشارع" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Street" } }
-      }
-    },
-    "addresses.title" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "العناوين" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Addresses" } }
-      }
-    },
-    "auth.email" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "البريد الإلكتروني" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Email" } }
-      }
-    },
-    "auth.error.configuration" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إعدادات الاتصال غير صحيحة." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "The connection configuration is invalid." } }
-      }
-    },
-    "auth.error.duplicateAccount" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "يوجد حساب بهذا البريد الإلكتروني بالفعل." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "An account with this email already exists." } }
-      }
-    },
-    "auth.error.expiredSession" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "انتهت الجلسة. سجّل الدخول مرة أخرى." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Your session expired. Please sign in again." } }
-      }
-    },
-    "auth.error.invalidCredentials" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "البريد الإلكتروني أو كلمة المرور غير صحيحة." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Email or password is incorrect." } }
-      }
-    },
-    "auth.error.invalidCurrentPassword" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "كلمة المرور الحالية غير صحيحة." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Current password is incorrect." } }
-      }
-    },
-    "auth.error.network" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعذر الاتصال بالخادم. حاول مرة أخرى." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Could not reach the server. Try again." } }
-      }
-    },
-    "auth.error.passwordReuse" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "يجب أن تختلف كلمة المرور الجديدة عن الحالية." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "New password must be different from the current password." } }
-      }
-    },
-    "auth.error.server" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الخدمة غير متاحة حالياً." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "The service is unavailable right now." } }
-      }
-    },
-    "auth.error.unauthorized" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "يلزم تسجيل الدخول للمتابعة." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Please sign in to continue." } }
-      }
-    },
-    "auth.error.validation" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "راجع البيانات المدخلة وحاول مرة أخرى." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Check the entered details and try again." } }
-      }
-    },
-    "auth.login.action" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تسجيل الدخول" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign in" } }
-      }
-    },
-    "auth.login.subtitle" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "ادخل إلى حسابك لمتابعة طلباتك لاحقاً." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign in to keep your Labna account ready for future orders." } }
-      }
-    },
-    "auth.login.title" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تسجيل الدخول" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign in" } }
-      }
-    },
-    "auth.logout" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تسجيل الخروج" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign out" } }
-      }
-    },
-    "auth.mode" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "وضع الحساب" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Account mode" } }
-      }
-    },
-    "auth.name" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الاسم" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Name" } }
-      }
-    },
-    "auth.password" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "كلمة المرور" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Password" } }
-      }
-    },
-    "auth.phone" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "رقم الهاتف" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Phone number" } }
-      }
-    },
-    "auth.register.action" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إنشاء الحساب" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Create account" } }
-      }
-    },
-    "auth.register.subtitle" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أنشئ حساب لبنة لحفظ بياناتك بأمان." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Create a Labna account so your details are ready later." } }
-      }
-    },
-    "auth.register.title" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "حساب جديد" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Create account" } }
-      }
-    },
-    "auth.restoring" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "جارٍ استعادة الجلسة..." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Restoring session..." } }
       }
     },
     "weekday.wednesday" : {

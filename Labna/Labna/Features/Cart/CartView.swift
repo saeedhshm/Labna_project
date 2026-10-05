@@ -14,6 +14,8 @@ struct CartView: View {
         .navigationBarTitleDisplayMode(.large)
     }
 
+    private var validation: CartValidationStore { container.cartValidation }
+
     @ViewBuilder
     private func cartContent(products: [Product]) -> some View {
         if container.cart.items.isEmpty {
@@ -26,13 +28,14 @@ struct CartView: View {
             ScrollView {
                 LazyVStack(spacing: LabnaSpacing.medium) {
                     if container.cart.persistenceFailed {
-                        statusBanner(text: "cart.persistenceError", symbol: "externaldrive.badge.exclamationmark")
+                        statusBanner(text: "cart.persistenceError", symbol: "externaldrive.badge.exclamationmark", color: .orange)
                     }
+                    validationBanner
                     if container.cart.containsUnavailableItems {
-                        statusBanner(text: "cart.unavailableNotice", symbol: "exclamationmark.triangle")
+                        statusBanner(text: "cart.unavailableNotice", symbol: "exclamationmark.triangle", color: .orange)
                     }
                     ForEach(container.cart.lines) { line in
-                        CartLineView(line: line, language: language)
+                        CartLineView(line: line, verdict: validation.verdict(for: line.id), language: language)
                     }
                     summary
                     NavigationLink {
@@ -41,24 +44,56 @@ struct CartView: View {
                         Text("cart.reviewOrder")
                     }
                     .buttonStyle(.labnaPrimary)
-                    .disabled(container.cart.containsUnavailableItems || container.cart.availableQuantity == 0)
+                    .disabled(!validation.isCheckoutReady)
                     .accessibilityIdentifier("cart.checkout")
                 }
                 .padding(LabnaSpacing.large)
             }
             .background(Color.labnaCream.opacity(0.25))
+            .refreshable { await validation.validate() }
+            .task(id: cartContentKey) { await validation.validate() }
+        }
+    }
+
+    /// Re-validates whenever the cart contents change, so a stale verdict can
+    /// never unlock checkout.
+    private var cartContentKey: Int {
+        container.cart.items.reduce(into: 0) { partial, item in
+            partial ^= item.productID.hashValue &* 31 &+ item.variantID.hashValue &* 17 &+ item.quantity.hashValue
         }
     }
 
     private var language: AppLanguage { container.settings.language }
 
-    private func statusBanner(text: LocalizedStringKey, symbol: String) -> some View {
+    /// Makes the difference between cached cart state and server-confirmed state
+    /// explicit, including the offline case.
+    @ViewBuilder
+    private var validationBanner: some View {
+        if validation.isValidating {
+            statusBanner(text: "cart.validation.checking", symbol: "arrow.triangle.2.circlepath", color: .labnaGreen)
+        } else if validation.isCheckoutReady {
+            statusBanner(text: "cart.validation.ready", symbol: "checkmark.seal.fill", color: .labnaGreen)
+        } else if !validation.blockingItems.isEmpty {
+            statusBanner(text: "cart.validation.blocked", symbol: "exclamationmark.octagon.fill", color: .red)
+        } else if let error = validation.lastError {
+            statusBanner(
+                text: error.isOffline ? "cart.validation.offline" : "cart.validation.failed",
+                symbol: "wifi.exclamationmark",
+                color: .orange
+            )
+        } else {
+            statusBanner(text: "cart.validation.pending", symbol: "clock", color: .orange)
+        }
+    }
+
+    private func statusBanner(text: LocalizedStringKey, symbol: String, color: Color) -> some View {
         Label(text, systemImage: symbol)
             .font(LabnaTypography.body)
-            .foregroundStyle(Color.orange)
+            .foregroundStyle(color)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(LabnaSpacing.medium)
-            .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: LabnaRadius.medium))
+            .background(color.opacity(0.1), in: RoundedRectangle(cornerRadius: LabnaRadius.medium))
+            .accessibilityIdentifier("cart.validation.banner")
     }
 
     private var summary: some View {
@@ -72,11 +107,19 @@ struct CartView: View {
                 Text("cart.total").font(LabnaTypography.headline)
                 Spacer()
                 PriceText(
-                    minorUnits: container.cart.totalMinor,
-                    currencyCode: container.cart.currencyCode
+                    minorUnits: validation.subtotalMinor ?? container.cart.totalMinor,
+                    currencyCode: validation.currencyCode ?? container.cart.currencyCode
                 )
+                .accessibilityIdentifier("cart.total.server")
             }
-            if container.cart.containsUnavailableItems {
+            if validation.subtotalMinor != nil {
+                Text("cart.validation.serverTotal")
+                    .font(LabnaTypography.caption)
+                    .foregroundStyle(Color.labnaMuted)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityIdentifier("cart.total.validated")
+            }
+            if container.cart.containsUnavailableItems || !validation.blockingItems.isEmpty {
                 Text("cart.totalExcludesUnavailable")
                     .font(LabnaTypography.caption)
                     .foregroundStyle(Color.labnaMuted)
@@ -91,28 +134,50 @@ struct CartView: View {
 
 private struct CartLineView: View {
     let line: CartLine
+    let verdict: CartValidatedItem?
     let language: AppLanguage
     @Environment(AppContainer.self) private var container
+
+    /// The server is authoritative whenever it has answered for this line;
+    /// otherwise the locally cached catalog value is shown and marked as such.
+    private var serverUnitPriceMinor: Int? { verdict?.unitPriceMinor }
+    private var currentUnitPriceMinor: Int? { serverUnitPriceMinor ?? line.currentUnitPriceMinor }
+    private var priceChanged: Bool {
+        guard let currentUnitPriceMinor else { return false }
+        return currentUnitPriceMinor != line.item.priceAtAdditionMinor
+    }
+    private var isBlocking: Bool { verdict?.valid == false }
 
     var body: some View {
         VStack(alignment: .leading, spacing: LabnaSpacing.medium) {
             HStack(alignment: .top, spacing: LabnaSpacing.medium) {
-                ProductImage(url: line.product?.imageURLs.first)
+                ProductImage(url: verdict?.imageURL ?? line.product?.imageURLs.first)
                     .frame(width: 88)
                     .clipShape(RoundedRectangle(cornerRadius: LabnaRadius.medium))
                 VStack(alignment: .leading, spacing: LabnaSpacing.extraSmall) {
-                    Text((line.product?.name ?? line.item.productName).value(for: language))
+                    Text(nameText)
                         .font(LabnaTypography.headline)
                         .foregroundStyle(Color.labnaInk)
                         .accessibilityIdentifier("cart.product.\(line.item.productID)")
-                    Text((line.variant?.label ?? line.item.variantLabel).value(for: language))
+                    Text(variantText)
                         .font(LabnaTypography.body)
                         .foregroundStyle(Color.labnaMuted)
                     price
-                    if line.availability != .available {
+                    if let reason = blockingReason {
+                        Label(reason.messageKey, systemImage: "exclamationmark.circle.fill")
+                            .font(LabnaTypography.caption)
+                            .foregroundStyle(.orange)
+                            .accessibilityIdentifier("cart.line.reason")
+                    } else if line.availability != .available {
                         Label(availabilityKey, systemImage: "exclamationmark.circle.fill")
                             .font(LabnaTypography.caption)
-                            .foregroundStyle(Color.orange)
+                            .foregroundStyle(.orange)
+                    }
+                    if let verdict, verdict.reason == .insufficientStock {
+                        Text("cart.availableUnits \(verdict.availableQuantity)")
+                            .font(LabnaTypography.caption)
+                            .foregroundStyle(.orange)
+                            .accessibilityIdentifier("cart.line.availableUnits")
                     }
                 }
                 Spacer(minLength: 0)
@@ -135,8 +200,8 @@ private struct CartLineView: View {
                 )
                 .disabled(!line.isAvailable)
                 Spacer()
-                if let subtotal = line.currentSubtotalMinor {
-                    PriceText(minorUnits: subtotal, currencyCode: line.item.currencyCode)
+                if let subtotal = lineTotalMinor {
+                    PriceText(minorUnits: subtotal, currencyCode: currencyCode)
                 }
             }
         }
@@ -144,15 +209,41 @@ private struct CartLineView: View {
         .background(Color.white, in: RoundedRectangle(cornerRadius: LabnaRadius.large))
         .overlay {
             RoundedRectangle(cornerRadius: LabnaRadius.large)
-                .stroke(line.isAvailable ? Color.labnaBorder : Color.orange.opacity(0.45))
+                .stroke(isBlocking ? Color.red.opacity(0.5) : Color.labnaBorder)
         }
     }
 
+    private var nameText: String {
+        verdict?.productName.value(for: language)
+            ?? (line.product?.name ?? line.item.productName).value(for: language)
+    }
+
+    private var variantText: String {
+        verdict?.variantLabel.value(for: language)
+            ?? (line.variant?.label ?? line.item.variantLabel).value(for: language)
+    }
+
+    private var blockingReason: CartValidationReason? {
+        guard let verdict, !verdict.valid else { return nil }
+        return verdict.reason
+    }
+
+    private var lineTotalMinor: Int? {
+        if let verdict { return verdict.lineTotalMinor }
+        return line.currentSubtotalMinor
+    }
+
+    private var currencyCode: String {
+        verdict?.currencyCode ?? line.item.currencyCode
+    }
+
+    /// `price at addition → current server price`, with the old price struck
+    /// through only when the server confirms it changed.
     @ViewBuilder
     private var price: some View {
-        if let current = line.currentUnitPriceMinor {
+        if let current = currentUnitPriceMinor, verdict != nil || line.isAvailable {
             HStack(spacing: LabnaSpacing.small) {
-                if line.hasPriceChanged {
+                if priceChanged {
                     Text(PriceFormatter.string(
                         minorUnits: line.item.priceAtAdditionMinor,
                         currencyCode: line.item.currencyCode,
@@ -163,10 +254,11 @@ private struct CartLineView: View {
                 }
                 PriceText(minorUnits: current, currencyCode: line.item.currencyCode)
             }
-            if line.hasPriceChanged {
+            if priceChanged {
                 Text("cart.priceUpdated")
                     .font(LabnaTypography.caption)
-                    .foregroundStyle(Color.orange)
+                    .foregroundStyle(.orange)
+                    .accessibilityIdentifier("cart.line.priceChanged")
             }
         } else {
             Text(PriceFormatter.string(
