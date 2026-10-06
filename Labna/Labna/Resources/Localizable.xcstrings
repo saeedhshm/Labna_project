@@ -2250,67 +2250,226 @@
         }
       }
     },
+    "checkout.address.empty" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا توجد عناوين محفوظة. أضف عنوانًا من صفحة الحساب."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No saved addresses yet. Add one from your account."
+          }
+        }
+      }
+    },
+    "checkout.address.manage" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إدارة العناوين"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manage addresses"
+          }
+        }
+      }
+    },
+    "checkout.address.title" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العنوان"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delivery address"
+          }
+        }
+      }
+    },
+    "checkout.checking" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ التحقق من المتجر…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checking with the store…"
+          }
+        }
+      }
+    },
     "checkout.confirm" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "تأكيد الطلب التجريبي"
+            "value" : "تأكيد الطلب"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Confirm demo order"
+            "value" : "Place order"
           }
         }
       }
     },
-    "checkout.demoMessage" : {
+    "checkout.contact.email" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "لن يتم إرسال طلب فعلي أو تحصيل أي مبلغ."
+            "value" : "البريد الإلكتروني (اختياري)"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No real order will be sent and no payment will be collected."
+            "value" : "Email (optional)"
           }
         }
       }
     },
-    "checkout.demoTitle" : {
+    "checkout.contact.name" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "هذه تجربة للطلب"
+            "value" : "الاسم"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "This is a demo checkout"
+            "value" : "Name"
           }
         }
       }
     },
-    "checkout.error.currency" : {
-      "extractionState" : "stale",
+    "checkout.contact.phone" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "لا يمكن جمع عناصر بعملات مختلفة في طلب واحد."
+            "value" : "رقم الهاتف"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Items with different currencies cannot be confirmed together."
+            "value" : "Phone number"
+          }
+        }
+      }
+    },
+    "checkout.contact.title" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بيانات التواصل"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contact details"
+          }
+        }
+      }
+    },
+    "checkout.coupon.hint" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يتم تطبيق الخصم من المتجر عند إنشاء الطلب."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The store applies any discount when the order is created."
+          }
+        }
+      }
+    },
+    "checkout.coupon.placeholder" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LABNA10"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter a code"
+          }
+        }
+      }
+    },
+    "checkout.coupon.title" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كوبون الخصم"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discount coupon"
+          }
+        }
+      }
+    },
+    "checkout.error.cartChanged" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيّر السلة. تم تحديث الأسعار والتوفر."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The cart changed. Prices and availability were refreshed."
+          }
+        }
+      }
+    },
+    "checkout.error.configuration" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إعدادات المتجر غير صحيحة."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The store is not configured correctly."
           }
         }
       }
@@ -2332,19 +2491,194 @@
         }
       }
     },
-    "checkout.error.unavailable" : {
-      "extractionState" : "stale",
+    "checkout.error.insufficientStock" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "تغير توفر بعض العناصر. ارجع إلى السلة وراجعها."
+            "value" : "الكمية المطلوبة أكبر من المتوفر. عد إلى السلة."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Some items changed availability. Return to the cart and review them."
+            "value" : "The requested quantity exceeds the available stock. Return to the cart."
+          }
+        }
+      }
+    },
+    "checkout.error.invalidBranch" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الفرع المختار لا يستقبل الطلبات."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The selected branch is not accepting orders."
+          }
+        }
+      }
+    },
+    "checkout.error.invalidContact" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "راجع الاسم ورقم الهاتف."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check the name and phone number."
+          }
+        }
+      }
+    },
+    "checkout.error.missingAddress" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختر عنوان التوصيل أولًا."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a delivery address first."
+          }
+        }
+      }
+    },
+    "checkout.error.noPickupBranch" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يوجد فرع متاح للاستلام حاليًا."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No pickup branch is currently available."
+          }
+        }
+      }
+    },
+    "checkout.error.offline" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذر الوصول إلى المتجر. لم يتم إنشاء أي طلب."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The store is unreachable. No order was created."
+          }
+        }
+      }
+    },
+    "checkout.error.payment" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم تُقبل عملية الدفع."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The payment was not accepted."
+          }
+        }
+      }
+    },
+    "checkout.error.productUnavailable" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أحد المنتجات لم يعد متاحًا. عد إلى السلة."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A product is no longer available. Return to the cart."
+          }
+        }
+      }
+    },
+    "checkout.error.rejected" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذر إنشاء الطلب."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The order could not be created."
+          }
+        }
+      }
+    },
+    "checkout.error.server" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذر إنشاء الطلب. حاول مرة أخرى."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The order could not be created. Try again."
+          }
+        }
+      }
+    },
+    "checkout.error.sessionExpired" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انتهت جلستك. سجّل الدخول مرة أخرى."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your session expired. Please sign in again."
+          }
+        }
+      }
+    },
+    "checkout.error.variantUnavailable" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إحدى العبوات لم تعد متاحة. عد إلى السلة."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A selected pack is no longer available. Return to the cart."
           }
         }
       }
@@ -2365,18 +2699,82 @@
         }
       }
     },
-    "checkout.processing" : {
+    "checkout.notes.hint" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "جارٍ التأكيد…"
+            "value" : "تُحفظ ضمن عنوان التوصيل."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Confirming…"
+            "value" : "Saved with your delivery address."
+          }
+        }
+      }
+    },
+    "checkout.payment.card" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بطاقة تجريبية"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demo card"
+          }
+        }
+      }
+    },
+    "checkout.payment.cod" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الدفع عند الاستلام"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cash on delivery"
+          }
+        }
+      }
+    },
+    "checkout.payment.title" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "طريقة الدفع"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Payment"
+          }
+        }
+      }
+    },
+    "checkout.processing" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ إنشاء الطلب…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Creating your order…"
           }
         }
       }
@@ -2413,6 +2811,118 @@
         }
       }
     },
+    "checkout.status.cancelled" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ملغي"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelled"
+          }
+        }
+      }
+    },
+    "checkout.status.completed" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مكتمل"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completed"
+          }
+        }
+      }
+    },
+    "checkout.status.confirmed" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مؤكد"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirmed"
+          }
+        }
+      }
+    },
+    "checkout.status.outForDelivery" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في الطريق"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Out for delivery"
+          }
+        }
+      }
+    },
+    "checkout.status.pending" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بانتظار التأكيد"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Awaiting confirmation"
+          }
+        }
+      }
+    },
+    "checkout.status.preparing" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قيد التحضير"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preparing"
+          }
+        }
+      }
+    },
+    "checkout.status.ready" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جاهز"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready"
+          }
+        }
+      }
+    },
     "checkout.title" : {
       "localizations" : {
         "ar" : {
@@ -2425,6 +2935,118 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Review order"
+          }
+        }
+      }
+    },
+    "checkout.total.couponIgnored" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يتم تطبيق الكوبون %@."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coupon %@ was not applied."
+          }
+        }
+      }
+    },
+    "checkout.total.delivery" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رسوم التوصيل"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delivery"
+          }
+        }
+      }
+    },
+    "checkout.total.discount" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الخصم"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discount"
+          }
+        }
+      }
+    },
+    "checkout.total.discountCoupon" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم تطبيق الكوبون %@."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coupon %@ applied."
+          }
+        }
+      }
+    },
+    "checkout.total.items" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إجمالي المنتجات"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Items subtotal"
+          }
+        }
+      }
+    },
+    "checkout.total.payable" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإجمالي المستحق"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total to pay"
+          }
+        }
+      }
+    },
+    "checkout.total.pending" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُحتسب رسوم التوصيل والخصم عند إنشاء الطلب."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delivery and any discount are confirmed when the order is created."
           }
         }
       }
@@ -3673,13 +4295,13 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "تم إنشاء هذا الملخص داخل التطبيق للتجربة فقط. لم يتم إرسال طلب شراء أو تحصيل أي مبلغ."
+            "value" : "تم إرسال طلبك إلى المتجر. يمكنك متابعته من حسابك."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "This summary was created locally for demonstration only. No purchase was sent and no payment was collected."
+            "value" : "Your order was sent to the store. You can follow it from your account."
           }
         }
       }
@@ -3689,13 +4311,13 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "اكتملت تجربة الطلب"
+            "value" : "تم استلام طلبك"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Demo order completed"
+            "value" : "Order received"
           }
         }
       }
@@ -3712,6 +4334,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Back to home"
+          }
+        }
+      }
+    },
+    "success.linkedAccount" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم ربط الطلب بحسابك."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The order is linked to your account."
           }
         }
       }
@@ -3743,7 +4381,23 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Demo reference"
+            "value" : "Order number"
+          }
+        }
+      }
+    },
+    "success.status" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الحالة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
           }
         }
       }
@@ -3753,13 +4407,13 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ملخص التجربة"
+            "value" : "ملخص الطلب"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Demo summary"
+            "value" : "Order summary"
           }
         }
       }

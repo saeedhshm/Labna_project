@@ -56,6 +56,24 @@ struct ProfileDraft: Equatable, Sendable {
 
     var isValid: Bool { validationErrors().isEmpty }
 
+    func value(for field: Field) -> String {
+        switch field {
+        case .name: name
+        case .phoneNumber: phoneNumber
+        case .email: email
+        }
+    }
+
+    func updating(_ field: Field, with value: String) -> ProfileDraft {
+        var copy = self
+        switch field {
+        case .name: copy.name = value
+        case .phoneNumber: copy.phoneNumber = value
+        case .email: copy.email = value
+        }
+        return copy
+    }
+
     /// `^\+[1-9]\d{7,14}$` exactly as `checkoutCustomer` defines it: a leading
     /// `+`, a first digit between 1 and 9, then 7 to 14 more digits.
     static func isValidPhoneNumber(_ raw: String) -> Bool {

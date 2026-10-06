@@ -122,14 +122,37 @@ struct MockDataTests {
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
         #expect(try decoder.decode([CartItem].self, from: encoder.encode([first, second])) == [first, second])
-        let order = DemoOrder(id: "DEMO-TEST", createdAt: Date(timeIntervalSince1970: 0), currencyCode: "EGP", lines: [
-            .init(productID: product.id, variantID: small.id, productName: product.name, variantLabel: small.label, unitPriceMinor: small.priceMinor, quantity: 2),
-            .init(productID: product.id, variantID: large.id, productName: product.name, variantLabel: large.label, unitPriceMinor: large.priceMinor, quantity: 1)
-        ], notes: nil)
-        let restored = try decoder.decode(DemoOrder.self, from: encoder.encode(order))
-        #expect(restored == order)
-        #expect(restored.totalMinor == 6600)
-        #expect(restored.lines[0].productName.value(for: .arabic) == "حليب كامل الدسم")
-        #expect(restored.lines[0].productName.value(for: .english) == "Full Cream Milk")
+        // Orders come from the API rather than being modelled locally, so what is
+        // checked here is the payload shape rather than a synthesised total.
+        let order = PlacedOrder(
+            id: "9f0f0d3e-1b1a-4c1e-9a3f-2b7f5b7a1c22",
+            orderNumber: "LBN-20260101-123456",
+            customerID: nil,
+            customer: CheckoutCustomer(name: "Demo", phoneNumber: "+201012345678", email: nil),
+            address: CheckoutAddress(city: "Cairo", area: "Maadi", street: "Road 9", building: "12", floor: "", apartment: "", notes: ""),
+            branchID: "demo-cairo",
+            items: [
+                PlacedOrderItem(
+                    productID: product.id, variantID: small.id,
+                    productName: product.name, variantLabel: small.label,
+                    quantity: 2, unitPriceMinor: small.priceMinor, lineTotalMinor: small.priceMinor * 2
+                )
+            ],
+            currencyCode: "EGP",
+            subtotalMinor: small.priceMinor * 2,
+            deliveryFeeMinor: 1500,
+            discountMinor: 0,
+            totalMinor: small.priceMinor * 2 + 1500,
+            couponCode: "",
+            payment: OrderPayment(method: .cashOnDelivery, status: .pending, providerReference: nil),
+            status: .pending,
+            createdAt: "2026-01-01T00:00:00.000Z"
+        )
+        #expect(order.items[0].lineTotalMinor == small.priceMinor * 2)
+        #expect(order.couponApplied == false)
+        #expect(order.couponIgnored == false)
+        #expect(order.orderNumber.hasPrefix("LBN-"))
+        #expect(order.items[0].productName.value(for: .arabic) == "حليب كامل الدسم")
+        #expect(order.items[0].productName.value(for: .english) == "Full Cream Milk")
     }
 }

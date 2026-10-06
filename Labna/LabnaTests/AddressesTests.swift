@@ -33,7 +33,7 @@ private final class AddressURLProtocol: URLProtocol, @unchecked Sendable {
     override func stopLoading() {}
 }
 
-private final class MemorySessionStore: AuthSessionStoring, @unchecked Sendable {
+final class MemorySessionStore: AuthSessionStoring, @unchecked Sendable {
     private let lock = NSLock()
     private var stored: AuthSession?
 

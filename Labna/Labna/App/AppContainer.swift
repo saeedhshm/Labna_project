@@ -18,6 +18,7 @@ final class AppContainer {
     let recentlyViewed: RecentlyViewedStore
     let auth: AuthStore
     let addresses: AddressesStore
+    let checkout: CheckoutStore
     let modelContainer: ModelContainer
     let router: AppRouter
     let deepLinks: DeepLinkCoordinator
@@ -80,6 +81,15 @@ final class AppContainer {
         auth = authStore
         // Shares the session actor so address calls refresh the same token.
         addresses = AddressesStore(service: resolvedAuthService, auth: authStore)
+        // Reuses the same session so the order is linked to the signed-in
+        // customer, and the same validation store so the review screen cannot
+        // disagree with the cart about pricing or stock.
+        checkout = CheckoutStore(
+            service: resolvedAuthService,
+            auth: authStore,
+            cart: cart,
+            cartValidation: cartValidation
+        )
         router = AppRouter()
         deepLinks = DeepLinkCoordinator(router: router)
         let publisher = widgetPublisher ?? WidgetSnapshotPublisher(

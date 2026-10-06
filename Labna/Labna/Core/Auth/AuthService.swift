@@ -182,6 +182,23 @@ actor AuthService {
         try await logoutWithResult()
     }
 
+    // MARK: - Orders
+
+    /// Creates a real order through `POST /orders`.
+    ///
+    /// The request is sent with the session's Bearer token, which is how the API
+    /// links the order to the signed-in customer. Ownership is therefore never
+    /// asserted by the client, and a guest session still gets an order without
+    /// a customer history entry.
+    func createOrder(_ request: CheckoutRequest) async throws -> PlacedOrder {
+        try await authorizedRequest(path: "orders", method: "POST", body: request, decode: PlacedOrder.self)
+    }
+
+    /// Reads a single order back from the API, e.g. after a relaunch.
+    func order(id: String) async throws -> PlacedOrder {
+        try await authorizedRequest(path: "orders/\(id)", decode: PlacedOrder.self)
+    }
+
     private func addressPath(_ id: String) -> String {
         let escaped = id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? id
         return "customer/addresses/\(escaped)"
@@ -368,6 +385,19 @@ actor AuthService {
         case "PASSWORD_REUSE": return .passwordReuse
         case "VALIDATION_ERROR": return .validation(decoded?.error.message ?? "Invalid input")
         case "UNAUTHORIZED": return .unauthorized
+        case "PRODUCT_UNAVAILABLE": return .checkout(.productUnavailable(productID: decoded?.error.details?.productID))
+        case "VARIANT_UNAVAILABLE": return .checkout(.variantUnavailable(
+            productID: decoded?.error.details?.productID,
+            variantID: decoded?.error.details?.variantID
+        ))
+        case "INSUFFICIENT_STOCK": return .checkout(.insufficientStock(
+            productID: decoded?.error.details?.productID,
+            variantID: decoded?.error.details?.variantID,
+            availableQuantity: decoded?.error.details?.availableQuantity
+        ))
+        case "INVALID_BRANCH": return .checkout(.invalidBranch)
+        case "NO_PICKUP_BRANCH": return .checkout(.noPickupBranch)
+        case "PAYMENT_FAILED": return .checkout(.paymentFailed)
         default: return .httpStatus(status, decoded?.error.message)
         }
     }

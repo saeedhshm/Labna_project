@@ -227,69 +227,136 @@ final class LabnaUITests: XCTestCase {
         app.launch()
         app.tabBars.buttons["Cart"].tap()
         XCTAssertTrue(app.staticTexts["cart.product.milk-full"].waitForExistence(timeout: 10))
-        app.buttons["cart.checkout"].tap()
-        XCTAssertTrue(app.navigationBars["Review order"].waitForExistence(timeout: 5))
-        let notes = app.textViews["checkout.notes"]
-        notes.tap()
-        notes.typeText("Demo note")
-        app.buttons["checkout.confirm"].tap()
-        XCTAssertTrue(app.staticTexts["checkout.success"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["success.reference"].label.contains("DEMO-"))
-        XCTAssertTrue(app.staticTexts["success.disclaimer"].exists)
-        app.buttons["success.products"].tap()
-        XCTAssertTrue(app.tabBars.buttons["Products"].isSelected)
-        app.tabBars.buttons["Cart"].tap()
-        XCTAssertTrue(app.staticTexts["Your cart is empty"].waitForExistence(timeout: 5))
+        // Checkout needs a saved address, so the rest of the flow lives in its
+        // own signed-in test.
+        app.terminate()
     }
 
+    /// Signs in, saves a delivery address and places a real order through the
+    /// API, replacing the old local demo checkout.
+    ///
+    /// Skipped when the backend is not running, since the order is server backed.
     @MainActor
-    func testFavoritesCanBeSavedAndOpenedFromMore() throws {
+    func testServerBackedCheckoutCreatesRealOrder() async throws {
+        guard await backendIsReachable() else {
+            throw XCTSkip("Backend not running on 127.0.0.1:3001")
+        }
+        let email = "ios-ui-order-\(Int(Date().timeIntervalSince1970))@example.com"
+        let seeded = await seedCustomer(email: email)
+        guard case .seeded = seeded else {
+            throw XCTSkip("Could not seed the account through the backend")
+        }
+
         let app = XCUIApplication()
-        app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-resetFavorites"]
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-resetAuthSession"]
         app.launch()
 
-        XCTAssertTrue(app.tabBars.buttons["Products"].waitForExistence(timeout: 10))
-        app.tabBars.buttons["Products"].tap()
-        let favorite = app.buttons["favorite.milk-full"]
-        XCTAssertTrue(favorite.waitForExistence(timeout: 10))
-        favorite.tap()
-
+        // Sign in first: checkout creates a real order for the account.
         app.tabBars.buttons["More"].tap()
-        XCTAssertEqual(app.staticTexts["more.favorites.count"].label, "1")
-        app.buttons["more.favorites"].tap()
-        XCTAssertTrue(app.navigationBars["Favorites"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["product.milk-full"].waitForExistence(timeout: 5))
-    }
+        app.buttons["more.account"].tap()
+        let emailField = app.textFields["auth.email"]
+        XCTAssertTrue(emailField.waitForExistence(timeout: 10))
+        emailField.tap()
+        emailField.typeText(email)
+        let password = app.secureTextFields["auth.password"]
+        password.tap()
+        password.typeText("password123")
+        app.buttons["auth.login.submit"].tap()
+        XCTAssertTrue(app.buttons["auth.logout"].waitForExistence(timeout: 20))
 
-    @MainActor
-    func testRecentlyViewedProductsAppearOnHomeAndViewAll() throws {
-        let app = XCUIApplication()
-        app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-resetRecentlyViewed"]
-        app.launch()
+        // Save a delivery address.
+        app.buttons["account.addresses"].tap()
+        XCTAssertTrue(app.buttons["addresses.add"].waitForExistence(timeout: 10))
+        app.buttons["addresses.add"].tap()
+        XCTAssertTrue(app.navigationBars["Add address"].waitForExistence(timeout: 5))
+        type("Home", into: app.textFields["addresses.field.label"])
+        type("Cairo", into: app.textFields["addresses.field.city"])
+        type("Maadi", into: app.textFields["addresses.field.area"])
+        type("Street 15", into: app.textFields["addresses.field.street"])
+        type("Building 7", into: app.textFields["addresses.field.building"])
+        app.buttons["addresses.save"].tap()
+        XCTAssertTrue(app.staticTexts["Home"].waitForExistence(timeout: 15))
 
-        XCTAssertTrue(app.tabBars.buttons["Products"].waitForExistence(timeout: 10))
+        // Put something in the cart, then review it.
         app.tabBars.buttons["Products"].tap()
         let product = app.buttons["product.milk-full"]
         XCTAssertTrue(product.waitForExistence(timeout: 10))
         product.tap()
-        XCTAssertTrue(app.navigationBars["Full Cream Milk"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["variant.milk-full-1000"].waitForExistence(timeout: 5))
+        app.buttons["productDetails.add"].tap()
 
-        app.navigationBars.buttons.firstMatch.tap()
-        app.tabBars.buttons["Home"].tap()
-        XCTAssertTrue(app.descendants(matching: .any)["recentlyViewed.section"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["product.milk-full"].waitForExistence(timeout: 5))
+        app.tabBars.buttons["Cart"].tap()
+        XCTAssertTrue(app.buttons["cart.checkout"].waitForExistence(timeout: 10))
+        app.buttons["cart.checkout"].tap()
+        XCTAssertTrue(app.navigationBars["Review order"].waitForExistence(timeout: 10))
 
-        app.buttons["recentlyViewed.viewAll"].tap()
-        XCTAssertTrue(app.navigationBars["Recently viewed"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["product.milk-full"].waitForExistence(timeout: 5))
+        // The saved address is preselected and the contact is prefilled.
+        XCTAssertTrue(app.staticTexts["Home"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.textFields["checkout.contact.name"].exists)
+        XCTAssertTrue(app.secureTextFields.count == 0, "No password field belongs on checkout")
+
+        // Cash on delivery is the only real option offered.
+        XCTAssertTrue(app.buttons["checkout.payment.cash_on_delivery"].exists)
+
+        // A coupon field is offered, but the discount it grants is decided by
+        // the server and is covered by the checkout tests, so this walkthrough
+        // orders without one.
+        XCTAssertTrue(app.descendants(matching: .any)["checkout.coupon.field"].exists)
+        app.buttons["checkout.confirm"].tap()
+
+        XCTAssertTrue(app.staticTexts["checkout.success"].waitForExistence(timeout: 30))
+        // A real backend order number, not a locally minted reference.
+        let reference = app.staticTexts["success.reference"].label
+        XCTAssertTrue(reference.hasPrefix("LBN-"), "Expected a backend order number, got \(reference)")
+        // Confirmed totals come from the created order.
+        XCTAssertTrue(app.descendants(matching: .any)["success.total"].exists)
+        XCTAssertTrue(app.staticTexts["Delivery"].exists)
+
+        // The cart is only emptied once the order exists.
+        app.buttons["success.products"].tap()
+        XCTAssertTrue(app.tabBars.buttons["Products"].isSelected)
+        app.tabBars.buttons["Cart"].tap()
+        XCTAssertTrue(app.staticTexts["Your cart is empty"].waitForExistence(timeout: 5))
+        app.terminate()
     }
 
     @MainActor
-    func testLaunchPerformance() throws {
-        // This measures how long it takes to launch your application.
-        measure(metrics: [XCTApplicationLaunchMetric()]) {
-            XCUIApplication().launch()
+    func testCartReportsServerValidationBeforeCheckout() async throws {
+        guard await backendIsReachable() else {
+            throw XCTSkip("Backend not running on 127.0.0.1:3001")
         }
+        let app = XCUIApplication()
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-resetAuthSession"]
+        app.launch()
+
+        app.tabBars.buttons["Products"].tap()
+        let product = app.buttons["product.milk-full"]
+        XCTAssertTrue(product.waitForExistence(timeout: 10))
+        product.tap()
+        XCTAssertTrue(app.buttons["variant.milk-full-1000"].waitForExistence(timeout: 5))
+        app.buttons["productDetails.add"].tap()
+
+        app.tabBars.buttons["Cart"].tap()
+        XCTAssertTrue(app.staticTexts["cart.product.milk-full"].waitForExistence(timeout: 10))
+
+        // The banner must settle on a server answer rather than staying pending.
+        let banner = app.descendants(matching: .any)["cart.validation.banner"]
+        XCTAssertTrue(banner.waitForExistence(timeout: 20))
+
+        // A stocked line is confirmed and the total is attributed to the server.
+        let ready = app.staticTexts["Cart checked \u{2014} prices and stock confirmed."].firstMatch
+        XCTAssertTrue(ready.waitForExistence(timeout: 20), "Cart should be confirmed by the server")
+        XCTAssertTrue(app.descendants(matching: .any)["cart.total.validated"].exists)
+        // No line-level complaint when nothing is wrong.
+        XCTAssertFalse(app.descendants(matching: .any)["cart.line.reason"].exists)
+        XCTAssertFalse(app.descendants(matching: .any)["cart.line.priceChanged"].exists)
+        // Checkout is offered only because the server agreed.
+        XCTAssertTrue(app.buttons["cart.checkout"].isEnabled)
+
+        // The confirmed total is the store's, not a locally computed guess.
+        let serverTotal = app.descendants(matching: .any)["cart.total.server"]
+        XCTAssertTrue(serverTotal.exists)
+        app.terminate()
     }
 
     /// Registers a real customer through the running backend, then walks the
@@ -370,7 +437,53 @@ final class LabnaUITests: XCTestCase {
         app.buttons["auth.logout"].tap()
         XCTAssertTrue(app.textFields["auth.email"].waitForExistence(timeout: 15))
     }
+    @MainActor
+    func testFavoritesCanBeSavedAndOpenedFromMore() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-resetFavorites"]
+        app.launch()
 
+        XCTAssertTrue(app.tabBars.buttons["Products"].waitForExistence(timeout: 10))
+        app.tabBars.buttons["Products"].tap()
+        let favorite = app.buttons["favorite.milk-full"]
+        XCTAssertTrue(favorite.waitForExistence(timeout: 10))
+        favorite.tap()
+
+        app.tabBars.buttons["More"].tap()
+        XCTAssertEqual(app.staticTexts["more.favorites.count"].label, "1")
+        app.buttons["more.favorites"].tap()
+        XCTAssertTrue(app.navigationBars["Favorites"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["product.milk-full"].waitForExistence(timeout: 5))
+    }
+    @MainActor
+    func testLaunchPerformance() throws {
+        // This measures how long it takes to launch your application.
+        measure(metrics: [XCTApplicationLaunchMetric()]) {
+            XCUIApplication().launch()
+        }
+    }
+    @MainActor
+    func testRecentlyViewedProductsAppearOnHomeAndViewAll() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-resetRecentlyViewed"]
+        app.launch()
+
+        XCTAssertTrue(app.tabBars.buttons["Products"].waitForExistence(timeout: 10))
+        app.tabBars.buttons["Products"].tap()
+        let product = app.buttons["product.milk-full"]
+        XCTAssertTrue(product.waitForExistence(timeout: 10))
+        product.tap()
+        XCTAssertTrue(app.navigationBars["Full Cream Milk"].waitForExistence(timeout: 5))
+
+        app.navigationBars.buttons.firstMatch.tap()
+        app.tabBars.buttons["Home"].tap()
+        XCTAssertTrue(app.descendants(matching: .any)["recentlyViewed.section"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["product.milk-full"].waitForExistence(timeout: 5))
+
+        app.buttons["recentlyViewed.viewAll"].tap()
+        XCTAssertTrue(app.navigationBars["Recently viewed"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["product.milk-full"].waitForExistence(timeout: 5))
+    }
     /// Walks the saved-address screen end to end against the running backend:
     /// empty state, add, set default, and delete behind a confirmation.
     ///
@@ -469,49 +582,6 @@ final class LabnaUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Work"].waitForExistence(timeout: 15))
         XCTAssertTrue(app.staticTexts["Home"].exists)
         XCTAssertEqual(app.staticTexts.matching(identifier: "Default").count, 1, "The survivor inherits the default flag")
-    }
-
-    /// Shows that the cart reports the server's verdict before checkout is
-    /// offered, and keeps working when the server cannot be reached.
-    ///
-    /// Skipped when the backend is not running, since validation is server driven.
-    @MainActor
-    func testCartReportsServerValidationBeforeCheckout() async throws {
-        guard await backendIsReachable() else {
-            throw XCTSkip("Backend not running on 127.0.0.1:3001")
-        }
-        let app = XCUIApplication()
-        app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-resetAuthSession"]
-        app.launch()
-
-        app.tabBars.buttons["Products"].tap()
-        let product = app.buttons["product.milk-full"]
-        XCTAssertTrue(product.waitForExistence(timeout: 10))
-        product.tap()
-        XCTAssertTrue(app.buttons["variant.milk-full-1000"].waitForExistence(timeout: 5))
-        app.buttons["productDetails.add"].tap()
-
-        app.tabBars.buttons["Cart"].tap()
-        XCTAssertTrue(app.staticTexts["cart.product.milk-full"].waitForExistence(timeout: 10))
-
-        // The banner must settle on a server answer rather than staying pending.
-        let banner = app.descendants(matching: .any)["cart.validation.banner"]
-        XCTAssertTrue(banner.waitForExistence(timeout: 20))
-
-        // A stocked line is confirmed and the total is attributed to the server.
-        let ready = app.staticTexts["Cart checked \u{2014} prices and stock confirmed."].firstMatch
-        XCTAssertTrue(ready.waitForExistence(timeout: 20), "Cart should be confirmed by the server")
-        XCTAssertTrue(app.descendants(matching: .any)["cart.total.validated"].exists)
-        // No line-level complaint when nothing is wrong.
-        XCTAssertFalse(app.descendants(matching: .any)["cart.line.reason"].exists)
-        XCTAssertFalse(app.descendants(matching: .any)["cart.line.priceChanged"].exists)
-        // Checkout is offered only because the server agreed.
-        XCTAssertTrue(app.buttons["cart.checkout"].isEnabled)
-
-        // The confirmed total is the store's, not a locally computed guess.
-        let serverTotal = app.descendants(matching: .any)["cart.total.server"]
-        XCTAssertTrue(serverTotal.exists)
-        app.terminate()
     }
 
     private func type(_ text: String, into field: XCUIElement) {
