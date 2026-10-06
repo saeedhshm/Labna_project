@@ -1,0 +1,21 @@
+{
+  "name": "لبنة — متجر منتجات الألبان",
+  "short_name": "لبنة",
+  "description": "متجر إلكتروني لمنتجات الألبان الطازجة مع الفروع والتوصيل.",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#fffdf8",
+  "theme_color": "#0f4f3a",
+  "icons": [
+    {
+      "src": "/labna-icon.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

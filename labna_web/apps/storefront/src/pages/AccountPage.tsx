@@ -4,6 +4,7 @@ import { customerProfilePatch } from '@labna/contracts';
 import { ApiError } from '../api';
 import { useAuth } from '../auth';
 import { useLanguage } from '../i18n';
+import { usePageMeta } from '../meta';
 
 type FormErrors = Record<string, string>;
 
@@ -17,6 +18,7 @@ const serverMessage = (error: unknown, t: (ar: string, en: string) => string) =>
 
 export function AccountPage() {
   const { t } = useLanguage();
+  usePageMeta(t('حسابي', 'My Account'));
   const auth = useAuth();
   const navigate = useNavigate();
   const form = useId();
@@ -45,7 +47,7 @@ export function AccountPage() {
     setSuccess('');
     const parsed = customerProfilePatch.safeParse(values);
     if (!parsed.success) {
-      setErrors(Object.fromEntries(parsed.error.issues.map(issue => [String(issue.path[0]), issue.message])));
+      setErrors(Object.fromEntries(parsed.error.issues.map((issue) => [String(issue.path[0]), issue.message])));
       return;
     }
     setErrors({});
@@ -67,16 +69,27 @@ export function AccountPage() {
           <p className="eyebrow">{t('منطقة العملاء', 'Customer area')}</p>
           <h1 id="account-title">{t('حسابي', 'My Account')}</h1>
           <dl>
-            <div><dt>{t('الاسم', 'Name')}</dt><dd>{customer.name}</dd></div>
-            <div><dt>{t('البريد الإلكتروني', 'Email')}</dt><dd>{customer.email}</dd></div>
-            <div><dt>{t('الهاتف', 'Phone')}</dt><dd dir="ltr">{customer.phoneNumber}</dd></div>
+            <div>
+              <dt>{t('الاسم', 'Name')}</dt>
+              <dd>{customer.name}</dd>
+            </div>
+            <div>
+              <dt>{t('البريد الإلكتروني', 'Email')}</dt>
+              <dd>{customer.email}</dd>
+            </div>
+            <div>
+              <dt>{t('الهاتف', 'Phone')}</dt>
+              <dd dir="ltr">{customer.phoneNumber}</dd>
+            </div>
           </dl>
           <nav className="account-nav" aria-label={t('تنقل الحساب', 'Account navigation')}>
             <a href="#profile-form">{t('الملف الشخصي', 'Profile')}</a>
             <Link to="/account/addresses">{t('العناوين', 'Addresses')}</Link>
             <Link to="/account/orders">{t('طلباتي', 'My Orders')}</Link>
             <Link to="/account/change-password">{t('تغيير كلمة المرور', 'Change Password')}</Link>
-            <button type="button" onClick={logout}>{t('تسجيل الخروج', 'Logout')}</button>
+            <button type="button" onClick={logout}>
+              {t('تسجيل الخروج', 'Logout')}
+            </button>
           </nav>
         </aside>
 
@@ -84,8 +97,16 @@ export function AccountPage() {
           <p className="eyebrow">{t('الملف الشخصي', 'Profile')}</p>
           <h2 id="profile-title">{t('تعديل بيانات الحساب', 'Edit profile')}</h2>
           <p className="hint">{t('يمكنك تعديل الاسم والبريد الإلكتروني ورقم الهاتف فقط.', 'You can edit only your name, email, and phone number.')}</p>
-          {formError ? <p className="form-alert" role="alert">{formError}</p> : null}
-          {success ? <p className="form-success" role="status">{success}</p> : null}
+          {formError ? (
+            <p className="form-alert" role="alert">
+              {formError}
+            </p>
+          ) : null}
+          {success ? (
+            <p className="form-success" role="status">
+              {success}
+            </p>
+          ) : null}
 
           {[
             ['name', t('الاسم', 'Name'), 'text', 'name'],
@@ -94,12 +115,26 @@ export function AccountPage() {
           ].map(([name, label, type, autoComplete]) => (
             <div className="auth-field" key={name}>
               <label htmlFor={field(name)}>{label}</label>
-              <input id={field(name)} type={type} autoComplete={autoComplete} value={values[name as keyof typeof values]} aria-invalid={Boolean(errors[name])} aria-describedby={errors[name] ? field(`${name}-error`) : undefined} onChange={event => setValues({ ...values, [name]: event.target.value })} />
-              {errors[name] ? <span id={field(`${name}-error`)} className="field-error">{errors[name]}</span> : null}
+              <input
+                id={field(name)}
+                type={type}
+                autoComplete={autoComplete}
+                value={values[name as keyof typeof values]}
+                aria-invalid={Boolean(errors[name])}
+                aria-describedby={errors[name] ? field(`${name}-error`) : undefined}
+                onChange={(event) => setValues({ ...values, [name]: event.target.value })}
+              />
+              {errors[name] ? (
+                <span id={field(`${name}-error`)} className="field-error">
+                  {errors[name]}
+                </span>
+              ) : null}
             </div>
           ))}
 
-          <button className="button button--wide" type="submit" disabled={saving}>{saving ? t('جارٍ الحفظ...', 'Saving...') : t('حفظ التغييرات', 'Save changes')}</button>
+          <button className="button button--wide" type="submit" disabled={saving}>
+            {saving ? t('جارٍ الحفظ...', 'Saving...') : t('حفظ التغييرات', 'Save changes')}
+          </button>
         </form>
       </div>
     </section>

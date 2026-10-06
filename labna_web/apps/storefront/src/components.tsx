@@ -3,19 +3,11 @@ import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { money, unit } from './format';
 import { useLanguage } from './i18n';
+import { useFavorites } from './favorites';
 import type { PublicBanner, PublicBranch, PublicCategory, PublicProduct, PublicVariant } from './types';
 import { text } from './types';
 import { clampQuantity, galleryImages, startingPrice, type QuantityBounds } from './product-detail';
-import {
-  branchStatus,
-  coordinatesLabel,
-  directionsURL,
-  formatIntervals,
-  groupSchedule,
-  hasSchedule,
-  telHref,
-  weekdayLabel,
-} from './branch-hours';
+import { branchStatus, coordinatesLabel, directionsURL, formatIntervals, groupSchedule, hasSchedule, telHref, weekdayLabel } from './branch-hours';
 
 export function BranchStatusBadge({ branch }: { branch: PublicBranch }) {
   const { locale } = useLanguage();
@@ -141,6 +133,31 @@ export function StateCard({ title, action }: { title: string; action?: ReactNode
   );
 }
 
+/** Accessible favourite toggle. `aria-pressed` exposes saved state so the
+ * control is understandable without relying on the icon alone. */
+export function FavoriteButton({ productID, className }: { productID: string; className?: string }) {
+  const { t } = useLanguage();
+  const { isFavorite, toggle, pending } = useFavorites();
+  const saved = isFavorite(productID);
+  return (
+    <button
+      type="button"
+      className={`${className ?? ''} favorite-button${saved ? ' is-saved' : ''}`.trim()}
+      aria-pressed={saved}
+      disabled={pending}
+      onClick={(event) => {
+        // The card itself is a link, so keep the tap on the button only.
+        event.preventDefault();
+        event.stopPropagation();
+        void toggle(productID);
+      }}
+    >
+      <span aria-hidden="true">{saved ? '♥' : '♡'}</span>
+      <span className="visually-hidden">{saved ? t('إزالة من المفضلة', 'Remove from favorites') : t('إضافة إلى المفضلة', 'Add to favorites')}</span>
+    </button>
+  );
+}
+
 export function ProductCard({ product, category }: { product: PublicProduct; category?: PublicCategory }) {
   const { locale, t } = useLanguage();
   const available = product.variants.filter((variant) => variant.isAvailable);
@@ -149,10 +166,13 @@ export function ProductCard({ product, category }: { product: PublicProduct; cat
 
   return (
     <article className="product-card">
-      <Link to={`/products/${product.id}`} className="product-card__image" aria-label={text(product.name, locale)}>
-        <ProductImage src={product.imageURLs[0]} alt="" className="product-card__image-file" />
-        {product.isFeatured ? <span className="pill">{t('مميز', 'Featured')}</span> : null}
-      </Link>
+      <div className="product-card__media">
+        <Link to={`/products/${product.id}`} className="product-card__image" aria-label={text(product.name, locale)}>
+          <ProductImage src={product.imageURLs[0]} alt="" className="product-card__image-file" />
+          {product.isFeatured ? <span className="pill">{t('مميز', 'Featured')}</span> : null}
+        </Link>
+        <FavoriteButton productID={product.id} className="product-card__favorite" />
+      </div>
       <div className="product-card__body">
         <p className="eyebrow">{category ? text(category.name, locale) : product.categoryID}</p>
         <h3>
@@ -160,11 +180,7 @@ export function ProductCard({ product, category }: { product: PublicProduct; cat
         </h3>
         <p>{text(product.description, locale)}</p>
         <div className="product-card__meta">
-          <strong>
-            {startingVariant && starting !== undefined
-              ? t('يبدأ من ', 'From ') + money(starting, startingVariant.currencyCode, locale)
-              : t('غير متوفر', 'Unavailable')}
-          </strong>
+          <strong>{startingVariant && starting !== undefined ? t('يبدأ من ', 'From ') + money(starting, startingVariant.currencyCode, locale) : t('غير متوفر', 'Unavailable')}</strong>
           <span>
             {available.length} {t('خيارات', 'options')}
           </span>
@@ -252,23 +268,10 @@ export function VariantPicker({
         {variants.map((variant) => {
           const isSelected = variant.id === selected?.id;
           const packSize = `${text(variant.label, locale)} · ${unit(variant.quantity, variant.unit, locale)}`;
-          const availability = variant.isAvailable
-            ? `${variant.availableQuantity} ${t('متاح', 'available')}`
-            : t('غير متوفر', 'Out of stock');
+          const availability = variant.isAvailable ? `${variant.availableQuantity} ${t('متاح', 'available')}` : t('غير متوفر', 'Out of stock');
           return (
-            <label
-              key={variant.id}
-              className={`variant-option${isSelected ? ' is-selected' : ''}`}
-              data-available={variant.isAvailable}
-            >
-              <input
-                type="radio"
-                name={name}
-                value={variant.id}
-                checked={isSelected}
-                disabled={!variant.isAvailable}
-                onChange={() => onSelect(variant)}
-              />
+            <label key={variant.id} className={`variant-option${isSelected ? ' is-selected' : ''}`} data-available={variant.isAvailable}>
+              <input type="radio" name={name} value={variant.id} checked={isSelected} disabled={!variant.isAvailable} onChange={() => onSelect(variant)} />
               <span className="variant-option__pack">{packSize}</span>
               <strong className="variant-option__price">{money(variant.priceMinor, variant.currencyCode, locale)}</strong>
               <small className="variant-option__stock">{availability}</small>
@@ -432,14 +435,7 @@ export function BannerCarousel({ banners }: { banners: PublicBanner[] }) {
             </>
           );
           return (
-            <div
-              className="banner-carousel__slide"
-              key={banner.id}
-              aria-hidden={slideIndex !== index}
-              role="group"
-              aria-roledescription="slide"
-              aria-label={`${slideIndex + 1} of ${count}`}
-            >
+            <div className="banner-carousel__slide" key={banner.id} aria-hidden={slideIndex !== index} role="group" aria-roledescription="slide" aria-label={`${slideIndex + 1} of ${count}`}>
               {target.kind === 'route' ? (
                 <Link to={target.to} className="banner-carousel__link">
                   {content}

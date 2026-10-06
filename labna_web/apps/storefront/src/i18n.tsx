@@ -23,11 +23,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     document.documentElement.dir = dir;
   }, [dir, locale]);
 
-  return (
-    <LanguageContext.Provider value={{ locale, dir, setLocale, t: (ar, en) => (locale === 'ar' ? ar : en) }}>
-      {children}
-    </LanguageContext.Provider>
-  );
+  return <LanguageContext.Provider value={{ locale, dir, setLocale, t: (ar, en) => (locale === 'ar' ? ar : en) }}>{children}</LanguageContext.Provider>;
 }
 
 export function useLanguage() {

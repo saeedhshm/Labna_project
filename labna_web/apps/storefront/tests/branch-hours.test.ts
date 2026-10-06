@@ -1,17 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  branchStatus,
-  coordinatesLabel,
-  directionsURL,
-  formatClock,
-  formatIntervals,
-  formatNextOpening,
-  groupSchedule,
-  hasCoordinates,
-  hasSchedule,
-  telHref,
-  weekdayLabel,
-} from '../src/branch-hours';
+import { branchStatus, coordinatesLabel, directionsURL, formatClock, formatIntervals, formatNextOpening, groupSchedule, hasCoordinates, hasSchedule, telHref, weekdayLabel } from '../src/branch-hours';
 import type { PublicBranch } from '../src/types';
 
 const branch = (overrides: Partial<PublicBranch> = {}): PublicBranch => ({
@@ -131,10 +119,7 @@ describe('customer facing status', () => {
   });
 
   it('reports closed with the next opening rendered in the branch time zone', () => {
-    const status = branchStatus(
-      branch({ isOpen: false, nextOpensAt: '2026-10-05T06:00:00.000Z', openingHours: [{ weekday: 1, opensAt: '09:00', closesAt: '22:00' }] }),
-      'en',
-    );
+    const status = branchStatus(branch({ isOpen: false, nextOpensAt: '2026-10-05T06:00:00.000Z', openingHours: [{ weekday: 1, opensAt: '09:00', closesAt: '22:00' }] }), 'en');
     expect(status.tone).toBe('closed');
     expect(status.label).toBe('Closed now');
     // 06:00Z is 09:00 in Africa/Cairo, so the local opening time is shown.
@@ -149,10 +134,7 @@ describe('customer facing status', () => {
   });
 
   it('omits the detail line when the API has no next opening', () => {
-    const status = branchStatus(
-      branch({ isOpen: false, openingHours: [{ weekday: 1, opensAt: '09:00', closesAt: '22:00' }], nextOpensAt: null }),
-      'en',
-    );
+    const status = branchStatus(branch({ isOpen: false, openingHours: [{ weekday: 1, opensAt: '09:00', closesAt: '22:00' }], nextOpensAt: null }), 'en');
     expect(status).toEqual({ tone: 'closed', label: 'Closed now' });
   });
 
@@ -164,10 +146,7 @@ describe('customer facing status', () => {
   it('tolerates an invalid stored time zone instead of throwing', () => {
     expect(formatNextOpening('2026-10-05T06:00:00.000Z', 'Not/AZone', 'en')).toBeNull();
     // An unparseable timestamp must not become a bogus "opens at" claim.
-    const status = branchStatus(
-      branch({ isOpen: false, openingHours: [{ weekday: 1, opensAt: '09:00', closesAt: '22:00' }], nextOpensAt: 'nonsense' }),
-      'en',
-    );
+    const status = branchStatus(branch({ isOpen: false, openingHours: [{ weekday: 1, opensAt: '09:00', closesAt: '22:00' }], nextOpensAt: 'nonsense' }), 'en');
     expect(status).toEqual({ tone: 'closed', label: 'Closed now' });
   });
 });

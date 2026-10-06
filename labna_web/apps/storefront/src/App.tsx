@@ -14,8 +14,12 @@ import { AccountPage } from './pages/AccountPage';
 import { AddressesPage } from './pages/AddressesPage';
 import { OrderDetailPage, OrdersPage } from './pages/OrdersPage';
 import { ChangePasswordPage } from './pages/ChangePasswordPage';
+import { FavoritesPage } from './pages/FavoritesPage';
 import { CartProvider, useCart } from './cart';
 import { AuthProvider, useAuth } from './auth';
+import { FavoritesProvider } from './favorites';
+import { RecentlyViewedProvider } from './recently-viewed';
+import { OfflineBanner } from './offline';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000, refetchOnWindowFocus: false } },
@@ -45,12 +49,16 @@ function Layout() {
     navigate('/login', { replace: true });
   };
 
-  const accountLinks = auth.status === 'authenticated' ? [
-    { to: '/account', label: t('حسابي', 'My Account') },
-    { to: '/account/orders', label: t('طلباتي', 'My Orders') },
-    { to: '/account/addresses', label: t('العناوين', 'Addresses') },
-    { to: '/account/change-password', label: t('تغيير كلمة المرور', 'Change Password') },
-  ] : [];
+  const accountLinks =
+    auth.status === 'authenticated'
+      ? [
+          { to: '/account', label: t('حسابي', 'My Account') },
+          { to: '/account/orders', label: t('طلباتي', 'My Orders') },
+          { to: '/account/favorites', label: t('المفضلة', 'Favorites') },
+          { to: '/account/addresses', label: t('العناوين', 'Addresses') },
+          { to: '/account/change-password', label: t('تغيير كلمة المرور', 'Change Password') },
+        ]
+      : [];
 
   useEffect(() => {
     setAccountOpen(false);
@@ -98,16 +106,24 @@ function Layout() {
         <div className="topbar__actions">
           {auth.status === 'authenticated' ? (
             <div className="account-menu" ref={accountMenuRef}>
-              <button type="button" className="account-menu__trigger" aria-haspopup="menu" aria-expanded={accountOpen} onClick={() => setAccountOpen(open => !open)}>
+              <button type="button" className="account-menu__trigger" aria-haspopup="menu" aria-expanded={accountOpen} onClick={() => setAccountOpen((open) => !open)}>
                 {auth.customer?.name ?? t('حسابي', 'Account')}
               </button>
               <div className="account-menu__panel" role="menu" hidden={!accountOpen}>
-                {accountLinks.map(item => <Link key={item.to} to={item.to} role="menuitem" onClick={() => setAccountOpen(false)}>{item.label}</Link>)}
-                <button type="button" role="menuitem" onClick={logout}>{t('تسجيل الخروج', 'Logout')}</button>
+                {accountLinks.map((item) => (
+                  <Link key={item.to} to={item.to} role="menuitem" onClick={() => setAccountOpen(false)}>
+                    {item.label}
+                  </Link>
+                ))}
+                <button type="button" role="menuitem" onClick={logout}>
+                  {t('تسجيل الخروج', 'Logout')}
+                </button>
               </div>
             </div>
           ) : (
-            <Link className="auth-entry" to="/login">{t('دخول / حساب جديد', 'Login / Create Account')}</Link>
+            <Link className="auth-entry" to="/login">
+              {t('دخول / حساب جديد', 'Login / Create Account')}
+            </Link>
           )}
           <button
             className="language-toggle"
@@ -117,13 +133,7 @@ function Layout() {
           >
             {locale === 'ar' ? 'EN' : 'ع'}
           </button>
-          <button
-            className="menu-toggle"
-            type="button"
-            aria-label={t('القائمة', 'Menu')}
-            aria-expanded={mobileOpen}
-            onClick={() => setMobileOpen((v) => !v)}
-          >
+          <button className="menu-toggle" type="button" aria-label={t('القائمة', 'Menu')} aria-expanded={mobileOpen} onClick={() => setMobileOpen((v) => !v)}>
             <span />
             <span />
             <span />
@@ -140,14 +150,23 @@ function Layout() {
           ))}
           {auth.status === 'authenticated' ? (
             <>
-              {accountLinks.map(item => <NavLink key={item.to} to={item.to} onClick={() => setMobileOpen(false)}>{item.label}</NavLink>)}
-              <button className="mobile-logout" type="button" onClick={logout}>{t('تسجيل الخروج', 'Logout')}</button>
+              {accountLinks.map((item) => (
+                <NavLink key={item.to} to={item.to} onClick={() => setMobileOpen(false)}>
+                  {item.label}
+                </NavLink>
+              ))}
+              <button className="mobile-logout" type="button" onClick={logout}>
+                {t('تسجيل الخروج', 'Logout')}
+              </button>
             </>
           ) : (
-            <NavLink to="/login" onClick={() => setMobileOpen(false)}>{t('دخول / حساب جديد', 'Login / Create Account')}</NavLink>
+            <NavLink to="/login" onClick={() => setMobileOpen(false)}>
+              {t('دخول / حساب جديد', 'Login / Create Account')}
+            </NavLink>
           )}
         </nav>
       ) : null}
+      <OfflineBanner />
       <main id="main" tabIndex={-1}>
         <Outlet />
       </main>
@@ -162,7 +181,12 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const { t } = useLanguage();
   const location = useLocation();
-  if (auth.status === 'checking') return <section className="state-card"><h1>{t('جارٍ تحميل الحساب', 'Loading account')}</h1></section>;
+  if (auth.status === 'checking')
+    return (
+      <section className="state-card">
+        <h1>{t('جارٍ تحميل الحساب', 'Loading account')}</h1>
+      </section>
+    );
   if (auth.status === 'unauthenticated') return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />;
   return children;
 }
@@ -181,27 +205,70 @@ function NotFound() {
 
 function createRouter() {
   return createBrowserRouter([
-  {
-    element: <Layout />,
-    children: [
-      { path: '/', element: <HomePage /> },
-      { path: '/products', element: <CatalogPage /> },
-      { path: '/products/:productId', element: <ProductPage /> },
-      { path: '/categories/:categoryId', element: <CatalogPage /> },
-      { path: '/branches', element: <BranchesPage /> },
-      { path: '/cart', element: <CartPage /> },
-      { path: '/checkout', element: <CheckoutPage /> },
-      { path: '/orders/:orderID', element: <ConfirmationPage /> },
-      { path: '/login', element: <LoginPage /> },
-      { path: '/register', element: <RegisterPage /> },
-      { path: '/account', element: <ProtectedRoute><AccountPage /></ProtectedRoute> },
-      { path: '/account/orders', element: <ProtectedRoute><OrdersPage /></ProtectedRoute> },
-      { path: '/account/orders/:orderId', element: <ProtectedRoute><OrderDetailPage /></ProtectedRoute> },
-      { path: '/account/addresses', element: <ProtectedRoute><AddressesPage /></ProtectedRoute> },
-      { path: '/account/change-password', element: <ProtectedRoute><ChangePasswordPage /></ProtectedRoute> },
-      { path: '*', element: <NotFound /> },
-    ],
-  },
+    {
+      element: <Layout />,
+      children: [
+        { path: '/', element: <HomePage /> },
+        { path: '/products', element: <CatalogPage /> },
+        { path: '/products/:productId', element: <ProductPage /> },
+        { path: '/categories/:categoryId', element: <CatalogPage /> },
+        { path: '/branches', element: <BranchesPage /> },
+        { path: '/cart', element: <CartPage /> },
+        { path: '/checkout', element: <CheckoutPage /> },
+        { path: '/orders/:orderID', element: <ConfirmationPage /> },
+        { path: '/login', element: <LoginPage /> },
+        { path: '/register', element: <RegisterPage /> },
+        {
+          path: '/account',
+          element: (
+            <ProtectedRoute>
+              <AccountPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: '/account/favorites',
+          element: (
+            <ProtectedRoute>
+              <FavoritesPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: '/account/orders',
+          element: (
+            <ProtectedRoute>
+              <OrdersPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: '/account/orders/:orderId',
+          element: (
+            <ProtectedRoute>
+              <OrderDetailPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: '/account/addresses',
+          element: (
+            <ProtectedRoute>
+              <AddressesPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: '/account/change-password',
+          element: (
+            <ProtectedRoute>
+              <ChangePasswordPage />
+            </ProtectedRoute>
+          ),
+        },
+        { path: '*', element: <NotFound /> },
+      ],
+    },
   ]);
 }
 
@@ -211,9 +278,13 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
         <AuthProvider>
-          <CartProvider>
-            <RouterProvider router={router} />
-          </CartProvider>
+          <FavoritesProvider>
+            <RecentlyViewedProvider>
+              <CartProvider>
+                <RouterProvider router={router} />
+              </CartProvider>
+            </RecentlyViewedProvider>
+          </FavoritesProvider>
         </AuthProvider>
       </LanguageProvider>
     </QueryClientProvider>

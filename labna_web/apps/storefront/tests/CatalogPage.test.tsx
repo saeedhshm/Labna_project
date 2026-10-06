@@ -5,6 +5,9 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import { LanguageProvider } from '../src/i18n';
+import { AuthProvider } from '../src/auth';
+import { FavoritesProvider } from '../src/favorites';
+import { stubSessionRefresh } from './providers';
 import { CatalogPage } from '../src/pages/CatalogPage';
 
 const image = 'https://images.unsplash.com/photo-1?w=800';
@@ -33,15 +36,20 @@ function renderPage(initialEntry = '/products') {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>
       <LanguageProvider>
-        <MemoryRouter initialEntries={[initialEntry]}>
-          <Routes>
-            <Route path="/products" element={children} />
-            <Route path="/categories/:categoryId" element={children} />
-          </Routes>
-        </MemoryRouter>
+        <AuthProvider>
+          <FavoritesProvider>
+            <MemoryRouter initialEntries={[initialEntry]}>
+              <Routes>
+                <Route path="/products" element={children} />
+                <Route path="/categories/:categoryId" element={children} />
+              </Routes>
+            </MemoryRouter>
+          </FavoritesProvider>
+        </AuthProvider>
       </LanguageProvider>
     </QueryClientProvider>
   );
+  stubSessionRefresh();
   return render(<CatalogPage />, { wrapper });
 }
 
@@ -160,7 +168,7 @@ describe('CatalogPage', () => {
 
     await userEvent.type(screen.getByLabelText('Search products'), 'nothing-matches');
     await waitFor(() => expect(calls.some((url) => url.includes('q=nothing-matches'))).toBe(true));
-    expect(screen.getByText('No matching products.')).toBeInTheDocument();
+    expect(await screen.findByText('No matching products.')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
     // Clearing must empty the search box and drop q from the next request.
@@ -189,7 +197,12 @@ describe('CatalogPage', () => {
   });
 
   it('renders a usable page, not a crash, when the API is unavailable', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('Failed to fetch'); }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new TypeError('Failed to fetch');
+      }),
+    );
     renderPage();
     expect(await screen.findByText('Could not load products.')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'All Labna products' })).toBeInTheDocument();

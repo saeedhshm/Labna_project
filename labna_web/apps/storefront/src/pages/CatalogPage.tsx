@@ -4,6 +4,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { LoadingGrid, ProductCard, StateCard } from '../components';
 import { useLanguage } from '../i18n';
+import { usePageMeta } from '../meta';
 import { text } from '../types';
 
 const sortOptions = ['featured', 'name', 'priceAsc', 'priceDesc'] as const;
@@ -19,9 +20,11 @@ export function CatalogPage() {
   const { categoryId } = useParams();
   const [params, setParams] = useSearchParams();
   const { locale, t } = useLanguage();
+
   const [searchInput, setSearchInput] = useState(params.get('q') ?? '');
 
   const search = params.get('q') ?? '';
+  usePageMeta(search ? t(`نتائج البحث عن ${search}`, `Search results for ${search}`) : t('المنتجات', 'Products'));
   const sortParam = params.get('sort');
   const sort: SortOption = (sortOptions as readonly string[]).includes(sortParam ?? '') ? (sortParam as SortOption) : 'featured';
   const available = params.get('available') === 'true' ? true : undefined;
@@ -127,20 +130,11 @@ export function CatalogPage() {
           </div>
           {categories.data?.data.length ? (
             <nav className="category-nav" aria-label={t('الأقسام', 'Categories')}>
-              <button
-                type="button"
-                className={`category-nav__item${!categoryID ? ' is-active' : ''}`}
-                onClick={() => updateParam('category', '')}
-              >
+              <button type="button" className={`category-nav__item${!categoryID ? ' is-active' : ''}`} onClick={() => updateParam('category', '')}>
                 {t('كل الأقسام', 'All categories')}
               </button>
               {categories.data.data.map((category) => (
-                <button
-                  key={category.id}
-                  type="button"
-                  className={`category-nav__item${category.id === (categoryID ?? '') ? ' is-active' : ''}`}
-                  onClick={() => updateParam('category', category.id)}
-                >
+                <button key={category.id} type="button" className={`category-nav__item${category.id === (categoryID ?? '') ? ' is-active' : ''}`} onClick={() => updateParam('category', category.id)}>
                   {text(category.name, locale)}
                 </button>
               ))}

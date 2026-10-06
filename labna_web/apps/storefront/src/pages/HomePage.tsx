@@ -1,12 +1,26 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { useState, type FormEvent } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { BannerCarousel, BranchPreviewCard, LoadingGrid, ProductCard, StateCard } from '../components';
 import { useLanguage } from '../i18n';
+import { usePageMeta } from '../meta';
+import { useRecentlyViewed } from '../recently-viewed';
 import { text } from '../types';
+import type { PublicCategory } from '../types';
 
 export function HomePage() {
   const { locale, t } = useLanguage();
+  usePageMeta(t('منتجات ألبان طازجة', 'Fresh dairy products'));
+  const navigate = useNavigate();
+  const recentlyViewed = useRecentlyViewed();
+  const [searchInput, setSearchInput] = useState('');
+
+  const submitSearch = (event: FormEvent) => {
+    event.preventDefault();
+    // Hand the query to the catalog, which owns filtering and pagination.
+    navigate(searchInput.trim() ? `/products?q=${encodeURIComponent(searchInput.trim())}` : '/products');
+  };
   const banners = useQuery({ queryKey: ['banners'], queryFn: ({ signal }) => api.banners(signal) });
   const categories = useQuery({ queryKey: ['categories'], queryFn: ({ signal }) => api.categories(signal) });
   const featured = useQuery({
@@ -31,6 +45,25 @@ export function HomePage() {
       ) : banners.data?.data.length ? (
         <BannerCarousel banners={banners.data.data} />
       ) : null}
+
+      <section className="section">
+        <form className="quick-search" role="search" onSubmit={submitSearch}>
+          <label className="visually-hidden" htmlFor="home-search">
+            {t('ابحث عن منتج', 'Search products')}
+          </label>
+          <input
+            id="home-search"
+            name="q"
+            type="search"
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            placeholder={t('ابحث عن لبن، زبادي…', 'Search for milk, yogurt…')}
+          />
+          <button className="button" type="submit">
+            {t('بحث', 'Search')}
+          </button>
+        </form>
+      </section>
 
       <section className="section">
         <div className="section__head">
@@ -71,6 +104,21 @@ export function HomePage() {
         </div>
       </section>
 
+      {recentlyViewed.productIDs.length > 0 ? (
+        <section className="section" aria-labelledby="recently-viewed-heading">
+          <div className="section__head">
+            <div>
+              <p className="eyebrow">{t('شوهد مؤخرًا', 'Recently viewed')}</p>
+              <h2 id="recently-viewed-heading">{t('ارجع لما شفته', 'Pick up where you left off')}</h2>
+            </div>
+            <button type="button" className="link-button" onClick={recentlyViewed.clear}>
+              {t('مسح السجل', 'Clear history')}
+            </button>
+          </div>
+          <RecentlyViewedGrid productIDs={recentlyViewed.productIDs} categories={categories.data?.data} />
+        </section>
+      ) : null}
+
       <section className="section">
         <div className="section__head">
           <div>
@@ -95,5 +143,38 @@ export function HomePage() {
         </div>
       </section>
     </>
+  );
+}
+
+/** Resolves stored ids against the live catalog so a price or availability
+ * change is reflected immediately, and drops ids the catalog no longer serves. */
+function RecentlyViewedGrid({ productIDs, categories }: { productIDs: string[]; categories?: PublicCategory[] }) {
+  const { locale, t } = useLanguage();
+  const recent = useQuery({
+    queryKey: ['recently-viewed', 'products', locale, productIDs],
+    queryFn: async ({ signal }) => {
+      const resolved = await Promise.all(
+        productIDs.map(async (id) => {
+          try {
+            return (await api.product(id, locale, signal)).data;
+          } catch {
+            return null;
+          }
+        }),
+      );
+      return resolved.filter((item) => item !== null);
+    },
+    staleTime: 60_000,
+  });
+
+  if (recent.isError) return <StateCard title={t('تعذر تحميل المنتجات الأخيرة.', 'Could not load recently viewed products.')} />;
+  if (!recent.data?.length) return null;
+
+  return (
+    <div className="grid products-grid">
+      {recent.data.map((product) => (
+        <ProductCard key={product.id} product={product} category={categories?.find((category) => category.id === product.categoryID)} />
+      ))}
+    </div>
   );
 }

@@ -19,13 +19,16 @@ const AuthContext = createContext<AuthState | null>(null);
 let refreshRequest: Promise<{ accessToken: string; customer: CustomerDTO } | null> | null = null;
 
 function restoreCustomer() {
-  refreshRequest ??= api.customerRefresh()
-    .then(result => ({ accessToken: result.data.accessToken, customer: result.data.customer }))
-    .catch(error => {
+  refreshRequest ??= api
+    .customerRefresh()
+    .then((result) => ({ accessToken: result.data.accessToken, customer: result.data.customer }))
+    .catch((error) => {
       if (error instanceof ApiError && (error.status === 401 || error.status === 403)) return null;
       throw error;
     })
-    .finally(() => { refreshRequest = null; });
+    .finally(() => {
+      refreshRequest = null;
+    });
   return refreshRequest;
 }
 
@@ -37,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     restoreCustomer()
-      .then(result => {
+      .then((result) => {
         if (cancelled) return;
         setAccessToken(result?.accessToken ?? null);
         setCustomer(result?.customer ?? null);
@@ -49,58 +52,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setCustomer(null);
         setStatus('unauthenticated');
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const value = useMemo<AuthState>(() => ({
-    status,
-    customer,
-    accessToken,
-    login: async (body) => {
-      const result = await api.customerLogin(body);
-      setAccessToken(result.data.accessToken);
-      setCustomer(result.data.customer);
-      setStatus('authenticated');
-      return result.data.customer;
-    },
-    register: async (body) => {
-      const result = await api.customerRegister(body);
-      setAccessToken(result.data.accessToken);
-      setCustomer(result.data.customer);
-      setStatus('authenticated');
-      return result.data.customer;
-    },
-    updateProfile: async (body) => {
-      if (!accessToken) throw new ApiError(401, 'UNAUTHORIZED', 'Valid customer session required');
-      const result = await api.customerUpdateProfile(accessToken, body);
-      setCustomer(result.data);
-      setStatus('authenticated');
-      return result.data;
-    },
-    changePassword: async (body) => {
-      if (!accessToken) throw new ApiError(401, 'UNAUTHORIZED', 'Valid customer session required');
-      await api.customerChangePassword(accessToken, body);
-      setAccessToken(null);
-      setCustomer(null);
-      setStatus('unauthenticated');
-    },
-    reloadCustomer: async () => {
-      if (!accessToken) throw new ApiError(401, 'UNAUTHORIZED', 'Valid customer session required');
-      const result = await api.customerMe(accessToken);
-      setCustomer(result.data);
-      setStatus('authenticated');
-      return result.data;
-    },
-    logout: async () => {
-      const token = accessToken;
-      setAccessToken(null);
-      setCustomer(null);
-      setStatus('unauthenticated');
-      if (token) {
-        try { await api.customerLogout(token); } catch { /* Local logout still wins when the session already expired. */ }
-      }
-    },
-  }), [accessToken, customer, status]);
+  const value = useMemo<AuthState>(
+    () => ({
+      status,
+      customer,
+      accessToken,
+      login: async (body) => {
+        const result = await api.customerLogin(body);
+        setAccessToken(result.data.accessToken);
+        setCustomer(result.data.customer);
+        setStatus('authenticated');
+        return result.data.customer;
+      },
+      register: async (body) => {
+        const result = await api.customerRegister(body);
+        setAccessToken(result.data.accessToken);
+        setCustomer(result.data.customer);
+        setStatus('authenticated');
+        return result.data.customer;
+      },
+      updateProfile: async (body) => {
+        if (!accessToken) throw new ApiError(401, 'UNAUTHORIZED', 'Valid customer session required');
+        const result = await api.customerUpdateProfile(accessToken, body);
+        setCustomer(result.data);
+        setStatus('authenticated');
+        return result.data;
+      },
+      changePassword: async (body) => {
+        if (!accessToken) throw new ApiError(401, 'UNAUTHORIZED', 'Valid customer session required');
+        await api.customerChangePassword(accessToken, body);
+        setAccessToken(null);
+        setCustomer(null);
+        setStatus('unauthenticated');
+      },
+      reloadCustomer: async () => {
+        if (!accessToken) throw new ApiError(401, 'UNAUTHORIZED', 'Valid customer session required');
+        const result = await api.customerMe(accessToken);
+        setCustomer(result.data);
+        setStatus('authenticated');
+        return result.data;
+      },
+      logout: async () => {
+        const token = accessToken;
+        setAccessToken(null);
+        setCustomer(null);
+        setStatus('unauthenticated');
+        if (token) {
+          try {
+            await api.customerLogout(token);
+          } catch {
+            /* Local logout still wins when the session already expired. */
+          }
+        }
+      },
+    }),
+    [accessToken, customer, status],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

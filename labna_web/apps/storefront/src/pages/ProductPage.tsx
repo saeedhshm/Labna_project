@@ -3,10 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { useCart } from '../cart';
-import { AddToCartPanel, ProductGallery, QuantityStepper, StateCard, VariantPicker } from '../components';
+import { AddToCartPanel, FavoriteButton, ProductGallery, QuantityStepper, StateCard, VariantPicker } from '../components';
 import { money } from '../format';
 import { useLanguage } from '../i18n';
+import { usePageMeta } from '../meta';
 import { clampQuantity, isAvailabilityError, isMissingProduct, isPurchasable, quantityBounds, resolveVariant } from '../product-detail';
+import { useRecentlyViewed } from '../recently-viewed';
 import { text } from '../types';
 import type { PublicVariant } from '../types';
 
@@ -18,7 +20,9 @@ function optional(value: string | undefined): string | undefined {
 export function ProductPage() {
   const { productId = '' } = useParams();
   const { locale, t } = useLanguage();
+
   const cart = useCart();
+  const recentlyViewed = useRecentlyViewed();
   const [selectedVariantID, setSelectedVariantID] = useState<string>();
   const [quantity, setQuantity] = useState(1);
 
@@ -34,10 +38,17 @@ export function ProductPage() {
   });
 
   const data = product.data?.data;
+
+  // Only a product that really rendered is recorded, so a failed lookup never
+  // lands in the history list.
+  useEffect(() => {
+    if (data) recentlyViewed.record(data.id);
+  }, [data, recentlyViewed.record]);
   const selected = data ? resolveVariant(data.variants, selectedVariantID) : undefined;
   const bounds = quantityBounds(selected);
   const category = categories.data?.data.find((item) => item.id === data?.categoryID);
   const anyAvailable = data ? isPurchasable(data.variants) : false;
+  usePageMeta(data ? text(data.name, locale) : t('المنتج', 'Product'));
 
   // Switching variant can change the ceiling, so the quantity is re-clamped
   // whenever the selected variant changes rather than keeping a stale value.
@@ -119,25 +130,20 @@ export function ProductPage() {
         </nav>
 
         {data.isFeatured ? <p className="eyebrow">{t('منتج مميز', 'Featured product')}</p> : null}
-        <h1>{name}</h1>
+        <div className="product-info__title">
+          <h1>{name}</h1>
+          <FavoriteButton productID={data.id} className="product-info__favorite" />
+        </div>
         {description ? <p className="lead">{description}</p> : null}
 
-        <p className={`availability${anyAvailable ? '' : ' is-out'}`}>
-          {anyAvailable ? t('متوفر حاليًا', 'In stock') : t('غير متوفر حاليًا', 'Out of stock')}
-        </p>
+        <p className={`availability${anyAvailable ? '' : ' is-out'}`}>{anyAvailable ? t('متوفر حاليًا', 'In stock') : t('غير متوفر حاليًا', 'Out of stock')}</p>
 
         <div className="price-panel">
           <span>{t('السعر', 'Price')}</span>
           <strong>{selected ? money(selected.priceMinor, selected.currencyCode, locale) : t('غير متوفر', 'Unavailable')}</strong>
         </div>
 
-        <VariantPicker
-          name="variant"
-          legend={data.variants.length > 1 ? t('اختر الحجم', 'Choose a size') : t('الحجم', 'Size')}
-          variants={data.variants}
-          selected={selected}
-          onSelect={chooseVariant}
-        />
+        <VariantPicker name="variant" legend={data.variants.length > 1 ? t('اختر الحجم', 'Choose a size') : t('الحجم', 'Size')} variants={data.variants} selected={selected} onSelect={chooseVariant} />
 
         <QuantityStepper
           value={quantity}
@@ -146,11 +152,7 @@ export function ProductPage() {
           label={t('الكمية', 'Quantity')}
           decrementLabel={t('إنقاص الكمية', 'Decrease quantity')}
           incrementLabel={t('زيادة الكمية', 'Increase quantity')}
-          hint={
-            selected?.isAvailable
-              ? `${t('الحد الأقصى', 'Maximum')} ${bounds.max}`
-              : t('غير متاح', 'Not available')
-          }
+          hint={selected?.isAvailable ? `${t('الحد الأقصى', 'Maximum')} ${bounds.max}` : t('غير متاح', 'Not available')}
         />
 
         <AddToCartPanel

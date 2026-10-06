@@ -7,6 +7,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../src/i18n';
 import { ProductPage } from '../src/pages/ProductPage';
 import { CartProvider } from '../src/cart';
+import { AuthProvider } from '../src/auth';
+import { FavoritesProvider } from '../src/favorites';
+import { RecentlyViewedProvider } from '../src/recently-viewed';
+import { stubSessionRefresh } from './providers';
 
 const image = (name: string) => `https://images.unsplash.com/${name}?w=400`;
 
@@ -44,12 +48,15 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 function stubApi(routes: Record<string, () => Response>) {
-  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
-    const url = String(input);
-    const match = Object.keys(routes).find((key) => url.includes(key));
-    if (!match) return jsonResponse({ error: { message: 'unexpected route' } }, 404);
-    return routes[match]();
-  }));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      const match = Object.keys(routes).find((key) => url.includes(key));
+      if (!match) return jsonResponse({ error: { message: 'unexpected route' } }, 404);
+      return routes[match]();
+    }),
+  );
 }
 
 function renderPage() {
@@ -57,16 +64,23 @@ function renderPage() {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>
       <LanguageProvider>
-        <CartProvider>
-          <MemoryRouter initialEntries={['/products/milk-full']}>
-            <Routes>
-              <Route path="/products/:productId" element={children} />
-            </Routes>
-          </MemoryRouter>
-        </CartProvider>
+        <AuthProvider>
+          <FavoritesProvider>
+            <RecentlyViewedProvider>
+              <CartProvider>
+                <MemoryRouter initialEntries={['/products/milk-full']}>
+                  <Routes>
+                    <Route path="/products/:productId" element={children} />
+                  </Routes>
+                </MemoryRouter>
+              </CartProvider>
+            </RecentlyViewedProvider>
+          </FavoritesProvider>
+        </AuthProvider>
       </LanguageProvider>
     </QueryClientProvider>
   );
+  stubSessionRefresh();
   render(<ProductPage />, { wrapper });
   return client;
 }
@@ -105,9 +119,7 @@ describe('ProductPage', () => {
     stubApi({
       '/api/v1/products/': () => {
         attempt += 1;
-        return attempt === 1
-          ? jsonResponse({ error: { message: 'boom' } }, 500)
-          : jsonResponse(makeProduct());
+        return attempt === 1 ? jsonResponse({ error: { message: 'boom' } }, 500) : jsonResponse(makeProduct());
       },
     });
     renderPage();
@@ -119,10 +131,7 @@ describe('ProductPage', () => {
 
   it('updates price, availability and stock when the selected variant changes', async () => {
     const product = makeProduct({
-      variants: [
-        makeVariant('big', { priceMinor: 8000, availableQuantity: 2 }),
-        makeVariant('small', { priceMinor: 3500, availableQuantity: 9 }),
-      ],
+      variants: [makeVariant('big', { priceMinor: 8000, availableQuantity: 2 }), makeVariant('small', { priceMinor: 3500, availableQuantity: 9 })],
     });
     stubApi({
       '/api/v1/products/': () => jsonResponse(product),
@@ -227,9 +236,7 @@ describe('ProductPage', () => {
     await userEvent.click(button);
     await waitFor(() => expect(screen.getByText('Total')).toBeInTheDocument());
     await waitFor(() => {
-      expect(JSON.parse(localStorage.getItem('labna.cart.v1') ?? '[]')).toEqual([
-        { productID: 'milk-full', variantID: 'milk-full-1l', quantity: 2 },
-      ]);
+      expect(JSON.parse(localStorage.getItem('labna.cart.v1') ?? '[]')).toEqual([{ productID: 'milk-full', variantID: 'milk-full-1l', quantity: 2 }]);
     });
   });
 });

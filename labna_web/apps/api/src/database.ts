@@ -103,6 +103,9 @@ const customerSchema = new Schema({
   passwordHash: { type: String, required: true },
   isActive: { type: Boolean, default: true, required: true },
   addresses: { type: [Schema.Types.Mixed], default: [] },
+  /** Newest first product ids the customer saved. Only references are kept, so
+   * the catalog stays the single source of product truth. */
+  favoriteProductIDs: { type: [String], default: [] },
 }, { timestamps: true });
 customerSchema.index({ isActive: 1, createdAt: -1, id: 1 });
 customerSchema.index({ name: 1, id: 1 });

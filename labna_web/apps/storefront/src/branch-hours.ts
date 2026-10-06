@@ -92,9 +92,7 @@ export function formatClock(value: string, locale: Locale): string {
 
 export function formatIntervals(intervals: Interval[], locale: Locale): string {
   if (intervals.length === 0) return '';
-  return intervals
-    .map((item) => `${formatClock(item.opensAt, locale)} – ${formatClock(item.closesAt, locale)}`)
-    .join(locale === 'ar' ? '، ' : ', ');
+  return intervals.map((item) => `${formatClock(item.opensAt, locale)} – ${formatClock(item.closesAt, locale)}`).join(locale === 'ar' ? '، ' : ', ');
 }
 
 export function hasSchedule(branch: Pick<PublicBranch, 'openingHours'>): boolean {

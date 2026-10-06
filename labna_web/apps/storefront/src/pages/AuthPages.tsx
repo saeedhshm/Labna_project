@@ -52,7 +52,7 @@ export function LoginPage() {
     setFormError('');
     const parsed = customerLoginBody.safeParse(values);
     if (!parsed.success) {
-      setErrors(Object.fromEntries(parsed.error.issues.map(issue => [String(issue.path[0]), issue.message])));
+      setErrors(Object.fromEntries(parsed.error.issues.map((issue) => [String(issue.path[0]), issue.message])));
       return;
     }
     setErrors({});
@@ -73,20 +73,59 @@ export function LoginPage() {
         <p className="eyebrow">{t('حسابك', 'Your account')}</p>
         <h1 id="login-title">{t('تسجيل الدخول', 'Login')}</h1>
         <p className="hint">{t('ادخل إلى حسابك لمتابعة الطلبات والعناوين لاحقًا.', 'Sign in to access customer-only pages.')}</p>
-        {notice ? <p className="form-success" role="status">{notice}</p> : null}
-        {formError ? <p className="form-alert" role="alert">{formError}</p> : null}
+        {notice ? (
+          <p className="form-success" role="status">
+            {notice}
+          </p>
+        ) : null}
+        {formError ? (
+          <p className="form-alert" role="alert">
+            {formError}
+          </p>
+        ) : null}
         <form className="auth-form" onSubmit={submit} noValidate>
           <label htmlFor={fieldID(form, 'email')}>{t('البريد الإلكتروني', 'Email')}</label>
-          <input id={fieldID(form, 'email')} type="email" autoComplete="email" value={values.email} aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? fieldID(form, 'email-error') : undefined} onChange={event => setValues({ ...values, email: event.target.value })} />
-          {errors.email ? <span id={fieldID(form, 'email-error')} className="field-error">{errors.email}</span> : null}
+          <input
+            id={fieldID(form, 'email')}
+            type="email"
+            autoComplete="email"
+            value={values.email}
+            aria-invalid={Boolean(errors.email)}
+            aria-describedby={errors.email ? fieldID(form, 'email-error') : undefined}
+            onChange={(event) => setValues({ ...values, email: event.target.value })}
+          />
+          {errors.email ? (
+            <span id={fieldID(form, 'email-error')} className="field-error">
+              {errors.email}
+            </span>
+          ) : null}
 
           <label htmlFor={fieldID(form, 'password')}>{t('كلمة المرور', 'Password')}</label>
-          <input id={fieldID(form, 'password')} type="password" autoComplete="current-password" value={values.password} aria-invalid={Boolean(errors.password)} aria-describedby={errors.password ? fieldID(form, 'password-error') : undefined} onChange={event => setValues({ ...values, password: event.target.value })} />
-          {errors.password ? <span id={fieldID(form, 'password-error')} className="field-error">{errors.password}</span> : null}
+          <input
+            id={fieldID(form, 'password')}
+            type="password"
+            autoComplete="current-password"
+            value={values.password}
+            aria-invalid={Boolean(errors.password)}
+            aria-describedby={errors.password ? fieldID(form, 'password-error') : undefined}
+            onChange={(event) => setValues({ ...values, password: event.target.value })}
+          />
+          {errors.password ? (
+            <span id={fieldID(form, 'password-error')} className="field-error">
+              {errors.password}
+            </span>
+          ) : null}
 
-          <button className="button button--wide" type="submit" disabled={loading}>{loading ? t('جارٍ الدخول...', 'Signing in...') : t('تسجيل الدخول', 'Login')}</button>
+          <button className="button button--wide" type="submit" disabled={loading}>
+            {loading ? t('جارٍ الدخول...', 'Signing in...') : t('تسجيل الدخول', 'Login')}
+          </button>
         </form>
-        <p className="auth-switch">{t('ليس لديك حساب؟', 'No account?')} <Link to="/register" state={location.state}>{t('إنشاء حساب', 'Create account')}</Link></p>
+        <p className="auth-switch">
+          {t('ليس لديك حساب؟', 'No account?')}{' '}
+          <Link to="/register" state={location.state}>
+            {t('إنشاء حساب', 'Create account')}
+          </Link>
+        </p>
       </div>
     </section>
   );
@@ -136,7 +175,11 @@ export function RegisterPage() {
         <p className="eyebrow">{t('حساب جديد', 'New account')}</p>
         <h1 id="register-title">{t('إنشاء حساب', 'Create account')}</h1>
         <p className="hint">{t('استخدم بياناتك الحقيقية حتى نربط الطلبات بحسابك.', 'Use your real details so orders can be linked to your account.')}</p>
-        {formError ? <p className="form-alert" role="alert">{formError}</p> : null}
+        {formError ? (
+          <p className="form-alert" role="alert">
+            {formError}
+          </p>
+        ) : null}
         <form className="auth-form" onSubmit={submit} noValidate>
           {[
             ['name', t('الاسم', 'Name'), 'text', 'name'],
@@ -147,13 +190,32 @@ export function RegisterPage() {
           ].map(([name, label, type, autoComplete]) => (
             <div className="auth-field" key={name}>
               <label htmlFor={fieldID(form, name)}>{label}</label>
-              <input id={fieldID(form, name)} type={type} autoComplete={autoComplete} value={values[name as keyof typeof values]} aria-invalid={Boolean(errors[name])} aria-describedby={errors[name] ? fieldID(form, `${name}-error`) : undefined} onChange={event => setValues({ ...values, [name]: event.target.value })} />
-              {errors[name] ? <span id={fieldID(form, `${name}-error`)} className="field-error">{errors[name]}</span> : null}
+              <input
+                id={fieldID(form, name)}
+                type={type}
+                autoComplete={autoComplete}
+                value={values[name as keyof typeof values]}
+                aria-invalid={Boolean(errors[name])}
+                aria-describedby={errors[name] ? fieldID(form, `${name}-error`) : undefined}
+                onChange={(event) => setValues({ ...values, [name]: event.target.value })}
+              />
+              {errors[name] ? (
+                <span id={fieldID(form, `${name}-error`)} className="field-error">
+                  {errors[name]}
+                </span>
+              ) : null}
             </div>
           ))}
-          <button className="button button--wide" type="submit" disabled={loading}>{loading ? t('جارٍ إنشاء الحساب...', 'Creating account...') : t('إنشاء الحساب', 'Create account')}</button>
+          <button className="button button--wide" type="submit" disabled={loading}>
+            {loading ? t('جارٍ إنشاء الحساب...', 'Creating account...') : t('إنشاء الحساب', 'Create account')}
+          </button>
         </form>
-        <p className="auth-switch">{t('لديك حساب بالفعل؟', 'Already have an account?')} <Link to="/login" state={location.state}>{t('تسجيل الدخول', 'Login')}</Link></p>
+        <p className="auth-switch">
+          {t('لديك حساب بالفعل؟', 'Already have an account?')}{' '}
+          <Link to="/login" state={location.state}>
+            {t('تسجيل الدخول', 'Login')}
+          </Link>
+        </p>
       </div>
     </section>
   );

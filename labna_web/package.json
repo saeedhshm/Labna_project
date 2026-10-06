@@ -1,8 +1,13 @@
 {
   "name": "labna-web",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
-  "engines": { "node": "^22.12.0 || >=24.0.0" },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": "^22.12.0 || >=24.0.0"
+  },
   "scripts": {
     "dev:api": "npm run dev -w @labna/api",
     "dev:admin": "npm run dev -w @labna/admin",
@@ -11,6 +16,9 @@
     "typecheck": "npm run build -w @labna/contracts && npm run typecheck -w @labna/api && npm run typecheck -w @labna/admin && npm run typecheck -w @labna/storefront",
     "test": "npm run build -w @labna/contracts && npm run test -w @labna/api && npm run test -w @labna/admin && npm run test -w @labna/storefront",
     "seed": "npm run seed -w @labna/api",
-    "openapi": "npm run build -w @labna/contracts && npm run openapi -w @labna/api"
+    "openapi": "npm run build -w @labna/contracts && npm run openapi -w @labna/api",
+    "lint": "npm run lint -w @labna/storefront",
+    "format": "npm run format -w @labna/storefront",
+    "format:check": "npm run format:check -w @labna/storefront"
   }
 }

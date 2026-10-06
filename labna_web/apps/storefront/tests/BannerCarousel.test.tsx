@@ -87,12 +87,7 @@ describe('BannerCarousel targets', () => {
     render(
       <LanguageProvider>
         <MemoryRouter>
-          <BannerCarousel
-            banners={[
-              banner({ id: 'first', title: { ar: 'أ', en: 'First' } }),
-              banner({ id: 'second', title: { ar: 'ب', en: 'Second' }, destination: { kind: 'none' } }),
-            ]}
-          />
+          <BannerCarousel banners={[banner({ id: 'first', title: { ar: 'أ', en: 'First' } }), banner({ id: 'second', title: { ar: 'ب', en: 'Second' }, destination: { kind: 'none' } })]} />
         </MemoryRouter>
       </LanguageProvider>,
     );

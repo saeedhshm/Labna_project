@@ -1,17 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { cartQuantityMax } from '@labna/contracts';
 import { ApiError } from '../src/api';
-import {
-  clampQuantity,
-  galleryImages,
-  isAvailabilityError,
-  isMissingProduct,
-  isPurchasable,
-  quantityBounds,
-  resolveVariant,
-  selectInitialVariant,
-  startingPrice,
-} from '../src/product-detail';
+import { clampQuantity, galleryImages, isAvailabilityError, isMissingProduct, isPurchasable, quantityBounds, resolveVariant, selectInitialVariant, startingPrice } from '../src/product-detail';
 import type { PublicVariant } from '../src/types';
 
 const variant = (id: string, overrides: Partial<PublicVariant> = {}): PublicVariant => ({

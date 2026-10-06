@@ -271,6 +271,16 @@ export const customerAddressInput = checkoutAddress.extend({
   isDefault: z.boolean().default(false),
 });
 export const customerAddressDTO = customerAddressInput.extend({ id });
+/** Stable product reference a customer can save. Only the id is stored, so a
+ * favorite never duplicates the product document and always reflects the
+ * catalog's current state. */
+export const customerFavoriteDTO = z.strictObject({
+  productID: id,
+  createdAt: z.iso.datetime(),
+});
+export const customerFavoritesResponse = z.strictObject({
+  favorites: z.array(customerFavoriteDTO),
+});
 export const customerDTO = z.strictObject({ id, name: z.string(), phoneNumber: z.string(), email: z.email(), addresses: z.array(customerAddressDTO), createdAt: z.iso.datetime() });
 export const customerProfilePatch = z.strictObject({
   name: checkoutCustomer.shape.name.optional(),
@@ -409,6 +419,8 @@ export type CustomerLoginBody = z.infer<typeof customerLoginBody>;
 export type CustomerPasswordPatch = z.infer<typeof customerPasswordPatch>;
 export type CustomerAddressInput = z.infer<typeof customerAddressInput>;
 export type CustomerAddressDTO = z.infer<typeof customerAddressDTO>;
+export type CustomerFavoriteDTO = z.infer<typeof customerFavoriteDTO>;
+export type CustomerFavoritesResponse = z.infer<typeof customerFavoritesResponse>;
 export type CustomerDTO = z.infer<typeof customerDTO>;
 export type CustomerProfilePatch = z.infer<typeof customerProfilePatch>;
 export type CustomerAuthResponse = z.infer<typeof customerAuthResponse>;

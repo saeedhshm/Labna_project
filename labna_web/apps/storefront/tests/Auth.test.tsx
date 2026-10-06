@@ -48,17 +48,20 @@ describe('customer authentication', () => {
   it('registers a customer, authenticates them, and restores the session after reload', async () => {
     let restore = false;
     const requests: string[] = [];
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      requests.push(url);
-      if (url.includes('/customer/auth/refresh')) return restore ? apiResponse(authPayload()) : apiResponse({ error: { code: 'UNAUTHORIZED', message: 'Refresh session required' } }, 401);
-      if (url.includes('/customer/auth/register')) {
-        expect(JSON.parse(String(init?.body))).toMatchObject({ name: 'Customer One', email: 'customer@example.com', phoneNumber: '+201012345678', password: 'password123' });
-        restore = true;
-        return apiResponse(authPayload());
-      }
-      return apiResponse([], 200);
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        requests.push(url);
+        if (url.includes('/customer/auth/refresh')) return restore ? apiResponse(authPayload()) : apiResponse({ error: { code: 'UNAUTHORIZED', message: 'Refresh session required' } }, 401);
+        if (url.includes('/customer/auth/register')) {
+          expect(JSON.parse(String(init?.body))).toMatchObject({ name: 'Customer One', email: 'customer@example.com', phoneNumber: '+201012345678', password: 'password123' });
+          restore = true;
+          return apiResponse(authPayload());
+        }
+        return apiResponse([], 200);
+      }),
+    );
 
     route('/register');
     const first = render(<App />);
@@ -77,20 +80,23 @@ describe('customer authentication', () => {
     render(<App />);
     expect(await screen.findByRole('heading', { name: 'My Account' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Customer One' })).toBeInTheDocument();
-    expect(requests.filter(url => url.includes('/customer/auth/refresh')).length).toBeGreaterThanOrEqual(2);
+    expect(requests.filter((url) => url.includes('/customer/auth/refresh')).length).toBeGreaterThanOrEqual(2);
   });
 
   it('updates profile details, refreshes header state, and restores updated details after reload', async () => {
     let current = { ...customer };
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      if (url.includes('/customer/auth/refresh')) return apiResponse(authPayload(current));
-      if (url.includes('/customer/me') && init?.method === 'PATCH') {
-        current = { ...current, ...JSON.parse(String(init.body)) };
-        return apiResponse(current);
-      }
-      return apiResponse([], 200);
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes('/customer/auth/refresh')) return apiResponse(authPayload(current));
+        if (url.includes('/customer/me') && init?.method === 'PATCH') {
+          current = { ...current, ...JSON.parse(String(init.body)) };
+          return apiResponse(current);
+        }
+        return apiResponse([], 200);
+      }),
+    );
 
     route('/account');
     const first = render(<App />);
@@ -118,11 +124,14 @@ describe('customer authentication', () => {
   it('opens and closes the customer account menu accessibly', async () => {
     const addListener = vi.spyOn(document, 'addEventListener');
     const removeListener = vi.spyOn(document, 'removeEventListener');
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.includes('/customer/auth/refresh')) return apiResponse(authPayload());
-      return apiResponse([], 200);
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('/customer/auth/refresh')) return apiResponse(authPayload());
+        return apiResponse([], 200);
+      }),
+    );
 
     route('/');
     render(<App />);
@@ -149,17 +158,20 @@ describe('customer authentication', () => {
     await user.click(screen.getByRole('menuitem', { name: 'My Account' }));
     expect(await screen.findByRole('heading', { name: 'My Account' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Customer One' })).toHaveAttribute('aria-expanded', 'false');
-    expect(addListener.mock.calls.some(call => call[0] === 'pointerdown')).toBe(true);
-    expect(removeListener.mock.calls.some(call => call[0] === 'pointerdown')).toBe(true);
+    expect(addListener.mock.calls.some((call) => call[0] === 'pointerdown')).toBe(true);
+    expect(removeListener.mock.calls.some((call) => call[0] === 'pointerdown')).toBe(true);
   });
 
   it('shows duplicate email errors while editing the profile', async () => {
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      if (url.includes('/customer/auth/refresh')) return apiResponse(authPayload());
-      if (url.includes('/customer/me') && init?.method === 'PATCH') return apiResponse({ error: { code: 'DUPLICATE_RESOURCE', message: 'Identifier or SKU already exists' } }, 409);
-      return apiResponse([], 200);
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes('/customer/auth/refresh')) return apiResponse(authPayload());
+        if (url.includes('/customer/me') && init?.method === 'PATCH') return apiResponse({ error: { code: 'DUPLICATE_RESOURCE', message: 'Identifier or SKU already exists' } }, 409);
+        return apiResponse([], 200);
+      }),
+    );
 
     route('/account');
     render(<App />);
@@ -215,19 +227,22 @@ describe('customer authentication', () => {
 
   it('logs in, opens account, logs out, and blocks protected routes afterwards', async () => {
     let loggedIn = false;
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.includes('/customer/auth/refresh')) return loggedIn ? apiResponse(authPayload()) : apiResponse({ error: { code: 'UNAUTHORIZED', message: 'Refresh session required' } }, 401);
-      if (url.includes('/customer/auth/login')) {
-        loggedIn = true;
-        return apiResponse(authPayload());
-      }
-      if (url.includes('/customer/auth/logout')) {
-        loggedIn = false;
-        return apiResponse({ loggedOut: true });
-      }
-      return apiResponse([], 200);
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('/customer/auth/refresh')) return loggedIn ? apiResponse(authPayload()) : apiResponse({ error: { code: 'UNAUTHORIZED', message: 'Refresh session required' } }, 401);
+        if (url.includes('/customer/auth/login')) {
+          loggedIn = true;
+          return apiResponse(authPayload());
+        }
+        if (url.includes('/customer/auth/logout')) {
+          loggedIn = false;
+          return apiResponse({ loggedOut: true });
+        }
+        return apiResponse([], 200);
+      }),
+    );
 
     route('/login');
     const first = render(<App />);
@@ -246,12 +261,15 @@ describe('customer authentication', () => {
   });
 
   it('shows the backend duplicate-account error during registration', async () => {
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.includes('/customer/auth/refresh')) return apiResponse({ error: { code: 'UNAUTHORIZED', message: 'Refresh session required' } }, 401);
-      if (url.includes('/customer/auth/register')) return apiResponse({ error: { code: 'DUPLICATE_RESOURCE', message: 'Identifier or SKU already exists' } }, 409);
-      return apiResponse([], 200);
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('/customer/auth/refresh')) return apiResponse({ error: { code: 'UNAUTHORIZED', message: 'Refresh session required' } }, 401);
+        if (url.includes('/customer/auth/register')) return apiResponse({ error: { code: 'DUPLICATE_RESOURCE', message: 'Identifier or SKU already exists' } }, 409);
+        return apiResponse([], 200);
+      }),
+    );
 
     route('/register');
     render(<App />);
@@ -267,7 +285,7 @@ describe('customer authentication', () => {
 
   it('manages addresses end-to-end and restores the MongoDB-backed state after reload', async () => {
     let loggedIn = false;
-    let current = { ...customer, addresses: [] as TestAddress[] };
+    const current = { ...customer, addresses: [] as TestAddress[] };
     let nextID = 1;
     const normalize = () => {
       let seenDefault = false;
@@ -278,43 +296,49 @@ describe('customer authentication', () => {
       });
       if (current.addresses.length && !seenDefault) current.addresses[0] = { ...current.addresses[0], isDefault: true };
     };
-    vi.stubGlobal('confirm', vi.fn(() => true));
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      const method = init?.method ?? 'GET';
-      if (url.includes('/customer/auth/refresh')) return loggedIn ? apiResponse(authPayload(current)) : apiResponse({ error: { code: 'UNAUTHORIZED', message: 'Refresh session required' } }, 401);
-      if (url.includes('/customer/auth/login')) {
-        loggedIn = true;
-        return apiResponse(authPayload(current));
-      }
-      if (url.includes('/customer/me')) return apiResponse(current);
-      if (url.includes('/customer/addresses') && method === 'POST') {
-        const body = JSON.parse(String(init?.body));
-        const address = { id: `addr-${nextID++}`, ...body, isDefault: body.isDefault || current.addresses.length === 0 } as TestAddress;
-        if (address.isDefault) current.addresses = current.addresses.map(item => ({ ...item, isDefault: false }));
-        current.addresses.push(address);
-        normalize();
-        return apiResponse(address, 201);
-      }
-      const defaultMatch = url.match(/\/customer\/addresses\/([^/]+)\/default/);
-      if (defaultMatch && method === 'PATCH') {
-        current.addresses = current.addresses.map(item => ({ ...item, isDefault: item.id === defaultMatch[1] }));
-        return apiResponse(current.addresses.find(item => item.id === defaultMatch[1]));
-      }
-      const addressMatch = url.match(/\/customer\/addresses\/([^/]+)/);
-      if (addressMatch && method === 'PATCH') {
-        const body = JSON.parse(String(init?.body));
-        current.addresses = current.addresses.map(item => item.id === addressMatch[1] ? { ...item, ...body } : body.isDefault ? { ...item, isDefault: false } : item);
-        normalize();
-        return apiResponse(current.addresses.find(item => item.id === addressMatch[1]));
-      }
-      if (addressMatch && method === 'DELETE') {
-        current.addresses = current.addresses.filter(item => item.id !== addressMatch[1]);
-        normalize();
-        return apiResponse({ deleted: true, addresses: current.addresses });
-      }
-      return apiResponse([], 200);
-    }));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => true),
+    );
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        const method = init?.method ?? 'GET';
+        if (url.includes('/customer/auth/refresh')) return loggedIn ? apiResponse(authPayload(current)) : apiResponse({ error: { code: 'UNAUTHORIZED', message: 'Refresh session required' } }, 401);
+        if (url.includes('/customer/auth/login')) {
+          loggedIn = true;
+          return apiResponse(authPayload(current));
+        }
+        if (url.includes('/customer/me')) return apiResponse(current);
+        if (url.includes('/customer/addresses') && method === 'POST') {
+          const body = JSON.parse(String(init?.body));
+          const address = { id: `addr-${nextID++}`, ...body, isDefault: body.isDefault || current.addresses.length === 0 } as TestAddress;
+          if (address.isDefault) current.addresses = current.addresses.map((item) => ({ ...item, isDefault: false }));
+          current.addresses.push(address);
+          normalize();
+          return apiResponse(address, 201);
+        }
+        const defaultMatch = url.match(/\/customer\/addresses\/([^/]+)\/default/);
+        if (defaultMatch && method === 'PATCH') {
+          current.addresses = current.addresses.map((item) => ({ ...item, isDefault: item.id === defaultMatch[1] }));
+          return apiResponse(current.addresses.find((item) => item.id === defaultMatch[1]));
+        }
+        const addressMatch = url.match(/\/customer\/addresses\/([^/]+)/);
+        if (addressMatch && method === 'PATCH') {
+          const body = JSON.parse(String(init?.body));
+          current.addresses = current.addresses.map((item) => (item.id === addressMatch[1] ? { ...item, ...body } : body.isDefault ? { ...item, isDefault: false } : item));
+          normalize();
+          return apiResponse(current.addresses.find((item) => item.id === addressMatch[1]));
+        }
+        if (addressMatch && method === 'DELETE') {
+          current.addresses = current.addresses.filter((item) => item.id !== addressMatch[1]);
+          normalize();
+          return apiResponse({ deleted: true, addresses: current.addresses });
+        }
+        return apiResponse([], 200);
+      }),
+    );
 
     route('/login');
     const first = render(<App />);
@@ -348,8 +372,8 @@ describe('customer authentication', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
     expect(await screen.findByText('Home Updated')).toBeInTheDocument();
 
-    await userEvent.click(screen.getAllByRole('button', { name: 'Set as Default' }).find(button => !button.hasAttribute('disabled'))!);
-    expect(current.addresses.find(item => item.label === 'Work')?.isDefault).toBe(true);
+    await userEvent.click(screen.getAllByRole('button', { name: 'Set as Default' }).find((button) => !button.hasAttribute('disabled'))!);
+    expect(current.addresses.find((item) => item.label === 'Work')?.isDefault).toBe(true);
     await userEvent.click(screen.getAllByRole('button', { name: 'Delete' })[1]);
     expect(await screen.findByText('Home Updated')).toBeInTheDocument();
     expect(current.addresses).toHaveLength(1);
@@ -370,7 +394,21 @@ describe('customer authentication', () => {
       customer: { name: 'Customer One', phoneNumber: '+201012345678', email: 'customer@example.com' },
       address: { city: 'Cairo', area: 'Maadi', street: 'Road 9', building: '12', floor: '', apartment: '', notes: '' },
       branchID: 'main',
-      items: [{ productID: 'milk-full', variantID: 'milk-full-1l', productName: { ar: 'لبن', en: 'Milk' }, variantLabel: { ar: '1 لتر', en: '1 L' }, imageURL: 'https://images.unsplash.com/photo-1?w=400', quantity: 2, unit: 'ml', variantQuantity: 1000, currencyCode: 'EGP', unitPriceMinor: 3500, lineTotalMinor: 7000 }],
+      items: [
+        {
+          productID: 'milk-full',
+          variantID: 'milk-full-1l',
+          productName: { ar: 'لبن', en: 'Milk' },
+          variantLabel: { ar: '1 لتر', en: '1 L' },
+          imageURL: 'https://images.unsplash.com/photo-1?w=400',
+          quantity: 2,
+          unit: 'ml',
+          variantQuantity: 1000,
+          currencyCode: 'EGP',
+          unitPriceMinor: 3500,
+          lineTotalMinor: 7000,
+        },
+      ],
       currencyCode: 'EGP',
       subtotalMinor: 7000,
       deliveryFeeMinor: 1500,
@@ -385,20 +423,24 @@ describe('customer authentication', () => {
     };
     let order: Record<string, unknown> = { ...baseOrder };
     let adminAdvanced = false;
-    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.includes('/customer/auth/refresh')) return apiResponse(authPayload());
-      if (url.includes('/customer/orders/LBN-TEST-1/cancel')) {
-        order = { ...order, status: 'cancelled', statusHistory: [...(order.statusHistory as unknown[]), { status: 'cancelled', at: '2026-10-03T10:05:00.000Z', actorID: 'customer-1' }] };
-        return apiResponse(order);
-      }
-      if (url.includes('/customer/orders/LBN-TEST-1')) {
-        if (adminAdvanced && order.status === 'pending') order = { ...order, status: 'confirmed', statusHistory: [...(order.statusHistory as unknown[]), { status: 'confirmed', at: '2026-10-03T10:10:00.000Z', actorID: 'admin' }] };
-        return apiResponse(order);
-      }
-      if (url.includes('/customer/orders')) return apiResponse([order]);
-      return apiResponse([], 200);
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('/customer/auth/refresh')) return apiResponse(authPayload());
+        if (url.includes('/customer/orders/LBN-TEST-1/cancel')) {
+          order = { ...order, status: 'cancelled', statusHistory: [...(order.statusHistory as unknown[]), { status: 'cancelled', at: '2026-10-03T10:05:00.000Z', actorID: 'customer-1' }] };
+          return apiResponse(order);
+        }
+        if (url.includes('/customer/orders/LBN-TEST-1')) {
+          if (adminAdvanced && order.status === 'pending')
+            order = { ...order, status: 'confirmed', statusHistory: [...(order.statusHistory as unknown[]), { status: 'confirmed', at: '2026-10-03T10:10:00.000Z', actorID: 'admin' }] };
+          return apiResponse(order);
+        }
+        if (url.includes('/customer/orders')) return apiResponse([order]);
+        return apiResponse([], 200);
+      }),
+    );
 
     route('/account/orders');
     render(<App />);

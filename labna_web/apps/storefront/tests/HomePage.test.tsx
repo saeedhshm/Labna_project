@@ -1,9 +1,11 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
-import { LanguageProvider } from '../src/i18n';
+import { AccountProviders, stubSessionRefresh } from './providers';
+import { RecentlyViewedProvider } from '../src/recently-viewed';
 import { HomePage } from '../src/pages/HomePage';
 
 const image = 'https://images.unsplash.com/photo-1?w=800';
@@ -67,13 +69,41 @@ function stubRoutes(routes: Record<string, () => Response | Promise<Response>>) 
 function renderPage() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   const wrapper = ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={client}>
-      <LanguageProvider>
+    <AccountProviders client={client}>
+      <RecentlyViewedProvider>
         <MemoryRouter>{children}</MemoryRouter>
-      </LanguageProvider>
-    </QueryClientProvider>
+      </RecentlyViewedProvider>
+    </AccountProviders>
   );
+  stubSessionRefresh();
   return render(<HomePage />, { wrapper });
+}
+
+/** Renders the home page next to a probe for the resulting location. */
+function renderPageWithLocation() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <AccountProviders client={client}>
+      <RecentlyViewedProvider>
+        <MemoryRouter>
+          {children}
+          <LocationProbe />
+        </MemoryRouter>
+      </RecentlyViewedProvider>
+    </AccountProviders>
+  );
+  stubSessionRefresh();
+  return render(<HomePage />, { wrapper });
+}
+
+function LocationProbe() {
+  const location = useLocation();
+  return (
+    <span data-testid="location">
+      {location.pathname}
+      {location.search}
+    </span>
+  );
 }
 
 const allRoutes = () => ({
@@ -153,7 +183,12 @@ describe('HomePage', () => {
   });
 
   it('renders every section as a message when the API is entirely unavailable', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('Failed to fetch'); }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new TypeError('Failed to fetch');
+      }),
+    );
     renderPage();
     expect(await screen.findByText('Could not load banners.')).toBeInTheDocument();
     expect(screen.getByText('Could not load categories.')).toBeInTheDocument();
@@ -164,7 +199,9 @@ describe('HomePage', () => {
 
   it('keeps the page usable while a slow section is still loading', async () => {
     let release: () => void = () => {};
-    const gates = new Promise<void>((resolve) => { release = resolve; });
+    const gates = new Promise<void>((resolve) => {
+      release = resolve;
+    });
     stubRoutes({
       ...allRoutes(),
       '/api/v1/banners': async () => {
@@ -201,5 +238,53 @@ describe('HomePage', () => {
     // A broken image must not remove the category from navigation.
     expect(image).toHaveAttribute('src', '/missing.png');
     expect(chip.closest('a')).toHaveAttribute('href', '/products?category=milk');
+  });
+
+  it('sends the home quick search to the catalog with the typed query', async () => {
+    const user = userEvent.setup();
+    stubRoutes(allRoutes());
+    renderPageWithLocation();
+    const field = await screen.findByRole('searchbox', { name: /search products/i });
+    await user.type(field, 'labna{enter}');
+    expect(await screen.findByTestId('location')).toHaveTextContent('/products?q=labna');
+  });
+
+  it('opens the plain catalog when the home search is empty', async () => {
+    const user = userEvent.setup();
+    stubRoutes(allRoutes());
+    renderPageWithLocation();
+    await user.click(await screen.findByRole('button', { name: 'Search' }));
+    expect(await screen.findByTestId('location')).toHaveTextContent('/products');
+  });
+
+  it('lists previously viewed products on the home page', async () => {
+    localStorage.setItem('labna.recentlyViewed.v1', JSON.stringify(['milk-full']));
+    // The detail route is listed first so the broader products route does not
+    // shadow it.
+    stubRoutes({
+      '/api/v1/products/milk-full': () => jsonResponse(product('milk-full', 'Full Fat Milk')),
+      ...allRoutes(),
+    });
+    renderPage();
+    expect(await screen.findByRole('heading', { name: /Pick up where you left off/i })).toBeInTheDocument();
+    // The stored id is resolved against the live catalog before it is shown.
+    expect((await screen.findAllByRole('link', { name: /Full Fat Milk/ })).length).toBeGreaterThan(0);
+  });
+
+  it('omits the recently viewed section until something has been viewed', async () => {
+    stubRoutes(allRoutes());
+    renderPage();
+    await screen.findByRole('link', { name: /Banner title/ });
+    expect(screen.queryByRole('heading', { name: /Pick up where you left off/i })).toBeNull();
+  });
+
+  it('clears the recently viewed history on request', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('labna.recentlyViewed.v1', JSON.stringify(['milk-full']));
+    stubRoutes({ '/api/v1/products/milk-full': () => jsonResponse(product('milk-full', 'Full Fat Milk')), ...allRoutes() });
+    renderPage();
+    await user.click(await screen.findByRole('button', { name: /Clear history/i }));
+    await waitFor(() => expect(screen.queryByRole('heading', { name: /Pick up where you left off/i })).toBeNull());
+    expect(localStorage.getItem('labna.recentlyViewed.v1')).toBeNull();
   });
 });

@@ -2,9 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../api';
 import { BranchCard, StateCard } from '../components';
 import { useLanguage } from '../i18n';
+import { usePageMeta } from '../meta';
 
 export function BranchesPage() {
   const { t } = useLanguage();
+  usePageMeta(t('الفروع', 'Branches'));
   const branches = useQuery({ queryKey: ['branches'], queryFn: ({ signal }) => api.branches(signal) });
 
   return (

@@ -2,10 +2,11 @@ import { createHash, randomBytes } from 'node:crypto';
 import { hash, verify } from '@node-rs/argon2';
 import { jwtVerify, SignJWT } from 'jose';
 import { Router, type RequestHandler, type Response } from 'express';
+import { z } from 'zod';
 import { rateLimit } from 'express-rate-limit';
 import { customerAddressInput, customerLoginBody, customerPasswordPatch, customerProfilePatch, customerRegisterBody, pageQuery } from '@labna/contracts';
 import type { Config } from './config.js';
-import { Customer, CustomerSession, Order } from './database.js';
+import { Customer, CustomerSession, Order, models } from './database.js';
 import { ApiError, pagination, respond } from './http.js';
 import { toOrderDTO, transitionOrder } from './orders.js';
 
@@ -30,6 +31,31 @@ export function customerAuthentication(config: Config) {
     if (!defaultSeen) normalized[0] = { ...normalized[0], isDefault: true };
     return normalized;
   };
+  /** Favorites as `{ productID, createdAt }`, newest first, de-duplicated. */
+  const favoritesFor = async (customer: any) => {
+    const ids: string[] = Array.isArray(customer.favoriteProductIDs) ? customer.favoriteProductIDs : [];
+    const rows = await models.products
+      .find({ id: { $in: ids }, archivedAt: null, 'data.publicationStatus': 'published' })
+      .select({ id: 1 })
+      .lean();
+    // Only ids that still resolve are returned, so a deleted product cannot leave
+    // a favorite that can never be opened.
+    const live = new Set(rows.map((row: any) => row.id));
+    const unique = [...new Set(ids)].filter((productID) => live.has(productID));
+    return unique.map((productID, index) => ({ productID, createdAt: new Date(Date.now() - index).toISOString() }));
+  };
+  const addFavorite = async (customer: any, productID: string) => {
+    const ids: string[] = Array.isArray(customer.favoriteProductIDs) ? customer.favoriteProductIDs.filter((id: string) => id !== productID) : [];
+    await Customer.updateOne({ id: customer.id }, { $set: { favoriteProductIDs: [productID, ...ids].slice(0, 200) } });
+  };
+  const removeFavorite = async (customer: any, productID: string) => {
+    const ids: string[] = Array.isArray(customer.favoriteProductIDs) ? customer.favoriteProductIDs : [];
+    const next = [...new Set(ids)].filter((id) => id !== productID);
+    if (next.length !== ids.length) {
+      await Customer.updateOne({ id: customer.id }, { $set: { favoriteProductIDs: next } });
+    }
+  };
+
   const issue = async (res: Response, customer: any, sessionID: string, refresh: string, expiresAt: Date) => {
     res.cookie(cookieName, refresh, { ...cookieOptions, expires: expiresAt });
     return respond(res, { accessToken: await token(customer.id, sessionID), expiresIn: 900, customer: toDTO(customer) });
@@ -167,6 +193,27 @@ export function customerAuthentication(config: Config) {
     await Customer.updateOne({ id: customer.id }, { $set: { addresses } });
     respond(res, { deleted: true, addresses });
   });
+  // Favorites hold only product ids. A saved product that is later archived or
+  // unpublished simply stops resolving, which the storefront handles as "no
+  // longer available" instead of serving stale data.
+  account.get('/favorites', async (_req, res) => {
+    const customer = res.locals.customer;
+    const favorites = await favoritesFor(customer);
+    respond(res, { favorites });
+  });
+  account.post('/favorites', async (req, res) => {
+    const { productID } = z.strictObject({ productID: z.string().min(1).max(120) }).parse(req.body);
+    const product = await models.products.findOne({ id: productID, archivedAt: null, 'data.publicationStatus': 'published' }).lean();
+    if (!product) throw new ApiError(404, 'PRODUCT_UNAVAILABLE', 'Product is not available to save');
+    await addFavorite(res.locals.customer, productID);
+    respond(res, { productID, createdAt: new Date().toISOString() }, {}, 201);
+  });
+  account.delete('/favorites/:productID', async (req, res) => {
+    const productID = req.params.productID;
+    await removeFavorite(res.locals.customer, productID);
+    respond(res, { deleted: true, productID });
+  });
+
   account.get('/orders', async (req, res) => {
     const { cursor, limit } = pageQuery.parse(req.query);
     const page = pagination(config.CURSOR_SECRET, ['customer-orders', res.locals.customer.id, limit], cursor);
