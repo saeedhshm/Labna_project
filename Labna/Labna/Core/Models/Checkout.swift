@@ -132,6 +132,14 @@ enum OrderStatus: String, Decodable, Hashable, Sendable {
 
     /// Whether the API would still allow the order to move forward.
     var isActive: Bool { !isTerminal }
+
+    /// Mirrors the API's customer cancellation rule, which only accepts
+    /// `pending`.
+    ///
+    /// This is a reflection of server state for affordances, never a decision:
+    /// the cancel request is still refused server side when the order has moved
+    /// on, and that refusal is what the app reports.
+    var isCancellableByCustomer: Bool { self == .pending }
 }
 
 /// One recorded transition, as the API stored it.

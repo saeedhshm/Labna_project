@@ -47,7 +47,6 @@ struct WidgetSnapshotPublisherTests {
                     ingredients: product.ingredients,
                     storageInstructions: product.storageInstructions,
                     isFeatured: false,
-                    isDemo: product.isDemo,
                     variants: product.variants
                 )
             },

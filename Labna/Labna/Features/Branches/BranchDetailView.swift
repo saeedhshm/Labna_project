@@ -22,7 +22,6 @@ struct BranchDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: LabnaSpacing.large) {
-                if branch.isDemo { demoNotice }
                 locationCard
                 openingHours
                 contactCard
@@ -39,19 +38,6 @@ struct BranchDetailView: View {
             latitude: branch.coordinate.latitude,
             longitude: branch.coordinate.longitude
         )
-    }
-
-    private var demoNotice: some View {
-        Label {
-            Text("branches.demoMessage").font(LabnaTypography.body)
-        } icon: {
-            Image(systemName: "testtube.2")
-        }
-        .foregroundStyle(Color.labnaGreen)
-        .padding(LabnaSpacing.medium)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.labnaMint, in: RoundedRectangle(cornerRadius: LabnaRadius.medium))
-        .accessibilityIdentifier("branch.demoNotice")
     }
 
     private var locationCard: some View {
@@ -127,7 +113,7 @@ struct BranchDetailView: View {
     }
 
     private var phoneURL: URL? {
-        guard !branch.isDemo, let phone = branch.phoneNumber else { return nil }
+        guard let phone = branch.phoneNumber else { return nil }
         let allowed = phone.filter { $0.isNumber || $0 == "+" }
         guard !allowed.isEmpty else { return nil }
         return URL(string: "tel:\(allowed)")

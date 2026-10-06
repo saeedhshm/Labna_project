@@ -43,7 +43,6 @@ struct MockDataTests {
         for product in products {
             #expect(!product.id.isEmpty)
             #expect(categoryIDs.contains(product.categoryID))
-            #expect(product.isDemo)
             #expect((1...3).contains(product.variants.count))
             #expect(!product.imageURLs.isEmpty)
             product.imageURLs.forEach(checkImage)
@@ -82,7 +81,6 @@ struct MockDataTests {
         for branch in branches {
             checkText(branch.name)
             checkText(branch.address)
-            #expect(branch.isDemo)
             #expect(branch.phoneNumber == nil)
             #expect((-90...90).contains(branch.coordinate.latitude))
             #expect((-180...180).contains(branch.coordinate.longitude))

@@ -91,7 +91,6 @@ private enum PreviewFixtures {
         ingredients: LocalizedText(ar: "حليب مبستر.", en: "Pasteurized milk."),
         storageInstructions: LocalizedText(ar: "يحفظ مبردًا.", en: "Keep refrigerated."),
         isFeatured: true,
-        isDemo: true,
         variants: [
             ProductVariant(id: "250", label: .init(ar: "250 مل", en: "250 ml"), quantity: 250, unit: .ml, priceMinor: 1800, currencyCode: "EGP", isAvailable: true),
             ProductVariant(id: "500", label: .init(ar: "500 مل", en: "500 ml"), quantity: 500, unit: .ml, priceMinor: 3000, currencyCode: "EGP", isAvailable: true),

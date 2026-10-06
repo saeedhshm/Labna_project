@@ -9,7 +9,6 @@ struct Product: Codable, Identifiable, Hashable {
     let ingredients: LocalizedText
     let storageInstructions: LocalizedText
     let isFeatured: Bool
-    let isDemo: Bool
     let variants: [ProductVariant]
 
     var isAvailable: Bool { variants.contains(where: \.isAvailable) }

@@ -205,11 +205,10 @@ private struct ProductDTO: Decodable {
     let ingredients: LocalizedText
     let storageInstructions: LocalizedText
     let isFeatured: Bool
-    let isDemo: Bool?
     let variants: [VariantDTO]
 
     var domain: Product {
-        Product(id: id, categoryID: categoryID, name: name, description: description, imageURLs: imageURLs, ingredients: ingredients, storageInstructions: storageInstructions, isFeatured: isFeatured, isDemo: isDemo ?? false, variants: variants.map(\.domain))
+        Product(id: id, categoryID: categoryID, name: name, description: description, imageURLs: imageURLs, ingredients: ingredients, storageInstructions: storageInstructions, isFeatured: isFeatured, variants: variants.map(\.domain))
     }
 }
 
@@ -269,9 +268,8 @@ private struct BranchDTO: Decodable {
     let timeZoneIdentifier: String
     let openingHours: [OpeningIntervalDTO]
     let phoneNumber: String?
-    let isDemo: Bool?
 
     var domain: Branch {
-        Branch(id: id, name: name, address: address, coordinate: coordinate, timeZoneIdentifier: timeZoneIdentifier, openingHours: openingHours.map { .init(weekday: $0.weekday, opensAt: $0.opensAt, closesAt: $0.closesAt) }, phoneNumber: phoneNumber, isDemo: isDemo ?? false)
+        Branch(id: id, name: name, address: address, coordinate: coordinate, timeZoneIdentifier: timeZoneIdentifier, openingHours: openingHours.map { .init(weekday: $0.weekday, opensAt: $0.opensAt, closesAt: $0.closesAt) }, phoneNumber: phoneNumber)
     }
 }

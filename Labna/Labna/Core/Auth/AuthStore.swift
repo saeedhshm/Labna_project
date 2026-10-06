@@ -10,6 +10,19 @@ enum AuthState: Equatable {
 @MainActor
 @Observable
 final class AuthStore {
+    /// Invoked whenever a session ends, by sign-out or by the API rejecting it,
+    /// so customer scoped stores can drop what they were holding.
+    private var sessionEndedObservers: [() -> Void] = []
+
+    /// Registers a customer scoped store to be cleared when the session ends.
+    func onSessionEnded(_ observer: @escaping () -> Void) {
+        sessionEndedObservers.append(observer)
+    }
+
+    private func notifySessionEnded() {
+        for observer in sessionEndedObservers { observer() }
+    }
+
     private let service: AuthService
     private(set) var state: AuthState = .unknown
     private(set) var isLoading = false
@@ -89,6 +102,7 @@ final class AuthStore {
         state = .guest
         lastError = nil
         isLoading = false
+        notifySessionEnded()
     }
 
     /// Drops the locally held session without contacting the API.
@@ -108,6 +122,7 @@ final class AuthStore {
         guard case .authenticated = state else { return }
         state = .guest
         lastError = .expiredSession
+        notifySessionEnded()
     }
 
     /// Keeps the signed-in customer's address book in step with the address

@@ -19,7 +19,6 @@ struct CartStoreTests {
             ingredients: product.ingredients,
             storageInstructions: product.storageInstructions,
             isFeatured: product.isFeatured,
-            isDemo: product.isDemo,
             variants: variants
         )
     }

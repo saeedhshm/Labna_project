@@ -12,6 +12,7 @@ struct OrderDetailView: View {
     @Environment(AppContainer.self) private var container
     @Environment(\.dismiss) private var dismiss
     @State private var loaded = false
+    @State private var isConfirmingCancel = false
 
     private var store: OrdersStore { container.orders }
     private var language: AppLanguage { container.settings.language }
@@ -26,6 +27,7 @@ struct OrderDetailView: View {
                     totals(order)
                     payment(order)
                     address(order)
+                    cancelSection(order)
                 }
                 .padding(LabnaSpacing.large)
             } else if let error = store.detailPhases[orderID] ?? nil {
@@ -53,6 +55,58 @@ struct OrderDetailView: View {
         }
         .onChange(of: container.auth.isAuthenticated) { _, isAuthenticated in
             if !isAuthenticated { dismiss() }
+        }
+        .confirmationDialog(
+            "orders.cancel.confirmTitle",
+            isPresented: $isConfirmingCancel,
+            presenting: store.details[orderID]
+        ) { order in
+            Button("orders.cancel.confirmAction", role: .destructive) {
+                Task { await store.cancel(id: order.id) }
+            }
+            .accessibilityIdentifier("orders.cancel.confirm")
+            Button("orders.cancel.dismissAction", role: .cancel) {}
+        } message: { order in
+            // The number is quoted so it is obvious what is being cancelled.
+            Text("orders.cancel.confirmMessage \(order.orderNumber)")
+        }
+    }
+
+    /// Cancellation is offered only for an order the API still allows it on,
+    /// which is `pending`. Any other state hides the action entirely rather than
+    /// showing a button that would be refused.
+    @ViewBuilder
+    private func cancelSection(_ order: PlacedOrder) -> some View {
+        if let failure = store.cancelFailure {
+            Label {
+                Text(LocalizedStringKey(failure.messageKey))
+                    .font(LabnaTypography.body)
+            } icon: {
+                Image(systemName: "exclamationmark.triangle.fill")
+            }
+            .foregroundStyle(.orange)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(LabnaSpacing.medium)
+            .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: LabnaRadius.medium))
+            .accessibilityIdentifier("orders.cancel.error")
+        }
+
+        if order.status.isCancellableByCustomer {
+            Button(role: .destructive) {
+                store.clearCancelFailure()
+                isConfirmingCancel = true
+            } label: {
+                if store.isCancelling(order.id) {
+                    HStack {
+                        ProgressView()
+                        Text("orders.cancel.progress")
+                    }
+                } else {
+                    Text("orders.cancel.action")
+                }
+            }
+            .disabled(store.isCancelling(order.id))
+            .accessibilityIdentifier("orders.cancel.action")
         }
     }
 

@@ -37,6 +37,9 @@ final class AppRouter {
     /// order, which only exists after the list has been fetched.
     private(set) var pendingOrderID: String?
     private(set) var cartNavigationID = UUID()
+    /// The More stack is also rebuilt by identity, because the account area
+    /// pushes its screens with direct links that a path reset cannot dismiss.
+    private(set) var moreNavigationID = UUID()
 
     init() {}
 
@@ -74,15 +77,23 @@ final class AppRouter {
         case .home: homePath = []
         case .catalog: catalogPath = []
         case .cart: resetCartStack()
-        case .more: morePath = []
+        case .more: resetMoreStack()
         }
     }
 
     func resetPaths() {
         homePath = []
         catalogPath = []
-        morePath = []
+        resetMoreStack()
         resetCartStack()
+    }
+
+    /// Rebuilding the stack by identity is the only way to dismiss screens that
+    /// were pushed with a direct `NavigationLink`, because those never appear in
+    /// the bound path.
+    private func resetMoreStack() {
+        morePath = []
+        moreNavigationID = UUID()
     }
 
     /// Selects the owning tab, clears its stack and pushes the destination.

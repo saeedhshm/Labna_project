@@ -15,6 +15,10 @@ final class PersistedCatalogProduct {
     var storageAR: String
     var storageEN: String
     var isFeatured: Bool
+    /// Retained only so existing stores keep a valid schema. The API has no
+    /// such field, so it is never populated from the catalog.
+    /// Retained only so existing stores keep a valid schema. The API has no
+    /// such field, so it is never populated from the catalog.
     var isDemo: Bool
     var cacheOrder: Int
 
@@ -31,7 +35,7 @@ final class PersistedCatalogProduct {
         storageAR = product.storageInstructions.ar
         storageEN = product.storageInstructions.en
         isFeatured = product.isFeatured
-        isDemo = product.isDemo
+        isDemo = false
         self.cacheOrder = cacheOrder
     }
 
@@ -45,7 +49,6 @@ final class PersistedCatalogProduct {
             ingredients: LocalizedText(ar: ingredientsAR, en: ingredientsEN),
             storageInstructions: LocalizedText(ar: storageAR, en: storageEN),
             isFeatured: isFeatured,
-            isDemo: isDemo,
             variants: variants
         )
     }
@@ -186,7 +189,7 @@ final class PersistedCatalogBranch {
         timeZoneIdentifier = branch.timeZoneIdentifier
         openingHoursData = try JSONEncoder().encode(branch.openingHours)
         phoneNumber = branch.phoneNumber
-        isDemo = branch.isDemo
+        isDemo = false
         self.cacheOrder = cacheOrder
     }
 
@@ -199,8 +202,7 @@ final class PersistedCatalogBranch {
             coordinate: Branch.Coordinate(latitude: latitude, longitude: longitude),
             timeZoneIdentifier: timeZoneIdentifier,
             openingHours: openingHours,
-            phoneNumber: phoneNumber,
-            isDemo: isDemo
+            phoneNumber: phoneNumber
         )
     }
 }

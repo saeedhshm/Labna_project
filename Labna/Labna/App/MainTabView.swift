@@ -41,6 +41,9 @@ struct MainTabView: View {
                 MoreView()
                     .navigationDestination(for: AppDestination.self, destination: destinationView)
             }
+            // Same reason as the cart stack: the account area pushes directly,
+            // and a path reset cannot dismiss those screens.
+            .id(router.moreNavigationID)
             .tabItem {
                 Label("tab.more", systemImage: "ellipsis")
             }

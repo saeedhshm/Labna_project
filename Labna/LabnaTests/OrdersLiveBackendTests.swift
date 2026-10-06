@@ -353,6 +353,64 @@ struct OrdersLiveBackendTests {
         }
     }
 
+    @Test func aCustomerCanCancelTheirOwnPendingOrder() async throws {
+        guard await backendIsReachable() else { return }
+        try await skipIfRateLimited {
+            let scenario = try await self.scenario(quantity: 2)
+            let cleanup = Cleanup(environmentFile: apiEnvironment)
+            let admin = try #require(await AdminOrders.make(environmentFile: apiEnvironment))
+            let before = try #require(await admin.reservedUnits(branchID: "demo-cairo", variantID: "milk-full-250"))
+
+            let placed = try #require(try await scenario.checkout.submit(notes: ""))
+            cleanup.track(placed.id)
+            #expect(await scenario.orders.loadDetail(id: placed.id) != nil)
+            // Only a pending order may be cancelled, and the app says so.
+            #expect(scenario.orders.details[placed.id]?.status.isCancellableByCustomer == true)
+            let reserved = try #require(await admin.reservedUnits(branchID: "demo-cairo", variantID: "milk-full-250"))
+            #expect(reserved == before + 2)
+
+            let cancelled = try #require(await scenario.orders.cancel(id: placed.id))
+            #expect(cancelled.status == .cancelled)
+            #expect(cancelled.timeline.map(\.status) == [.pending, .cancelled])
+            #expect(cancelled.id == placed.id)
+            #expect(scenario.orders.details[placed.id]?.status == .cancelled)
+            #expect(scenario.orders.cancelFailure == nil)
+
+            // The list reflects it after a refresh.
+            #expect(await scenario.orders.refresh())
+            #expect(scenario.orders.orders.first?.status == .cancelled)
+
+            // Restoring the stock is the backend's job, which it did.
+            let after = try #require(await admin.reservedUnits(branchID: "demo-cairo", variantID: "milk-full-250"))
+            #expect(after == before, "The API released the reservation when cancelling")
+            cleanup.releaseNow()
+        }
+    }
+
+    @Test func anOrderThatHasMovedOnCannotBeCancelled() async throws {
+        guard await backendIsReachable() else { return }
+        try await skipIfRateLimited {
+            let scenario = try await self.scenario()
+            let cleanup = Cleanup(environmentFile: apiEnvironment)
+            defer { cleanup.releaseNow() }
+            let admin = try #require(await AdminOrders.make(environmentFile: apiEnvironment))
+
+            let placed = try #require(try await scenario.checkout.submit(notes: ""))
+            cleanup.track(placed.id)
+            // Admin confirms it, which is exactly when the customer loses the
+            // ability to cancel.
+            #expect(await admin.setStatus(orderID: placed.id, status: "confirmed"))
+            #expect(await scenario.orders.loadDetail(id: placed.id, forceRefresh: true) != nil)
+            #expect(scenario.orders.details[placed.id]?.status.isCancellableByCustomer == false)
+
+            // The server refuses, and the app reports that rather than pretending.
+            #expect(await scenario.orders.cancel(id: placed.id) == nil)
+            #expect(scenario.orders.cancelFailure == .notCancellable)
+            // The refusal triggered a re-read, so local state matches the server.
+            #expect(scenario.orders.details[placed.id]?.status == .confirmed)
+        }
+    }
+
     @Test func oneCustomerCannotReadAnotherCustomersOrder() async throws {
         guard await backendIsReachable() else { return }
         try await skipIfRateLimited {

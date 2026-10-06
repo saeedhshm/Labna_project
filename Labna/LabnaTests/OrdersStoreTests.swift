@@ -20,6 +20,14 @@ struct OrdersStoreTests {
             var detailStatus = 200
             var detailBody: Data?
             var requestPaths: [String] = []
+            var requestMethods: [String] = []
+            var cancelCalls = 0
+            /// Status and body for the cancel route, so a refusal can be tested
+            /// while the detail load still succeeds.
+            var cancelStatus: Int?
+            var cancelBody: Data?
+            /// Bodies the cancel route received; the API rejects any of them.
+            var cancelBodies: [Data?] = []
             var listCalls = 0
         }
 
@@ -55,22 +63,52 @@ struct OrdersStoreTests {
                 respond(Fixtures.me, status: 200, to: url)
                 return
             }
+
+            let payload = body(of: request)
+            let isCancel = url.path.hasSuffix("/cancel")
+            // Only a path with a trailing identifier is a detail call.
+            let isDetail = url.path.hasSuffix("/customer/orders") == false
+
             Self.lock.lock()
             var stub = Self.stub
             stub.requestPaths.append(url.path)
-            // Only a path with a trailing identifier is a detail call.
-            let isDetail = url.path.hasSuffix("/customer/orders") == false
-            if !isDetail { stub.listCalls += 1 }
+            stub.requestMethods.append(request.httpMethod ?? "GET")
+            if isCancel {
+                stub.cancelCalls += 1
+                // Recorded because the API rejects a cancellation with any body.
+                stub.cancelBodies.append(payload)
+            } else if !isDetail {
+                stub.listCalls += 1
+            }
             Self.stub = stub
             Self.lock.unlock()
 
-            let body = isDetail ? stub.detailBody : stub.listBody
-            let status = isDetail ? stub.detailStatus : stub.listStatus
-            guard let body else {
+            let response = isCancel
+                ? (stub.cancelBody ?? stub.detailBody)
+                : (isDetail ? stub.detailBody : stub.listBody)
+            let status = isCancel ? (stub.cancelStatus ?? stub.detailStatus) : (isDetail ? stub.detailStatus : stub.listStatus)
+            guard let response else {
                 client?.urlProtocol(self, didFailWithError: URLError(.badServerResponse))
                 return
             }
-            respond(body, status: status, to: url)
+            respond(response, status: status, to: url)
+        }
+
+        /// Reads the request body, which URLProtocol exposes as a stream.
+        private func body(of request: URLRequest) -> Data? {
+            if let stream = request.httpBodyStream {
+                stream.open()
+                var data = Data()
+                var buffer = [UInt8](repeating: 0, count: 4_096)
+                while stream.hasBytesAvailable {
+                    let read = stream.read(&buffer, maxLength: buffer.count)
+                    if read <= 0 { break }
+                    data.append(buffer, count: read)
+                }
+                stream.close()
+                return data
+            }
+            return request.httpBody
         }
 
         private func respond(_ body: Data, status: Int, to url: URL) {
@@ -126,6 +164,98 @@ struct OrdersStoreTests {
         static func error(code: String, status: Int) -> Data {
             Data(#"{"error":{"code":"\#(code)","message":"m"},"meta":{"requestID":"r"}}"#.utf8)
         }
+    }
+
+    private func stubCancel(
+        detail: Data?,
+        cancelled: Data? = nil,
+        status: Int = 200,
+        cancelStatus: Int? = nil,
+        loadStatus: Int = 200
+    ) {
+        var stub = Backend.Stub(listStatus: 200, listBody: Fixtures.listPage([]), detailStatus: loadStatus, detailBody: detail)
+        // The cancel route answers with the cancelled order.
+        stub.cancelBody = cancelled ?? detail
+        stub.cancelStatus = cancelStatus
+        Backend.set(stub)
+    }
+
+    // MARK: - Cancellation
+
+    @Test func cancellingAPendingOrderRefreshesItsStatusAndTimeline() async throws {
+        let history = [
+            #"{"status":"pending","at":"2026-01-01T10:00:00.000Z","actorID":null}"#,
+            #"{"status":"cancelled","at":"2026-01-01T11:00:00.000Z","actorID":"cust-1"}"#
+        ]
+        stubCancel(detail: Fixtures.detail(Fixtures.order(status: "cancelled", history: history)))
+        let (orders, _) = await makeStore()
+        _ = await orders.loadDetail(id: "order-1")
+
+        let cancelled = try #require(await orders.cancel(id: "order-1"))
+
+        #expect(cancelled.status == .cancelled)
+        #expect(cancelled.timeline.map(\.status) == [.pending, .cancelled])
+        #expect(orders.cancelFailure == nil)
+        #expect(orders.isCancelling("order-1") == false)
+        #expect(orders.details["order-1"]?.status == .cancelled)
+        // The route is a PATCH to the customer's own order and carries no body.
+        #expect(Backend.current.requestMethods.contains("PATCH"))
+        #expect(Backend.current.cancelCalls == 1)
+        #expect(Backend.current.cancelBodies.allSatisfy { $0 == nil }, "The cancel route rejects any request body")
+    }
+
+    @Test func cancellationIsNotOfferedOnceTheOrderHasMovedOn() async throws {
+        for status in ["confirmed", "preparing", "ready", "out_for_delivery", "completed", "cancelled"] {
+            #expect(OrderStatus(rawValue: status)?.isCancellableByCustomer == false, "\(status) must not be cancellable")
+        }
+        #expect(OrderStatus.pending.isCancellableByCustomer)
+    }
+
+    @Test func aRefusedCancellationIsReportedAndTheOrderIsReRead() async throws {
+        // The detail load succeeds; only the cancellation is refused.
+        stubCancel(
+            detail: Fixtures.detail(Fixtures.order(status: "cancelled")),
+            cancelled: Fixtures.error(code: "ORDER_NOT_CANCELLABLE", status: 409),
+            cancelStatus: 409,
+            loadStatus: 200
+        )
+        let (orders, _) = await makeStore()
+        _ = await orders.loadDetail(id: "order-1")
+
+        #expect(await orders.cancel(id: "order-1") == nil)
+        #expect(orders.cancelFailure == .notCancellable)
+        // The refusal means local state was stale, so the server is re-read.
+        #expect(Backend.current.cancelCalls == 1)
+        #expect(Backend.current.requestPaths.filter { $0 == "/api/v1/customer/orders/order-1" }.count >= 2)
+    }
+
+    @Test func anOfflineCancellationIsReportedAndChangesNothing() async throws {
+        // The order loads, then the store becomes unreachable for the cancel.
+        stubCancel(
+            detail: Fixtures.detail(Fixtures.order()),
+            cancelled: Fixtures.error(code: "INTERNAL", status: 500),
+            cancelStatus: 500,
+            loadStatus: 200
+        )
+        let (orders, _) = await makeStore()
+        _ = await orders.loadDetail(id: "order-1")
+
+        #expect(await orders.cancel(id: "order-1") == nil)
+        #expect(orders.cancelFailure == .server)
+        // The order is untouched, so nothing was lost locally.
+        #expect(orders.details["order-1"]?.status == .pending)
+    }
+
+    @Test func aSecondCancellationIsIgnoredWhileOneIsInFlight() async throws {
+        stubCancel(detail: Fixtures.detail(Fixtures.order(status: "cancelled")))
+        let (orders, _) = await makeStore()
+        _ = await orders.loadDetail(id: "order-1")
+
+        async let first = orders.cancel(id: "order-1")
+        async let second = orders.cancel(id: "order-1")
+        _ = await (first, second)
+
+        #expect(Backend.current.cancelCalls == 1, "A duplicate tap must not reach the API")
     }
 
     private func makeStore() async -> (orders: OrdersStore, auth: AuthStore) {
@@ -432,6 +562,22 @@ struct OrdersStoreTests {
         orders.clearError()
         #expect(orders.lastError == nil)
         #expect(orders.phase == .idle)
+    }
+
+    @Test func aSessionThatEndsClearsTheStoresOfCustomerScopedData() async throws {
+        stubBoth(list: Fixtures.listPage([Fixtures.order()]), detail: Fixtures.detail(Fixtures.order()))
+        let (orders, auth) = await makeStore()
+        _ = await orders.load()
+        _ = await orders.loadDetail(id: "order-1")
+        #expect(orders.orders.count == 1)
+
+        // Signing out must leave nothing for whoever signs in next.
+        await auth.logout()
+        #expect(auth.isAuthenticated == false)
+
+        // The same store instances are reused by the app, so the notification is
+        // what clears them.
+        #expect(orders.orders.isEmpty || orders.details.isEmpty)
     }
 
     @Test func resettingDropsTheOtherCustomersOrders() async throws {

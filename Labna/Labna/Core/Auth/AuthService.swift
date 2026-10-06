@@ -215,8 +215,24 @@ actor AuthService {
 
     /// One of the signed-in customer's orders, by internal id or order number.
     func customerOrder(id: String) async throws -> PlacedOrder {
-        let escaped = id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? id
-        return try await authorizedRequest(path: "customer/orders/\(escaped)", decode: PlacedOrder.self)
+        try await authorizedRequest(path: customerOrderPath(id), decode: PlacedOrder.self)
+    }
+
+    /// Cancels one of the customer's own orders.
+    ///
+    /// The route rejects any request body, so this sends none, and the API is the
+    /// only authority on whether the order may still be cancelled. Releasing the
+    /// stock it reserved is the backend's job, not the app's.
+    func cancelCustomerOrder(id: String) async throws -> PlacedOrder {
+        try await authorizedRequest(
+            path: "\(customerOrderPath(id))/cancel",
+            method: "PATCH",
+            decode: PlacedOrder.self
+        )
+    }
+
+    private func customerOrderPath(_ id: String) -> String {
+        "customer/orders/\(id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? id)"
     }
 
     private func addressPath(_ id: String) -> String {
@@ -484,6 +500,7 @@ actor AuthService {
         case "INVALID_BRANCH": return .checkout(.invalidBranch)
         case "NO_PICKUP_BRANCH": return .checkout(.noPickupBranch)
         case "PAYMENT_FAILED": return .checkout(.paymentFailed)
+        case "ORDER_NOT_CANCELLABLE": return .checkout(.orderNotCancellable)
         default: return .httpStatus(status, decoded?.error.message)
         }
     }

@@ -262,7 +262,6 @@ struct CatalogOfflineSyncTests {
                 ingredients: product.ingredients,
                 storageInstructions: product.storageInstructions,
                 isFeatured: product.isFeatured,
-                isDemo: product.isDemo,
                 variants: product.variants
             )
         }
@@ -302,7 +301,6 @@ struct CatalogOfflineSyncTests {
                 ingredients: product.ingredients,
                 storageInstructions: product.storageInstructions,
                 isFeatured: product.isFeatured,
-                isDemo: product.isDemo,
                 variants: variants
             )
         }

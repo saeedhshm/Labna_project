@@ -43,6 +43,8 @@ final class CheckoutStore {
         self.auth = auth
         self.cart = cart
         self.cartValidation = cartValidation
+        // A signed-out shopper leaves nothing behind for the next one.
+        auth.onSessionEnded { [weak self] in self?.clearCustomerData() }
     }
 
     var isBusy: Bool {
@@ -90,6 +92,28 @@ final class CheckoutStore {
     func updatePaymentMethod(_ method: PaymentMethod) {
         paymentMethod = method
         failure = nil
+    }
+
+    /// Drops the half-finished selection when the session ends, so the next
+    /// customer never inherits a prefilled address or coupon. Any failure is kept
+    /// because it is what explains the return to the sign-in form.
+    func clearCustomerData() {
+        // A failed phase is what shows why the session ended, so it survives.
+        if case .failed = phase {} else { phase = .idle }
+        placedOrder = nil
+        contact = ProfileDraft(name: "", phoneNumber: "", email: "")
+        couponCode = ""
+        paymentMethod = .cashOnDelivery
+        selectedAddressID = nil
+    }
+
+    func reset() {
+        clearCustomerData()
+        failure = nil
+        contact = ProfileDraft(name: "", phoneNumber: "", email: "")
+        couponCode = ""
+        paymentMethod = .cashOnDelivery
+        selectedAddressID = nil
     }
 
     var selectedAddress: CustomerAddress? {

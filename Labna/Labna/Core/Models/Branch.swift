@@ -20,5 +20,4 @@ struct Branch: Codable, Identifiable, Hashable {
     let timeZoneIdentifier: String
     let openingHours: [OpeningHours]
     let phoneNumber: String?
-    let isDemo: Bool
 }

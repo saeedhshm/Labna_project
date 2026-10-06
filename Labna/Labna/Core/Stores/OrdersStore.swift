@@ -29,11 +29,15 @@ final class OrdersStore {
     /// Orders currently being opened, keyed by the identifier used in the URL.
     private(set) var details: [String: PlacedOrder] = [:]
     private(set) var detailPhases: [String: OrdersError?] = [:]
+    private(set) var cancellingOrderID: String?
+    /// Why a cancellation was refused, rendered next to the order.
+    private(set) var cancelFailure: CancelFailure?
     private var inFlight: Task<OrderPage, Error>?
 
     init(service: AuthService, auth: AuthStore) {
         self.service = service
         self.auth = auth
+        auth.onSessionEnded { [weak self] in self?.clearCustomerData() }
     }
 
     var isEmpty: Bool { orders.isEmpty }
@@ -152,9 +156,93 @@ final class OrdersStore {
         detailPhases[id] = nil
     }
 
+    // MARK: - Cancellation
+
+    func isCancelling(_ id: String) -> Bool { cancellingOrderID == id }
+
+    func clearCancelFailure() {
+        cancelFailure = nil
+    }
+
+    /// Cancels one of the customer's orders through the API.
+    ///
+    /// Eligibility is the server's call: the button is only offered for a
+    /// `pending` order, and a `409 ORDER_NOT_CANCELLABLE` here means the order
+    /// moved on between the fetch and the tap, which is reported and then
+    /// refreshed rather than papered over. Releasing the reserved stock is the
+    /// backend's responsibility; the app only re-reads the result.
+    @discardableResult
+    func cancel(id: String) async -> PlacedOrder? {
+        guard cancellingOrderID == nil else { return details[id] }
+        cancelFailure = nil
+        cancellingOrderID = id
+        defer { cancellingOrderID = nil }
+        do {
+            let cancelled = try await service.cancelCustomerOrder(id: id)
+            details[id] = cancelled
+            detailPhases[id] = nil
+            if let index = orders.firstIndex(where: { $0.id == cancelled.id }) {
+                orders[index] = cancelled
+            }
+            // Re-read so the screen shows the server's own record, including the
+            // cancellation it appended to the status history.
+            await loadDetail(id: id, forceRefresh: true)
+            return details[id]
+        } catch is CancellationError {
+            return nil
+        } catch let error as AuthError {
+            cancelFailure = mapCancelError(error)
+            if cancelFailure?.terminatesSession == true { auth.markSessionExpired() }
+            // The refusal means local state is stale, so pull the truth.
+            if cancelFailure == .notCancellable {
+                await loadDetail(id: id, forceRefresh: true)
+            }
+            return nil
+        } catch {
+            cancelFailure = .server
+            return nil
+        }
+    }
+
+    private func mapCancelError(_ error: AuthError) -> CancelFailure {
+        switch error {
+        case .checkout(.orderNotCancellable):
+            return .notCancellable
+        case .checkout:
+            return .server
+        case .unauthorized, .expiredSession:
+            return .unauthorized
+        case .network(let code):
+            return OrdersError.fromNetwork(code) == .offline ? .offline : .server
+        case .invalidBaseURL:
+            return .server
+        case .httpStatus(let status, _) where status == 404:
+            return .notFound
+        default:
+            return .server
+        }
+    }
+
     /// Drops cached state when the session ends, so a later sign-in never shows
     /// the previous customer's orders.
+    /// Drops the previous customer's orders when a session ends, keeping any
+    /// error that explains why the shopper is back at the sign-in form.
+    func clearCustomerData() {
+        inFlight?.cancel()
+        inFlight = nil
+        orders = []
+        details = [:]
+        detailPhases = [:]
+        nextCursor = nil
+        // A failed phase is what shows why the session ended, so it survives.
+        if case .failed = phase {} else { phase = .idle }
+    }
+
     func reset() {
+        clearCustomerData()
+        lastError = nil
+        cancelFailure = nil
+        cancellingOrderID = nil
         inFlight?.cancel()
         inFlight = nil
         orders = []
@@ -182,6 +270,28 @@ final class OrdersStore {
             return .server
         }
     }
+}
+
+/// Why a customer cancellation did not happen.
+enum CancelFailure: Equatable {
+    /// The API says the order has already moved past `pending`.
+    case notCancellable
+    case notFound
+    case unauthorized
+    case offline
+    case server
+
+    var messageKey: String {
+        switch self {
+        case .notCancellable: "orders.cancel.notCancellable"
+        case .notFound: "orders.error.notFound"
+        case .unauthorized: "auth.error.unauthorized"
+        case .offline: "data.error.offline"
+        case .server: "orders.cancel.failed"
+        }
+    }
+
+    var terminatesSession: Bool { self == .unauthorized }
 }
 
 /// Why order history could not be read.

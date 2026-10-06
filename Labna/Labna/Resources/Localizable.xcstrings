@@ -119,13 +119,13 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "المنتجات والفروع والطلبات الحالية بيانات توضيحية. لا ينفذ التطبيق شراءً أو تواصلًا حقيقيًا."
+            "value" : "المنتجات والأسعار والمخزون تقدمها واجهة المتجر، وتُسجَّل الطلبات هناك. أما مواقع الفروع وبيانات التواصل فهي توضيحية."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Current products, branches and orders are illustrative. The app performs no real purchase or contact."
+            "value" : "Products, prices and stock are served by the store API and orders are recorded there. Branch locations and contact details are illustrative."
           }
         }
       }
@@ -135,13 +135,13 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "نسخة تجريبية"
+            "value" : "عن هذه النسخة"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Demo version"
+            "value" : "About this build"
           }
         }
       }
@@ -1528,38 +1528,6 @@
         }
       }
     },
-    "branches.demoBadge" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تجريبي"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Demo"
-          }
-        }
-      }
-    },
-    "branches.demoMessage" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "هذا موقع توضيحي وليس متجرًا فعليًا. الاتجاهات تقود إلى الإحداثيات التجريبية المعروضة."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This is an illustrative location, not an actual store. Directions lead to the displayed demo coordinates."
-          }
-        }
-      }
-    },
     "branches.directions" : {
       "localizations" : {
         "ar" : {
@@ -1645,13 +1613,13 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "لا يتوفر رقم اتصال حقيقي في النسخة التجريبية."
+            "value" : "لا يوجد رقم هاتف منشور لهذا الفرع."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No real phone number is available in the demo version."
+            "value" : "No phone number is published for this branch."
           }
         }
       }
@@ -3667,13 +3635,13 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "هذه نسخة استعراضية ببيانات محلية وتجريبية، ولا تنفذ طلبات أو اتصالات حقيقية."
+            "value" : "الأسعار والمخزون والطلبات تأتي من متجر لبنة. الطلبات التي تُنشئها سجلات حقيقية يراها المتجر."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "This is a showcase version with local demo data. It performs no real orders or calls."
+            "value" : "Prices, stock and orders come from the Labna store. Orders you place are real records the store can see."
           }
         }
       }
@@ -3770,6 +3738,134 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Version"
+          }
+        }
+      }
+    },
+    "orders.cancel.action" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إلغاء الطلب"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel order"
+          }
+        }
+      }
+    },
+    "orders.cancel.confirmAction" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إلغاء الطلب"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel order"
+          }
+        }
+      }
+    },
+    "orders.cancel.confirmMessage" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سيتم إلغاء الطلب %@ ولا يمكن التراجع عن ذلك."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Order %@ will be cancelled. This cannot be undone."
+          }
+        }
+      }
+    },
+    "orders.cancel.confirmTitle" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إلغاء الطلب"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel this order?"
+          }
+        }
+      }
+    },
+    "orders.cancel.dismissAction" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الاحتفاظ بالطلب"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep order"
+          }
+        }
+      }
+    },
+    "orders.cancel.failed" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذر إلغاء الطلب. حاول مرة أخرى."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The order could not be cancelled. Try again."
+          }
+        }
+      }
+    },
+    "orders.cancel.notCancellable" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يعد من الممكن إلغاء هذا الطلب لأنه تجاوز مرحلة الانتظار."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This order can no longer be cancelled because it has moved past the pending stage."
+          }
+        }
+      }
+    },
+    "orders.cancel.progress" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ الإلغاء…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelling…"
           }
         }
       }

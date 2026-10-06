@@ -36,6 +36,7 @@ final class AddressesStore {
     init(service: AuthService, auth: AuthStore) {
         self.service = service
         self.auth = auth
+        auth.onSessionEnded { [weak self] in self?.clearCustomerData() }
     }
 
     var isEmpty: Bool {
@@ -129,6 +130,20 @@ final class AddressesStore {
             fail(.invalidResponse)
         }
         return false
+    }
+
+    /// Drops the previous customer's addresses when a session ends, keeping any
+    /// error that explains why the shopper is back at the sign-in form.
+    func clearCustomerData() {
+        addresses = []
+        // A failed phase is what shows why the session ended, so it survives.
+        if case .failed = phase {} else { phase = .idle }
+        notice = nil
+    }
+
+    func reset() {
+        clearCustomerData()
+        lastError = nil
     }
 
     func clearNotice() {

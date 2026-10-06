@@ -66,7 +66,7 @@ final class LabnaUITests: XCTestCase {
     }
 
     @MainActor
-    func testMoreInformationAndDemoBranches() throws {
+    func testMoreInformationAndBranches() throws {
         let app = XCUIApplication()
         app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-resetAuthSession"]
         app.launch()
@@ -96,11 +96,13 @@ final class LabnaUITests: XCTestCase {
         XCTAssertTrue(cairo.waitForExistence(timeout: 10))
         cairo.tap()
         XCTAssertTrue(app.navigationBars["Cairo — Demo Branch"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["branch.demoNotice"].exists)
+        // The branch demo notice is gone: the API has no "demo" flag, so the app
+        // no longer invents one.
+        XCTAssertFalse(app.descendants(matching: .any)["branch.demoNotice"].exists)
         XCTAssertTrue(app.descendants(matching: .any)["branch.map"].exists)
         XCTAssertTrue(app.buttons["branch.directions"].exists)
         XCTAssertFalse(app.buttons["branch.call"].exists)
-        XCTAssertTrue(app.staticTexts["No real phone number is available in the demo version."].exists)
+        XCTAssertTrue(app.staticTexts["No phone number is published for this branch."].exists)
     }
 
     @MainActor
@@ -311,26 +313,6 @@ final class LabnaUITests: XCTestCase {
         // Confirmed totals come from the created order.
         XCTAssertTrue(app.descendants(matching: .any)["success.total"].exists)
         XCTAssertTrue(app.staticTexts["Delivery"].exists)
-
-        // The same order is now in My Orders, with its real status.
-        app.buttons["success.home"].tap()
-        XCTAssertTrue(app.tabBars.buttons["More"].waitForExistence(timeout: 10))
-        app.tabBars.buttons["More"].tap()
-        XCTAssertTrue(app.buttons["more.account"].waitForExistence(timeout: 10))
-        app.buttons["more.account"].tap()
-        let ordersRow = app.buttons["account.orders"]
-        XCTAssertTrue(ordersRow.waitForExistence(timeout: 15))
-        ordersRow.tap()
-        XCTAssertTrue(app.navigationBars["My Orders"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts[reference].waitForExistence(timeout: 20))
-        XCTAssertTrue(app.descendants(matching: .any)["orders.status.pending"].exists)
-
-        // Opening it shows the server's details and its status timeline.
-        app.staticTexts[reference].tap()
-        XCTAssertTrue(app.staticTexts["orders.detail.title"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts[reference].exists)
-        XCTAssertTrue(app.descendants(matching: .any)["orders.detail.total"].exists)
-        XCTAssertTrue(app.descendants(matching: .any)["orders.timeline.pending"].exists)
 
         // And the cart is only emptied once the order exists.
         app.tabBars.buttons["Cart"].tap()
@@ -600,6 +582,142 @@ final class LabnaUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Work"].waitForExistence(timeout: 15))
         XCTAssertTrue(app.staticTexts["Home"].exists)
         XCTAssertEqual(app.staticTexts.matching(identifier: "Default").count, 1, "The survivor inherits the default flag")
+    }
+
+    /// Scrolls until `element` is rendered, for rows a lazy list has not built.
+    @discardableResult
+    /// Walks My Orders → Order Details from a cold app and cancels the order,
+    /// covering the tracking half of the flow after checkout has already been
+    /// proven by `testServerBackedCheckoutCreatesRealOrder`.
+    ///
+    /// Skipped when the backend is not running, since orders are server backed.
+    @MainActor
+    func testMyOrdersTrackingAndCancellation() async throws {
+        guard await backendIsReachable() else {
+            throw XCTSkip("Backend not running on 127.0.0.1:3001")
+        }
+        let email = "ios-ui-hist-\(Int(Date().timeIntervalSince1970))@example.com"
+        let orderNumber = await seedCustomerWithPendingOrder(email: email)
+        guard let number = orderNumber else {
+            throw XCTSkip("Could not create the order through the backend")
+        }
+
+        let app = XCUIApplication()
+        app.launchArguments = ["-selectedLanguage", "en", "-resetCart", "-resetAuthSession"]
+        app.launch()
+
+        app.tabBars.buttons["More"].tap()
+        XCTAssertTrue(app.buttons["more.account"].waitForExistence(timeout: 20))
+        app.buttons["more.account"].tap()
+
+        // Order history is behind the account, so sign in first.
+        let emailField = app.textFields["auth.email"]
+        XCTAssertTrue(emailField.waitForExistence(timeout: 15))
+        emailField.tap()
+        emailField.typeText(email)
+        let password = app.secureTextFields["auth.password"]
+        password.tap()
+        password.typeText("password123")
+        app.buttons["auth.login.submit"].tap()
+
+        XCTAssertTrue(app.buttons["auth.logout"].waitForExistence(timeout: 25))
+        // A `List` is lazy, so a row below the fold may not exist yet.
+        XCTAssertTrue(scrollToFind(app.buttons["account.orders"], in: app), "My Orders row should be reachable")
+        app.buttons["account.orders"].tap()
+
+        XCTAssertTrue(app.navigationBars["My Orders"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.staticTexts[number].waitForExistence(timeout: 20))
+        XCTAssertTrue(app.descendants(matching: .any)["orders.status.pending"].exists)
+
+        // The details show the server's own record.
+        app.staticTexts[number].tap()
+        // The title is a localized value, so it is matched as one.
+        XCTAssertTrue(app.navigationBars["Order details"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.staticTexts[number].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["orders.detail.total"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["orders.timeline.pending"].exists)
+
+        // A pending order is cancellable, behind a confirmation.
+        let cancel = app.buttons["orders.cancel.action"]
+        XCTAssertTrue(cancel.waitForExistence(timeout: 10))
+        cancel.tap()
+        let confirm = app.buttons["orders.cancel.confirm"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5), "Cancelling must ask for confirmation")
+        confirm.tap()
+
+        // The screen then shows the server's cancelled record and timeline.
+        // On the detail screen the badge carries its own identifier.
+        let currentStatus = app.descendants(matching: .any)["orders.detail.currentStatus"]
+        XCTAssertTrue(currentStatus.waitForExistence(timeout: 25))
+        XCTAssertTrue(currentStatus.label.contains("Cancelled"), "Expected a cancelled status, got \(currentStatus.label)")
+        XCTAssertTrue(app.descendants(matching: .any)["orders.timeline.cancelled"].exists)
+        // Once cancelled the API no longer allows it, so the action is gone.
+        XCTAssertFalse(app.buttons["orders.cancel.action"].exists)
+        app.terminate()
+    }
+
+    /// Creates a signed-in customer with one saved address and one pending
+    /// order, returning its `LBN-…` reference.
+    private func seedCustomerWithPendingOrder(email: String) async -> String? {
+        guard case .seeded = await seedCustomer(email: email) else { return nil }
+        guard let token = try? await customerToken(email: email) else { return nil }
+
+        var addressRequest = URLRequest(url: URL(string: "http://127.0.0.1:3001/api/v1/customer/addresses")!)
+        addressRequest.httpMethod = "POST"
+        addressRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        addressRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        addressRequest.httpBody = try? JSONSerialization.data(withJSONObject: [
+            "label": "Home", "city": "Cairo", "area": "Maadi", "street": "Road 9",
+            "building": "12", "floor": "3", "apartment": "5", "notes": "",
+            "recipientName": "Order Tester", "phoneNumber": "+201012345678", "isDefault": true
+        ])
+        guard let (_, addressResponse) = try? await Self.cookieLessSession.data(for: addressRequest),
+              (200..<300).contains((addressResponse as? HTTPURLResponse)?.statusCode ?? 0) else { return nil }
+
+        var orderRequest = URLRequest(url: URL(string: "http://127.0.0.1:3001/api/v1/orders")!)
+        orderRequest.httpMethod = "POST"
+        orderRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        orderRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        orderRequest.httpBody = try? JSONSerialization.data(withJSONObject: [
+            "customer": ["name": "Order Tester", "phoneNumber": "+201012345678"],
+            "address": [
+                "city": "Cairo", "area": "Maadi", "street": "Road 9",
+                "building": "12", "floor": "3", "apartment": "5", "notes": ""
+            ],
+            "items": [["productID": "milk-full", "variantID": "milk-full-250", "quantity": 1]],
+            "couponCode": "",
+            "paymentMethod": "cash_on_delivery"
+        ])
+        guard let (data, orderResponse) = try? await Self.cookieLessSession.data(for: orderRequest),
+              (200..<300).contains((orderResponse as? HTTPURLResponse)?.statusCode ?? 0),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let payload = json["data"] as? [String: Any] else { return nil }
+        return payload["orderNumber"] as? String
+    }
+
+    /// Signs the seeded customer in so its session can be reused.
+    private func customerToken(email: String) async throws -> String {
+        var request = URLRequest(url: URL(string: "http://127.0.0.1:3001/api/v1/customer/auth/login")!)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(["email": email, "password": "password123"])
+        let (data, response) = try await Self.cookieLessSession.data(for: request)
+        guard (200..<300).contains((response as? HTTPURLResponse)?.statusCode ?? 0),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let payload = json["data"] as? [String: Any],
+              let token = payload["accessToken"] as? String else {
+            throw URLError(.userAuthenticationRequired)
+        }
+        return token
+    }
+
+    private func scrollToFind(_ element: XCUIElement, in app: XCUIApplication, maxSwipes: Int = 8) -> Bool {
+        if element.waitForExistence(timeout: 3) { return true }
+        for _ in 0..<maxSwipes {
+            app.swipeUp()
+            if element.exists { return true }
+        }
+        return element.exists
     }
 
     private func type(_ text: String, into field: XCUIElement) {

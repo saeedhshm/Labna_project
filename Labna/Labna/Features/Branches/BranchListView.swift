@@ -48,14 +48,6 @@ private struct BranchRow: View {
                     Text(branch.name.value(for: language))
                         .font(LabnaTypography.headline)
                         .foregroundStyle(Color.labnaInk)
-                    if branch.isDemo {
-                        Text("branches.demoBadge")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(Color.labnaGreen)
-                            .padding(.horizontal, 7)
-                            .padding(.vertical, 3)
-                            .background(Color.labnaMint, in: Capsule())
-                    }
                 }
                 Text(branch.address.value(for: language))
                     .font(LabnaTypography.caption)

@@ -61,6 +61,8 @@ enum CheckoutRejection: Equatable, Sendable {
     case invalidBranch
     case noPickupBranch
     case paymentFailed
+    /// The order had already moved past the state the API allows cancelling from.
+    case orderNotCancellable
 
     var messageKey: String {
         switch self {
@@ -70,6 +72,7 @@ enum CheckoutRejection: Equatable, Sendable {
         case .invalidBranch: "checkout.error.invalidBranch"
         case .noPickupBranch: "checkout.error.noPickupBranch"
         case .paymentFailed: "checkout.error.payment"
+        case .orderNotCancellable: "orders.cancel.notCancellable"
         }
     }
 
@@ -86,7 +89,7 @@ enum CheckoutRejection: Equatable, Sendable {
         case .productUnavailable(let productID):
             guard let productID else { return nil }
             return (productID, nil)
-        case .invalidBranch, .noPickupBranch, .paymentFailed:
+        case .invalidBranch, .noPickupBranch, .paymentFailed, .orderNotCancellable:
             return nil
         }
     }
