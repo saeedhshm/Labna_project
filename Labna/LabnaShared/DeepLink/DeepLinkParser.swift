@@ -129,6 +129,14 @@ nonisolated struct DeepLinkParser: DeepLinkParsing {
             DeepLinkRoute(host: "recently-viewed", make: { _ in .recentlyViewed }),
             DeepLinkRoute(host: "cart", make: { _ in .cart }),
             DeepLinkRoute(host: "branches", make: { _ in .branches }),
+            DeepLinkRoute(host: "orders", make: { _ in .orders }),
+            // An order can be addressed by its internal id or its `LBN-…`
+            // number, which is what the API accepts.
+            DeepLinkRoute(
+                host: "order",
+                requiresIdentifier: true,
+                make: { $0.map(DeepLink.order(id:)) }
+            ),
         ]
     }
 }

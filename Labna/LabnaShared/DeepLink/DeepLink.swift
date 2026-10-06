@@ -13,6 +13,8 @@ nonisolated enum DeepLink: Equatable, Hashable, Sendable {
     case recentlyViewed
     case cart
     case branches
+    case orders
+    case order(id: String)
 }
 
 /// Why a deep link could not be turned into navigation.

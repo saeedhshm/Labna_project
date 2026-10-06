@@ -121,33 +121,53 @@ struct MockDataTests {
         ).id)
         let encoder = JSONEncoder()
         let decoder = JSONDecoder()
+        // Orders carry ISO timestamps, which only the order decoder understands.
+        let orderDecoder = OrderTimestamp.decoder
         #expect(try decoder.decode([CartItem].self, from: encoder.encode([first, second])) == [first, second])
-        // Orders come from the API rather than being modelled locally, so what is
-        // checked here is the payload shape rather than a synthesised total.
-        let order = PlacedOrder(
-            id: "9f0f0d3e-1b1a-4c1e-9a3f-2b7f5b7a1c22",
-            orderNumber: "LBN-20260101-123456",
-            customerID: nil,
-            customer: CheckoutCustomer(name: "Demo", phoneNumber: "+201012345678", email: nil),
-            address: CheckoutAddress(city: "Cairo", area: "Maadi", street: "Road 9", building: "12", floor: "", apartment: "", notes: ""),
-            branchID: "demo-cairo",
-            items: [
-                PlacedOrderItem(
-                    productID: product.id, variantID: small.id,
-                    productName: product.name, variantLabel: small.label,
-                    quantity: 2, unitPriceMinor: small.priceMinor, lineTotalMinor: small.priceMinor * 2
-                )
+        // Orders come from the API rather than being modelled locally, so this
+        // decodes a real payload instead of building one, which also exercises
+        // the ISO timestamp handling.
+        let created = "2026-01-01T10:00:00.000Z"
+        var payload: [String: Any] = [
+            "id": "9f0f0d3e-1b1a-4c1e-9a3f-2b7f5b7a1c22",
+            "orderNumber": "LBN-20260101-123456",
+            "customerID": NSNull(),
+            "customer": ["name": "Demo", "phoneNumber": "+201012345678", "email": NSNull()],
+            "address": [
+                "city": "Cairo", "area": "Maadi", "street": "Road 9",
+                "building": "12", "floor": "", "apartment": "", "notes": ""
             ],
-            currencyCode: "EGP",
-            subtotalMinor: small.priceMinor * 2,
-            deliveryFeeMinor: 1500,
-            discountMinor: 0,
-            totalMinor: small.priceMinor * 2 + 1500,
-            couponCode: "",
-            payment: OrderPayment(method: .cashOnDelivery, status: .pending, providerReference: nil),
-            status: .pending,
-            createdAt: "2026-01-01T00:00:00.000Z"
-        )
+            "branchID": "demo-cairo",
+            "items": [[
+                "productID": product.id,
+                "variantID": small.id,
+                "productName": ["ar": product.name.ar, "en": product.name.en],
+                "variantLabel": ["ar": small.label.ar, "en": small.label.en],
+                "imageURL": "https://example.test/m.png",
+                "quantity": 2,
+                "unitPriceMinor": small.priceMinor,
+                "lineTotalMinor": small.priceMinor * 2
+            ]],
+            "currencyCode": "EGP",
+            "subtotalMinor": small.priceMinor * 2,
+            "deliveryFeeMinor": 1_500,
+            "discountMinor": 0,
+            "totalMinor": small.priceMinor * 2 + 1_500,
+            "couponCode": "",
+            "payment": ["method": "cash_on_delivery", "status": "pending", "providerReference": NSNull()],
+            "status": "pending",
+            "statusHistory": [["status": "pending", "at": created, "actorID": NSNull()]],
+            "createdAt": created,
+            "updatedAt": created
+        ]
+        let order = try orderDecoder.decode(PlacedOrder.self, from: try JSONSerialization.data(withJSONObject: payload))
+        let placed = order.createdAt
+        #expect(order.updatedAt == placed)
+        #expect(order.statusHistory.count == 1)
+        #expect(order.statusHistory[0].status == .pending)
+        #expect(order.createdAt == placed)
+        #expect(order.updatedAt == placed)
+        #expect(order.timeline.count == 1)
         #expect(order.items[0].lineTotalMinor == small.priceMinor * 2)
         #expect(order.couponApplied == false)
         #expect(order.couponIgnored == false)

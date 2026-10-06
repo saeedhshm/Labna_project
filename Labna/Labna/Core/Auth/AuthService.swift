@@ -199,18 +199,43 @@ actor AuthService {
         try await authorizedRequest(path: "orders/\(id)", decode: PlacedOrder.self)
     }
 
+    /// The signed-in customer's own orders, newest first, one cursor page at a
+    /// time. The API scopes the query to the token's customer, so the app never
+    /// sends an ownership identifier.
+    func customerOrders(cursor: String? = nil, limit: Int = OrderPage.defaultLimit) async throws -> OrderPage {
+        var queryItems = [URLQueryItem(name: "limit", value: String(limit))]
+        if let cursor { queryItems.append(URLQueryItem(name: "cursor", value: cursor)) }
+        let page: CustomerOrderPageDTO = try await authorizedRawRequest(
+            path: "customer/orders",
+            queryItems: queryItems,
+            decode: CustomerOrderPageDTO.self
+        )
+        return OrderPage(items: page.data, nextCursor: page.meta.nextCursor)
+    }
+
+    /// One of the signed-in customer's orders, by internal id or order number.
+    func customerOrder(id: String) async throws -> PlacedOrder {
+        let escaped = id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? id
+        return try await authorizedRequest(path: "customer/orders/\(escaped)", decode: PlacedOrder.self)
+    }
+
     private func addressPath(_ id: String) -> String {
         let escaped = id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? id
         return "customer/addresses/\(escaped)"
     }
 
-    func authorizedRequest<T: Decodable>(path: String, method: String = "GET", decode type: T.Type) async throws -> T {
+    func authorizedRequest<T: Decodable>(
+        path: String,
+        method: String = "GET",
+        queryItems: [URLQueryItem] = [],
+        decode type: T.Type
+    ) async throws -> T {
         do {
             let token = try await validAccessToken()
-            return try await request(path: path, method: method, accessToken: token, decode: type)
+            return try await request(path: path, method: method, accessToken: token, queryItems: queryItems, decode: type)
         } catch AuthError.unauthorized, AuthError.expiredSession {
             let token = try await refreshSession().accessToken
-            return try await request(path: path, method: method, accessToken: token, decode: type)
+            return try await request(path: path, method: method, accessToken: token, queryItems: queryItems, decode: type)
         }
     }
 
@@ -278,8 +303,14 @@ actor AuthService {
         return try await perform(request)
     }
 
-    private func request<T: Decodable>(path: String, method: String, accessToken: String, decode type: T.Type) async throws -> T {
-        var request = try makeRequest(path: path, method: method)
+    private func request<T: Decodable>(
+        path: String,
+        method: String,
+        accessToken: String,
+        queryItems: [URLQueryItem] = [],
+        decode type: T.Type
+    ) async throws -> T {
+        var request = try makeRequest(path: path, method: method, queryItems: queryItems)
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         return try await perform(request)
     }
@@ -292,6 +323,35 @@ actor AuthService {
         return try await perform(request)
     }
 
+    /// Like `authorizedRequest`, but decodes the whole response body.
+    ///
+    /// List routes answer `{"data": [...], "meta": {...}}`, so their payload is
+    /// not wrapped in the single-resource envelope.
+    func authorizedRawRequest<T: Decodable>(
+        path: String,
+        queryItems: [URLQueryItem] = [],
+        decode type: T.Type
+    ) async throws -> T {
+        do {
+            let token = try await validAccessToken()
+            return try await rawRequest(path: path, accessToken: token, queryItems: queryItems, decode: type)
+        } catch AuthError.unauthorized, AuthError.expiredSession {
+            let token = try await refreshSession().accessToken
+            return try await rawRequest(path: path, accessToken: token, queryItems: queryItems, decode: type)
+        }
+    }
+
+    private func rawRequest<T: Decodable>(
+        path: String,
+        accessToken: String,
+        queryItems: [URLQueryItem],
+        decode type: T.Type
+    ) async throws -> T {
+        var request = try makeRequest(path: path, method: "GET", queryItems: queryItems)
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        return try await performRaw(request)
+    }
+
     private func perform<T: Decodable>(_ request: URLRequest) async throws -> T {
         do {
             let (data, response) = try await session.data(for: request)
@@ -299,7 +359,24 @@ actor AuthService {
             guard let http = response as? HTTPURLResponse else { throw AuthError.invalidResponse }
             guard (200..<300).contains(http.statusCode) else { throw mapHTTPError(status: http.statusCode, data: data) }
             rememberRefreshCookie(from: http)
-            return try JSONDecoder().decode(APIEnvelope<T>.self, from: data).data
+            return try OrderTimestamp.decoder.decode(APIEnvelope<T>.self, from: data).data
+        } catch let error as AuthError {
+            throw error
+        } catch let error as URLError {
+            throw AuthError.network(error.code)
+        } catch {
+            throw AuthError.invalidData
+        }
+    }
+
+    private func performRaw<T: Decodable>(_ request: URLRequest) async throws -> T {
+        do {
+            let (data, response) = try await session.data(for: request)
+            try Task.checkCancellation()
+            guard let http = response as? HTTPURLResponse else { throw AuthError.invalidResponse }
+            guard (200..<300).contains(http.statusCode) else { throw mapHTTPError(status: http.statusCode, data: data) }
+            rememberRefreshCookie(from: http)
+            return try OrderTimestamp.decoder.decode(T.self, from: data)
         } catch is CancellationError {
             throw CancellationError()
         } catch let error as AuthError {
@@ -312,9 +389,18 @@ actor AuthService {
         }
     }
 
-    private func makeRequest(path: String, method: String) throws -> URLRequest {
+    private func makeRequest(path: String, method: String, queryItems: [URLQueryItem] = []) throws -> URLRequest {
         guard baseURL.isAllowedCatalogAPIBaseURL, baseURL.query == nil, baseURL.fragment == nil else { throw AuthError.invalidBaseURL }
-        var request = URLRequest(url: baseURL.appendingPathComponent(path))
+        var url = baseURL.appendingPathComponent(path)
+        if !queryItems.isEmpty {
+            guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
+                throw AuthError.invalidBaseURL
+            }
+            components.queryItems = queryItems
+            guard let resolved = components.url else { throw AuthError.invalidBaseURL }
+            url = resolved
+        }
+        var request = URLRequest(url: url)
         request.httpMethod = method
         request.timeoutInterval = 30
         request.setValue("application/json", forHTTPHeaderField: "Accept")

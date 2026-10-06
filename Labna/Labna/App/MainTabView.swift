@@ -69,6 +69,8 @@ struct MainTabView: View {
             BranchListView()
         case .addresses:
             AddressesView()
+        case .orders:
+            OrdersView()
         case .about:
             AboutLabnaView()
         case .contact:

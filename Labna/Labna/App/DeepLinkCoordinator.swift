@@ -86,7 +86,7 @@ private extension DeepLink {
     var requiresCatalog: Bool {
         switch self {
         case .product, .category: true
-        case .favorites, .recentlyViewed, .cart, .branches: false
+        case .favorites, .recentlyViewed, .cart, .branches, .orders, .order: false
         }
     }
 }

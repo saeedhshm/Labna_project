@@ -12,6 +12,7 @@ enum AppDestination: Hashable {
     case recentlyViewed
     case branches
     case addresses
+    case orders
     case about
     case contact
 }

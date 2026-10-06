@@ -32,9 +32,18 @@ final class AppRouter {
     var catalogPath: [AppDestination] = []
     var cartPath: [AppDestination] = []
     var morePath: [AppDestination] = []
+    /// Order a deep link asked for, revealed by `OrdersView` once it loads.
+    /// Held rather than pushed directly because the detail screen needs the
+    /// order, which only exists after the list has been fetched.
+    private(set) var pendingOrderID: String?
     private(set) var cartNavigationID = UUID()
 
     init() {}
+
+    /// Forgets the deep link's order request once it has been acted on.
+    func consumePendingOrderID() {
+        pendingOrderID = nil
+    }
 
     func show(_ tab: AppTab) {
         resetPaths()
@@ -100,6 +109,13 @@ final class AppRouter {
             return .handled
         case .branches:
             return navigate(.branches, on: .more)
+        case .orders:
+            return navigate(.orders, on: .more)
+        case .order(let id):
+            // Order history belongs to the account area, so the link opens the
+            // list and remembers which order to reveal once it has loaded.
+            pendingOrderID = id
+            return navigate(.orders, on: .more)
         }
     }
 

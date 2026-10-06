@@ -14,6 +14,10 @@ struct DeepLinkParserTests {
         #expect(parser.parse("labna://cart") == .cart)
         #expect(parser.parse("labna://branches") == .branches)
         #expect(parser.parse("labna://recently-viewed") == .recentlyViewed)
+        #expect(parser.parse("labna://orders") == .orders)
+        #expect(parser.parse("labna://order/LBN-20260101-123456") == .order(id: "LBN-20260101-123456"))
+        // An order is addressable by its internal id too.
+        #expect(parser.parse("labna://order/9f0f0d3e-1b1a") == .order(id: "9f0f0d3e-1b1a"))
     }
 
     @Test func parsingIsCaseInsensitiveForSchemeAndHost() throws {
@@ -70,11 +74,14 @@ struct DeepLinkParserTests {
         #expect(DeepLinkURLBuilder.url(for: .recentlyViewed)?.absoluteString == "labna://recently-viewed")
         #expect(DeepLinkURLBuilder.url(for: .cart)?.absoluteString == "labna://cart")
         #expect(DeepLinkURLBuilder.url(for: .branches)?.absoluteString == "labna://branches")
+        #expect(DeepLinkURLBuilder.url(for: .orders)?.absoluteString == "labna://orders")
+        #expect(DeepLinkURLBuilder.url(for: .order(id: "LBN-20260101-123456"))?.absoluteString == "labna://order/LBN-20260101-123456")
     }
 
     @Test func builderRejectsEmptyIdentifiersAndRoundTrips() throws {
         #expect(DeepLinkURLBuilder.url(for: .product(id: "  ")) == nil)
-        for link: DeepLink in [.product(id: "a b"), .category(id: "milk"), .favorites, .cart, .branches, .recentlyViewed] {
+        #expect(DeepLinkURLBuilder.url(for: .order(id: "  ")) == nil)
+        for link: DeepLink in [.product(id: "a b"), .category(id: "milk"), .favorites, .cart, .branches, .recentlyViewed, .orders, .order(id: "LBN-1")] {
             let url = try #require(DeepLinkURLBuilder.url(for: link))
             #expect(parser.parse(url) == link)
         }

@@ -18,6 +18,7 @@ final class AppContainer {
     let recentlyViewed: RecentlyViewedStore
     let auth: AuthStore
     let addresses: AddressesStore
+    let orders: OrdersStore
     let checkout: CheckoutStore
     let modelContainer: ModelContainer
     let router: AppRouter
@@ -84,6 +85,9 @@ final class AppContainer {
         // Reuses the same session so the order is linked to the signed-in
         // customer, and the same validation store so the review screen cannot
         // disagree with the cart about pricing or stock.
+        // Order history shares the session actor, so it sees the same refreshed
+        // token and can end the session when the API rejects it.
+        orders = OrdersStore(service: resolvedAuthService, auth: authStore)
         checkout = CheckoutStore(
             service: resolvedAuthService,
             auth: authStore,

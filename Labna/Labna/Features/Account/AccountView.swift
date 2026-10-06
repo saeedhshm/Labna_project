@@ -180,12 +180,14 @@ private struct AuthenticatedAccountView: View {
                     Label("account.changePassword", systemImage: "lock.rotation")
                 }
                 .accessibilityIdentifier("account.changePassword")
-            }
 
-            Section("account.availableLater") {
-                Label("account.ordersSoon", systemImage: "shippingbox")
+                NavigationLink {
+                    OrdersView()
+                } label: {
+                    Label("orders.title", systemImage: "shippingbox")
+                }
+                .accessibilityIdentifier("account.orders")
             }
-            .foregroundStyle(Color.labnaMuted)
 
             Section {
                 Button(role: .destructive) {

@@ -84,6 +84,10 @@ enum PaymentStatus: String, Decodable, Hashable, Sendable {
 }
 
 /// Order lifecycle, matching `orderStatus`.
+///
+/// `progressIndex` follows the only forward path the API allows:
+/// `pending → confirmed → preparing → ready → out_for_delivery → completed`.
+/// `cancelled` leaves the happy path and has no index.
 enum OrderStatus: String, Decodable, Hashable, Sendable {
     case pending
     case confirmed
@@ -92,6 +96,75 @@ enum OrderStatus: String, Decodable, Hashable, Sendable {
     case outForDelivery = "out_for_delivery"
     case completed
     case cancelled
+
+    /// The happy path in the order the API permits.
+    static let lifecycle: [OrderStatus] = [.pending, .confirmed, .preparing, .ready, .outForDelivery, .completed]
+
+    var isCancelled: Bool { self == .cancelled }
+    var isTerminal: Bool { self == .completed || self == .cancelled }
+
+    /// Position on the happy path, or `nil` for `cancelled`.
+    var progressIndex: Int? { Self.lifecycle.firstIndex(of: self) }
+
+    var messageKey: String {
+        switch self {
+        case .pending: "checkout.status.pending"
+        case .confirmed: "checkout.status.confirmed"
+        case .preparing: "checkout.status.preparing"
+        case .ready: "checkout.status.ready"
+        case .outForDelivery: "checkout.status.outForDelivery"
+        case .completed: "checkout.status.completed"
+        case .cancelled: "checkout.status.cancelled"
+        }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .pending: "clock"
+        case .confirmed: "checkmark.seal"
+        case .preparing: "frying.pan"
+        case .ready: "takeoutbag.and.cup.and.straw"
+        case .outForDelivery: "bicycle"
+        case .completed: "checkmark.circle.fill"
+        case .cancelled: "xmark.circle.fill"
+        }
+    }
+
+    /// Whether the API would still allow the order to move forward.
+    var isActive: Bool { !isTerminal }
+}
+
+/// One recorded transition, as the API stored it.
+///
+/// The timestamp comes straight from the server's `statusHistory`, so the app
+/// never invents a time for a step it did not witness.
+struct OrderStatusEvent: Decodable, Hashable, Sendable, Identifiable {
+    let status: OrderStatus
+    let at: Date
+    /// Set by the API for staff-driven transitions; `null` for system ones.
+    let actorID: String?
+
+    var id: String { "\(status.rawValue)-\(at.timeIntervalSince1970)" }
+    var isSystemChange: Bool { actorID == nil }
+}
+
+/// ISO-8601 with or without fractional seconds, which is what the API emits.
+enum OrderTimestamp {
+    static let decoder: JSONDecoder = {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let raw = try container.decode(String.self)
+            let fractional = ISO8601DateFormatter()
+            fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let date = fractional.date(from: raw) { return date }
+            let plain = ISO8601DateFormatter()
+            plain.formatOptions = [.withInternetDateTime]
+            if let date = plain.date(from: raw) { return date }
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Unrecognised date \(raw)")
+        }
+        return decoder
+    }()
 }
 
 /// A confirmed order exactly as the server recorded it.
@@ -114,7 +187,50 @@ struct PlacedOrder: Decodable, Sendable, Hashable, Identifiable {
     let couponCode: String
     let payment: OrderPayment
     let status: OrderStatus
-    let createdAt: String
+    let statusHistory: [OrderStatusEvent]
+    let createdAt: Date
+    let updatedAt: Date
+
+    enum CodingKeys: String, CodingKey {
+        case id, orderNumber, customerID, customer, address, branchID, items, currencyCode
+        case subtotalMinor, deliveryFeeMinor, discountMinor, totalMinor, couponCode
+        case payment, status, statusHistory, createdAt, updatedAt
+    }
+
+    /// Custom decoder for the two ISO timestamps, which the API always sends
+    /// with milliseconds.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        orderNumber = try container.decode(String.self, forKey: .orderNumber)
+        customerID = try container.decodeIfPresent(String.self, forKey: .customerID)
+        customer = try container.decode(CheckoutCustomer.self, forKey: .customer)
+        address = try container.decode(CheckoutAddress.self, forKey: .address)
+        branchID = try container.decode(String.self, forKey: .branchID)
+        items = try container.decode([PlacedOrderItem].self, forKey: .items)
+        currencyCode = try container.decode(String.self, forKey: .currencyCode)
+        subtotalMinor = try container.decode(Int.self, forKey: .subtotalMinor)
+        deliveryFeeMinor = try container.decode(Int.self, forKey: .deliveryFeeMinor)
+        discountMinor = try container.decode(Int.self, forKey: .discountMinor)
+        totalMinor = try container.decode(Int.self, forKey: .totalMinor)
+        couponCode = try container.decode(String.self, forKey: .couponCode)
+        payment = try container.decode(OrderPayment.self, forKey: .payment)
+        status = try container.decode(OrderStatus.self, forKey: .status)
+        // Older records may predate the field; the current status is then the
+        // only step that is genuinely known.
+        statusHistory = try container.decodeIfPresent([OrderStatusEvent].self, forKey: .statusHistory) ?? []
+        createdAt = try container.decode(Date.self, forKey: .createdAt)
+        updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt) ?? createdAt
+    }
+
+    /// History ordered oldest first, which is how the timeline reads. The API
+    /// returns them in that order already, so this only guards the display.
+    var timeline: [OrderStatusEvent] {
+        statusHistory.sorted { $0.at == $1.at
+            ? ($0.status.progressIndex ?? .max) < ($1.status.progressIndex ?? .max)
+            : $0.at < $1.at
+        }
+    }
 
     /// Whether the server actually honoured a submitted coupon.
     var couponApplied: Bool { discountMinor > 0 }
@@ -138,4 +254,23 @@ struct OrderPayment: Decodable, Sendable, Hashable {
     let method: PaymentMethod
     let status: PaymentStatus
     let providerReference: String?
+}
+/// One page of the customer's order history.
+struct OrderPage: Equatable, Sendable {
+    static let defaultLimit = 20
+    let items: [PlacedOrder]
+    /// `nil` when the API says there is nothing more to fetch.
+    let nextCursor: String?
+
+    var hasMore: Bool { nextCursor != nil }
+}
+
+/// Wire shape of `GET /customer/orders`, which wraps the page in the usual
+/// `data`/`meta` envelope and decodes with the order timestamp strategy.
+struct CustomerOrderPageDTO: Decodable {
+    struct Meta: Decodable {
+        let nextCursor: String?
+    }
+    let data: [PlacedOrder]
+    let meta: Meta
 }

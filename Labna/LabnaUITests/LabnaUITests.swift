@@ -312,11 +312,29 @@ final class LabnaUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["success.total"].exists)
         XCTAssertTrue(app.staticTexts["Delivery"].exists)
 
-        // The cart is only emptied once the order exists.
-        app.buttons["success.products"].tap()
-        XCTAssertTrue(app.tabBars.buttons["Products"].isSelected)
+        // The same order is now in My Orders, with its real status.
+        app.buttons["success.home"].tap()
+        XCTAssertTrue(app.tabBars.buttons["More"].waitForExistence(timeout: 10))
+        app.tabBars.buttons["More"].tap()
+        XCTAssertTrue(app.buttons["more.account"].waitForExistence(timeout: 10))
+        app.buttons["more.account"].tap()
+        let ordersRow = app.buttons["account.orders"]
+        XCTAssertTrue(ordersRow.waitForExistence(timeout: 15))
+        ordersRow.tap()
+        XCTAssertTrue(app.navigationBars["My Orders"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts[reference].waitForExistence(timeout: 20))
+        XCTAssertTrue(app.descendants(matching: .any)["orders.status.pending"].exists)
+
+        // Opening it shows the server's details and its status timeline.
+        app.staticTexts[reference].tap()
+        XCTAssertTrue(app.staticTexts["orders.detail.title"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts[reference].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["orders.detail.total"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["orders.timeline.pending"].exists)
+
+        // And the cart is only emptied once the order exists.
         app.tabBars.buttons["Cart"].tap()
-        XCTAssertTrue(app.staticTexts["Your cart is empty"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Your cart is empty"].waitForExistence(timeout: 10))
         app.terminate()
     }
 

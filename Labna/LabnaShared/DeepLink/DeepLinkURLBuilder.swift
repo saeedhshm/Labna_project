@@ -21,6 +21,10 @@ enum DeepLinkURLBuilder {
             return url(host: "cart")
         case .branches:
             return url(host: "branches")
+        case .orders:
+            return url(host: "orders")
+        case .order(let id):
+            return url(host: "order", identifier: id)
         }
     }
 
