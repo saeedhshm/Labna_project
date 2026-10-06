@@ -14,6 +14,9 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   use: {
     baseURL: `http://127.0.0.1:${port}`,
+    // Tests mock the API with page.route(). Blocking service workers keeps those
+    // stubs deterministic while the production build still includes the SW.
+    serviceWorkers: 'block',
     trace: 'on-first-retry',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],

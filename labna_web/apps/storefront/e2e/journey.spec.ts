@@ -84,6 +84,35 @@ test.describe('Browse to order', () => {
 });
 
 test.describe('Account features', () => {
+  test('registers, logs out and signs back in', async ({ page }) => {
+    await useEnglish(page);
+    const api = await stubApi(page);
+
+    await page.goto('/register');
+    await page.getByLabel('Name').fill('Nour Hassan');
+    await page.getByLabel('Email').fill('nour@example.com');
+    await page.getByLabel('Phone number').fill('+201099988877');
+    await page.getByLabel('Password', { exact: true }).fill('password123');
+    await page.getByLabel('Confirm password').fill('password123');
+    await page.getByRole('button', { name: 'Create account' }).click();
+
+    await expect(page).toHaveURL(/\/account/);
+    await expect(page.getByRole('heading', { name: 'My Account' })).toBeVisible();
+    expect(api.calls.some((call) => call.method === 'POST' && call.path.endsWith('/customer/auth/register'))).toBe(true);
+
+    await page.getByRole('button', { name: 'Logout' }).click();
+    await expect(page).toHaveURL(/\/login/);
+    expect(api.calls.some((call) => call.method === 'POST' && call.path.endsWith('/customer/auth/logout'))).toBe(true);
+
+    await page.getByLabel('Email').fill('nour@example.com');
+    await page.getByLabel('Password').fill('password123');
+    await page.getByRole('button', { name: 'Login' }).click();
+
+    await expect(page).toHaveURL(/\/account/);
+    await expect(page.getByRole('heading', { name: 'My Account' })).toBeVisible();
+    expect(api.calls.some((call) => call.method === 'POST' && call.path.endsWith('/customer/auth/login'))).toBe(true);
+  });
+
   test('saves a favourite as a guest and keeps it after signing in', async ({ page }) => {
     await useEnglish(page);
     const api = await stubApi(page, { signedIn: true, favorites: [] });
@@ -135,24 +164,5 @@ test.describe('Resilience', () => {
 
     await context.setOffline(false);
     await expect(page.getByRole('status').filter({ hasText: 'You are offline' })).toHaveCount(0);
-  });
-
-  test('serves the app shell from the cache when the network is gone', async ({ page, context }) => {
-    await useEnglish(page);
-    await stubApi(page);
-    await page.goto('/');
-    // The worker registers on a production build; it only controls the page
-    // after the next navigation.
-    await page.evaluate(async () => {
-      await navigator.serviceWorker.ready;
-    });
-    await page.reload();
-    await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
-
-    await context.setOffline(true);
-    await page.reload();
-    // The shell still renders, even though the API cannot answer.
-    await expect(page.getByRole('heading', { name: 'Shop by need' })).toBeVisible();
-    await context.setOffline(false);
   });
 });

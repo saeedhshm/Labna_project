@@ -72,7 +72,7 @@ export type StubOptions = {
  * validation code paths.
  */
 export async function stubApi(page: Page, options: StubOptions = {}) {
-  const signedIn = options.signedIn ?? false;
+  let authenticated = options.signedIn ?? false;
   const price = options.unitPriceMinor ?? 3500;
   const orderNumber = options.orderNumber ?? 'LBN-E2E-1';
   const saved = new Set(options.favorites ?? []);
@@ -95,7 +95,17 @@ export async function stubApi(page: Page, options: StubOptions = {}) {
     const json = (payload: unknown, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(payload) });
 
     if (path.endsWith('/customer/auth/refresh')) {
-      return signedIn ? json(envelope({ accessToken: 'e2e-token', expiresIn: 900, customer })) : json({ error: { code: 'UNAUTHENTICATED', message: 'No session' } }, 401);
+      return authenticated ? json(envelope({ accessToken: 'e2e-token', expiresIn: 900, customer })) : json({ error: { code: 'UNAUTHENTICATED', message: 'No session' } }, 401);
+    }
+
+    if ((path.endsWith('/customer/auth/register') || path.endsWith('/customer/auth/login')) && method === 'POST') {
+      authenticated = true;
+      return json(envelope({ accessToken: 'e2e-token', expiresIn: 900, customer }));
+    }
+
+    if (path.endsWith('/customer/auth/logout') && method === 'POST') {
+      authenticated = false;
+      return json(envelope({ loggedOut: true }));
     }
 
     if (path.endsWith('/customer/favorites')) {
