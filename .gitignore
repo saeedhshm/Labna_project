@@ -7,6 +7,7 @@ xcuserdata/
 *.xcworkspace/xcuserdata/
 *.xcodeproj/xcuserdata/
 *.xcodeproj/project.xcworkspace/xcuserdata/
+Labna/Labna.xcodeproj/xcshareddata/
 *.moved-aside
 *.xccheckout
 *.xcscmblueprint
@@ -27,3 +28,6 @@ Labna/Packages/
 # CocoaPods / Carthage (unused, kept for future dependencies)
 Pods/
 Carthage/Build/
+
+# React Native task-tracking README
+/Labna_react_native/TASKS.md
