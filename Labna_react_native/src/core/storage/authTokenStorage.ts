@@ -1,6 +1,6 @@
 import * as Keychain from 'react-native-keychain'
 
-const REFRESH_TOKEN_SERVICE = 'com.labna.auth.refresh-token';
+const AUTH_TOKEN_SERVICE = 'com.labna.auth.refresh-token';
 const USER_NAME = 'labna_customer';
  
 // set refresh token in keychain
@@ -9,7 +9,7 @@ export async function saveRefreshToken(token:string):Promise<void>{
         USER_NAME,
         token,
         {
-            server:REFRESH_TOKEN_SERVICE
+            server:AUTH_TOKEN_SERVICE
         }
     )
 }
@@ -17,7 +17,7 @@ export async function saveRefreshToken(token:string):Promise<void>{
 // get refresh token from keychain
 export async function getRefreshToken(): Promise<string | null> {
     const cridentials = await Keychain.getGenericPassword({
-        server:REFRESH_TOKEN_SERVICE
+        server:AUTH_TOKEN_SERVICE
     })
 
     const refreshToken = cridentials ? cridentials.password : null
@@ -28,6 +28,6 @@ export async function getRefreshToken(): Promise<string | null> {
 // remove refresh token from keychain
 export async function removeRefreshToken():Promise<void>{
     await Keychain.resetGenericPassword({
-        server:REFRESH_TOKEN_SERVICE
+        server:AUTH_TOKEN_SERVICE
     })
 }

@@ -1,7 +1,7 @@
 let accessToken : string | null = null;
 
 //set access token in memory
-export function setAccesstoken(token:string | null){
+export function setAccessToken(token:string | null){
     accessToken = token;
 }
 // get access token from memory

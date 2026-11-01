@@ -4,8 +4,9 @@ export type CustomerAddress = {
   recipientName?: string;
   phoneNumber?: string;
   city: string;
-  district: string;
+  area: string;
   street: string;
+  floor?: string;
   building: string;
   apartment?: string;
   notes?: string;
@@ -22,27 +23,10 @@ export type Customer = {
 };
 
 
-
-export type CustomerLoginBody = {
-  email: string;
-  password: string;
-};
-
-export type CustomerAuthResponse = {
-  accessToken: string;
-  expiresIn: number;
-  customer: Customer;
-};
-
-
-
-
-
-
 export type RegisterRequest = {
   name: string;
   phoneNumber: string;
-  email?: string;
+  email: string;
   password: string;
 };
 
