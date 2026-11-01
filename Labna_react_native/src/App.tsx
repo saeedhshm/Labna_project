@@ -19,6 +19,7 @@ import {
   SafeAreaProvider,
   SafeAreaView,
 } from 'react-native-safe-area-context';
+import { AuthProvider } from '@src/features/auth/AuthContext';
 
 function App() {
 
@@ -37,21 +38,23 @@ function App() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar
-        barStyle="dark-content"
-      />
+      <AuthProvider>
+        <StatusBar
+          barStyle="dark-content"
+        />
 
-      <SafeAreaView style={styles.container}>
-        <View style={styles.card}>
-          <Text style={styles.title}>
-            Welcome to Labna
-          </Text>
+        <SafeAreaView style={styles.container}>
+          <View style={styles.card}>
+            <Text style={styles.title}>
+              Welcome to Labna
+            </Text>
 
-          <Text style={styles.description}>
-            My first React Native application
-          </Text>
-        </View>
-      </SafeAreaView>
+            <Text style={styles.description}>
+              My first React Native application
+            </Text>
+          </View>
+        </SafeAreaView>
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }
