@@ -1,5 +1,14 @@
 
-import React from 'react';
+import React, {
+  useEffect,
+  useState,
+} from 'react';
+
+import {
+  initializeI18n,
+} from '@src/i18n';
+
+
 import {
   StatusBar,
   StyleSheet,
@@ -12,6 +21,20 @@ import {
 } from 'react-native-safe-area-context';
 
 function App() {
+
+  const [i18nReady, setI18nReady] =
+    useState(false);
+
+     useEffect(() => {
+    initializeI18n().finally(() => {
+      setI18nReady(true);
+    });
+  }, []);
+
+  if (!i18nReady) {
+    return null;
+  }
+
   return (
     <SafeAreaProvider>
       <StatusBar
