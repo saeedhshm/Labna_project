@@ -1,6 +1,10 @@
 import React from 'react';
 
 import {
+  Ionicons,
+} from '@react-native-vector-icons/ionicons/static';
+
+import {
   NavigationContainer,
 } from '@react-navigation/native';
 
@@ -71,6 +75,61 @@ const CartStack =
 
 const MoreStack =
   createNativeStackNavigator<MoreStackParamList>();
+
+type TabBarIconProps = {
+  color: string;
+  size: number;
+  focused: boolean;
+};
+
+type IoniconName = React.ComponentProps<
+  typeof Ionicons
+>['name'];
+
+/**
+ * Builds a tab bar icon renderer outside of the navigator
+ * so React does not see a new component type on every render.
+ */
+function createTabBarIcon(
+  activeName: IoniconName,
+  inactiveName: IoniconName,
+) {
+  return function TabBarIcon({
+    color,
+    size,
+    focused,
+  }: TabBarIconProps) {
+    return (
+      <Ionicons
+        name={
+          focused ? activeName : inactiveName
+        }
+        color={color}
+        size={size}
+      />
+    );
+  };
+}
+
+const renderHomeTabIcon = createTabBarIcon(
+  'home',
+  'home-outline',
+);
+
+const renderCatalogTabIcon = createTabBarIcon(
+  'grid',
+  'grid-outline',
+);
+
+const renderCartTabIcon = createTabBarIcon(
+  'bag',
+  'bag-outline',
+);
+
+const renderMoreTabIcon = createTabBarIcon(
+  'ellipsis-horizontal',
+  'ellipsis-horizontal',
+);
 
 /**
  * Temporary development-only content.
@@ -227,6 +286,7 @@ function MainTabNavigator() {
         component={HomeNavigator}
         options={{
           title: t('tab.home'),
+          tabBarIcon: renderHomeTabIcon,
         }}
       />
 
@@ -235,6 +295,7 @@ function MainTabNavigator() {
         component={CatalogNavigator}
         options={{
           title: t('tab.products'),
+          tabBarIcon: renderCatalogTabIcon,
         }}
       />
 
@@ -243,6 +304,7 @@ function MainTabNavigator() {
         component={CartNavigator}
         options={{
           title: t('tab.cart'),
+          tabBarIcon: renderCartTabIcon,
 
           /**
            * We will connect this to the real cart quantity
@@ -257,6 +319,7 @@ function MainTabNavigator() {
         component={MoreNavigator}
         options={{
           title: t('tab.more'),
+          tabBarIcon: renderMoreTabIcon,
         }}
       />
     </MainTab.Navigator>
