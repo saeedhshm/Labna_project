@@ -8,6 +8,9 @@ import {
   initializeI18n,
 } from '@src/i18n';
 
+import {ThemeExample} from '@src/ThemeExample';
+
+
 
 import {
   StatusBar,
@@ -43,46 +46,13 @@ function App() {
           barStyle="dark-content"
         />
 
-        <SafeAreaView style={styles.container}>
-          <View style={styles.card}>
-            <Text style={styles.title}>
-              Welcome to Labna
-            </Text>
-
-            <Text style={styles.description}>
-              My first React Native application
-            </Text>
-          </View>
+        <SafeAreaView >
+          <ThemeExample />
         </SafeAreaView>
       </AuthProvider>
     </SafeAreaProvider>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f6dada',
-  },
-
-  card: {
-    flex: 3,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#222222',
-  },
-
-  description: {
-    fontSize: 16,
-    color: '#666666',
-    marginTop: 30,
-  },
-});
 
 export default App;
