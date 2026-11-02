@@ -17,7 +17,7 @@ import {
   Text,
   View,
 } from 'react-native';
-
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   useTranslation,
 } from 'react-i18next';
@@ -46,6 +46,10 @@ import type {
   RootStackParamList,
 } from './navigationTypes';
 
+import {
+  PrimaryButton,
+  SecondaryButton,
+} from '@src/components/buttons';
 const RootStack =
   createNativeStackNavigator<RootStackParamList>();
 
@@ -71,13 +75,51 @@ const MoreStack =
  * Home, Catalog, Cart, and More.
  */
 function NavigationFoundationScreen() {
-  const { t } = useTranslation();
-
+    const insets = useSafeAreaInsets();
   return (
-    <View style={styles.placeholder}>
-      <Text style={styles.placeholderText}>
-        {t('navigation.foundationReady')}
-      </Text>
+    <View style={ {
+  flex: 1,
+  justifyContent: 'center',
+  gap: spacing.medium,
+  padding: spacing.large,
+  backgroundColor: colors.cream25,
+}}>
+        <View
+        style={{
+          height: insets.top,
+          backgroundColor: colors.labnaGreen,
+        }}
+      />
+      <PrimaryButton
+        title="Primary button"
+        
+        onPress={() => {
+          console.log('Primary pressed');
+        }}
+      />
+
+      <SecondaryButton
+        title="Secondary button"
+        onPress={() => {
+          console.log('Secondary pressed');
+        }}
+      />
+
+      <PrimaryButton
+        title="Disabled button"
+        disabled
+        onPress={() => {
+          console.log('Disabled');
+        }}
+      />
+
+      <SecondaryButton
+        title="Loading button"
+        isLoading
+        onPress={() => {
+          console.log('Loading');
+        }}
+      />
     </View>
   );
 }
