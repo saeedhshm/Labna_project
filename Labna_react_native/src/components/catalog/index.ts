@@ -1,0 +1,3 @@
+export {
+  PriceText,
+} from './PriceText';

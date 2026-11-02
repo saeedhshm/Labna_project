@@ -3,7 +3,9 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-
+import {
+  CatalogProvider,
+} from '@src/features/catalog/CatalogContext';
 import {
   StatusBar,
   StyleSheet,
@@ -64,7 +66,9 @@ function App() {
           />
 
           {i18nReady ? (
+             <CatalogProvider>
             <RootNavigator />
+          </CatalogProvider>
           ) : (
             <View
               style={styles.initializing}

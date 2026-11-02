@@ -1,0 +1,3 @@
+export {
+  LabnaLogo,
+} from './LabnaLogo';
