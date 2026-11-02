@@ -1,4 +1,15 @@
 export const en = {
+    tab: {
+    home: 'Home',
+    products: 'Products',
+    cart: 'Cart',
+    more: 'More',
+  },
+
+  navigation: {
+    foundationReady: 'Navigation is ready',
+  },
+
   auth: {
     validation: {
       nameTooShort:

@@ -1,4 +1,15 @@
 export const ar = {
+    tab: {
+    home: 'الرئيسية',
+    products: 'المنتجات',
+    cart: 'السلة',
+    more: 'المزيد',
+  },
+
+  navigation: {
+    foundationReady: 'تم إعداد التنقل',
+  },
+
     auth : {
         validation : {
               nameTooShort:

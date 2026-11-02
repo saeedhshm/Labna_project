@@ -1,35 +1,37 @@
-
 import React, {
   useEffect,
   useState,
 } from 'react';
 
 import {
+  StatusBar,
+} from 'react-native';
+
+import {
+  SafeAreaProvider,
+} from 'react-native-safe-area-context';
+
+import {
+  AuthProvider,
+} from '@src/features/auth/AuthContext';
+
+import {
   initializeI18n,
 } from '@src/i18n';
 
-import {ThemeExample} from '@src/ThemeExample';
-
-
+import {
+  RootNavigator,
+} from '@src/navigation/RootNavigator';
 
 import {
-  StatusBar,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import {
-  SafeAreaProvider,
-  SafeAreaView,
-} from 'react-native-safe-area-context';
-import { AuthProvider } from '@src/features/auth/AuthContext';
+  colors,
+} from '@src/theme';
 
 function App() {
-
   const [i18nReady, setI18nReady] =
     useState(false);
 
-     useEffect(() => {
+  useEffect(() => {
     initializeI18n().finally(() => {
       setI18nReady(true);
     });
@@ -43,16 +45,14 @@ function App() {
     <SafeAreaProvider>
       <AuthProvider>
         <StatusBar
+          animated
           barStyle="dark-content"
         />
 
-        <SafeAreaView >
-          <ThemeExample />
-        </SafeAreaView>
+        <RootNavigator />
       </AuthProvider>
     </SafeAreaProvider>
   );
 }
-
 
 export default App;
