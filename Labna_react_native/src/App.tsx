@@ -1,11 +1,18 @@
 import React, {
+  useCallback,
   useEffect,
   useState,
 } from 'react';
 
 import {
   StatusBar,
+  StyleSheet,
+  View,
 } from 'react-native';
+
+import {
+  SplashOverlay,
+} from '@src/components/splash';
 
 import {
   SafeAreaProvider,
@@ -31,28 +38,63 @@ function App() {
   const [i18nReady, setI18nReady] =
     useState(false);
 
+  const [
+    splashVisible,
+    setSplashVisible,
+  ] = useState(true);
+
   useEffect(() => {
     initializeI18n().finally(() => {
       setI18nReady(true);
     });
   }, []);
 
-  if (!i18nReady) {
-    return null;
-  }
+  const handleSplashFinished =
+    useCallback(() => {
+      setSplashVisible(false);
+    }, []);
 
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <StatusBar
-          animated
-          barStyle="dark-content"
-        />
+        <View style={styles.container}>
+          <StatusBar
+            animated
+            barStyle="dark-content"
+          />
 
-        <RootNavigator />
+          {i18nReady ? (
+            <RootNavigator />
+          ) : (
+            <View
+              style={styles.initializing}
+            />
+          )}
+
+          {splashVisible ? (
+            <SplashOverlay
+              ready={i18nReady}
+              onFinished={
+                handleSplashFinished
+              }
+            />
+          ) : null}
+        </View>
       </AuthProvider>
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.white,
+  },
+
+  initializing: {
+    flex: 1,
+    backgroundColor: colors.labnaCream,
+  },
+});
 
 export default App;

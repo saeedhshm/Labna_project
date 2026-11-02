@@ -180,4 +180,7 @@ export const animations = {
 
   bannerInterval: 5000,
   bannerTransitionDuration: 450,
+
+  splashMinimumDuration: 5000,
+  splashFadeDuration: 200,
 } as const;
