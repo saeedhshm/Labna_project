@@ -14,10 +14,13 @@ import {
 
 import {
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import {
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
+
 import {
   useTranslation,
 } from 'react-i18next';
@@ -50,6 +53,7 @@ import {
   PrimaryButton,
   SecondaryButton,
 } from '@src/components/buttons';
+
 const RootStack =
   createNativeStackNavigator<RootStackParamList>();
 
@@ -75,24 +79,21 @@ const MoreStack =
  * Home, Catalog, Cart, and More.
  */
 function NavigationFoundationScreen() {
-    const insets = useSafeAreaInsets();
+  const insets = useSafeAreaInsets();
+
   return (
-    <View style={ {
-  flex: 1,
-  justifyContent: 'center',
-  gap: spacing.medium,
-  padding: spacing.large,
-  backgroundColor: colors.cream25,
-}}>
-        <View
-        style={{
-          height: insets.top,
-          backgroundColor: colors.labnaGreen,
-        }}
+    <View style={styles.placeholder}>
+      <View
+        style={[
+          styles.topInset,
+          {
+            height: insets.top,
+          },
+        ]}
       />
+
       <PrimaryButton
         title="Primary button"
-        
         onPress={() => {
           console.log('Primary pressed');
         }}
@@ -320,15 +321,17 @@ const stackScreenOptions = {
 const styles = StyleSheet.create({
   placeholder: {
     flex: 1,
-    alignItems: 'center',
+    gap: spacing.medium,
     justifyContent: 'center',
-    backgroundColor: colors.cream25,
     padding: spacing.large,
+    backgroundColor: colors.cream25,
   },
 
-  placeholderText: {
-    ...typography.body,
-    color: colors.labnaMuted,
-    textAlign: 'center',
+  topInset: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.labnaGreen,
   },
 });
