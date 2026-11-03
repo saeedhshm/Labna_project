@@ -25,6 +25,10 @@ import {
 } from '@src/features/auth/AuthContext';
 
 import {
+  FavoritesProvider,
+} from '@src/features/favorites/FavoritesContext';
+
+import {
   initializeI18n,
 } from '@src/i18n';
 
@@ -66,9 +70,11 @@ function App() {
           />
 
           {i18nReady ? (
+             <FavoritesProvider>
              <CatalogProvider>
-            <RootNavigator />
-          </CatalogProvider>
+               <RootNavigator />
+             </CatalogProvider>
+           </FavoritesProvider>
           ) : (
             <View
               style={styles.initializing}

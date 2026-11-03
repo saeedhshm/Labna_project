@@ -6,6 +6,7 @@ import {
 
 import {
   NavigationContainer,
+
 } from '@react-navigation/native';
 
 import {
@@ -19,11 +20,9 @@ import {
 import {
   StyleSheet,
   View,
+  Text,
 } from 'react-native';
 
-import {
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
 
 import {
   useTranslation,
@@ -54,9 +53,8 @@ import type {
 } from './navigationTypes';
 
 import {
-  PrimaryButton,
-  SecondaryButton,
-} from '@src/components/buttons';
+  HomeScreen,
+} from '@src/features/home/screens';
 
 const RootStack =
   createNativeStackNavigator<RootStackParamList>();
@@ -138,60 +136,61 @@ const renderMoreTabIcon = createTabBarIcon(
  * Home, Catalog, Cart, and More.
  */
 function NavigationFoundationScreen() {
-  const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
 
   return (
     <View style={styles.placeholder}>
-      <View
-        style={[
-          styles.topInset,
-          {
-            height: insets.top,
-          },
-        ]}
-      />
-
-      <PrimaryButton
-        title="Primary button"
-        onPress={() => {
-          console.log('Primary pressed');
-        }}
-      />
-
-      <SecondaryButton
-        title="Secondary button"
-        onPress={() => {
-          console.log('Secondary pressed');
-        }}
-      />
-
-      <PrimaryButton
-        title="Disabled button"
-        disabled
-        onPress={() => {
-          console.log('Disabled');
-        }}
-      />
-
-      <SecondaryButton
-        title="Loading button"
-        isLoading
-        onPress={() => {
-          console.log('Loading');
-        }}
-      />
+      <Text style={styles.placeholderText}>
+        {t(
+          'navigation.foundationReady',
+        )}
+      </Text>
     </View>
   );
 }
 
 function HomeNavigator() {
   return (
-    <HomeStack.Navigator>
+    <HomeStack.Navigator
+      screenOptions={
+        stackScreenOptions
+      }
+    >
       <HomeStack.Screen
         name="Home"
-        component={NavigationFoundationScreen}
+        component={HomeScreen}
         options={{
           headerShown: false,
+        }}
+      />
+
+      <HomeStack.Screen
+        name="CategoryCatalog"
+        component={
+          NavigationFoundationScreen
+        }
+        options={{
+          title: '',
+        }}
+      />
+
+      <HomeStack.Screen
+        name="ProductDetails"
+        component={
+          NavigationFoundationScreen
+        }
+        options={{
+          title: '',
+        }}
+      />
+
+      <HomeStack.Screen
+        name="RecentlyViewed"
+        component={
+          NavigationFoundationScreen
+        }
+        options={{
+          title: '',
         }}
       />
     </HomeStack.Navigator>
@@ -356,6 +355,17 @@ export function RootNavigator() {
           name="MainTabs"
           component={MainTabNavigator}
         />
+        <RootStack.Screen
+          name="QuickAdd"
+          component={
+            NavigationFoundationScreen
+          }
+          options={{
+            headerShown: true,
+            presentation: 'modal',
+            title: '',
+          }}
+        />
       </RootStack.Navigator>
     </NavigationContainer>
   );
@@ -388,6 +398,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: spacing.large,
     backgroundColor: colors.cream25,
+  },
+  placeholderText: {
+    ...typography.body,
+    color: colors.labnaMuted,
+    textAlign: 'center',
   },
 
   topInset: {

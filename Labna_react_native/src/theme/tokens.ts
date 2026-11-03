@@ -22,7 +22,7 @@ export const colors = {
   labnaCream: '#FAF7ED',
   labnaInk: '#1A241F',
   labnaMuted: '#636E66',
-
+  cream65: 'rgba(250, 247, 237, 0.65)',
   /**
    * labnaGreen with 12% opacity.
    */

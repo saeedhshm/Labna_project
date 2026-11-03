@@ -9,6 +9,46 @@ brand: {
   name: 'لبنة',
   tagline: 'طازة كل يوم',
 },
+action: {
+  close: 'إغلاق',
+},
+
+search: {
+  prompt: 'بتدور على إيه؟',
+  clear: 'مسح البحث',
+  results: 'نتائج البحث',
+
+  empty: {
+    title: 'لا توجد منتجات مطابقة',
+    message:
+      'جرّب كلمة أخرى أو امسح الفلاتر الحالية.',
+  },
+},
+home: {
+  categories: 'الأقسام',
+  featured: 'منتجات مختارة',
+},
+image: {
+  loading: 'جارٍ تحميل الصورة',
+  unavailable: 'الصورة غير متاحة',
+},
+
+favorites: {
+  add: 'إضافة إلى المفضلة',
+  remove: 'إزالة من المفضلة',
+  persistenceError:
+    'تعذر حفظ آخر تغيير في المفضلة على هذا الجهاز.',
+},
+
+price: {
+  from: 'يبدأ من',
+},
+
+product: {
+  add: 'إضافة',
+  open: 'فتح تفاصيل المنتج',
+  unavailable: 'غير متوفر',
+},
 
 data: {
   loading: 'جارٍ تحميل المنتجات…',

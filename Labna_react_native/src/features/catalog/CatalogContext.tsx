@@ -8,7 +8,9 @@ import React, {
   useRef,
   useState,
 } from 'react';
-
+import {
+  ApiError,
+} from '@src/core/api/ApiError';
 import {
   useTranslation,
 } from 'react-i18next';
@@ -44,7 +46,7 @@ export type CatalogSnapshot = {
 
 type CatalogContextValue = {
   snapshot: CatalogSnapshot | null;
-
+  refreshErrorIsOffline: boolean;
   isInitialLoading: boolean;
   isRefreshing: boolean;
 
@@ -183,7 +185,17 @@ function isCatalogSnapshot(
     Array.isArray(candidate.branches)
   );
 }
-
+function isOfflineError(
+  error: unknown,
+): boolean {
+  return (
+    error instanceof ApiError &&
+    (
+      error.status === 0 ||
+      error.code === 'NETWORK_ERROR'
+    )
+  );
+}
 async function readCatalogCache():
 Promise<CatalogSnapshot | null> {
   try {
@@ -255,6 +267,11 @@ export function CatalogProvider({
   children,
 }: CatalogProviderProps) {
   const { i18n } = useTranslation();
+
+  const [
+    refreshErrorIsOffline,
+    setRefreshErrorIsOffline,
+  ] = useState(false);
 
   const locale: Locale =
     i18n.resolvedLanguage === 'ar'
@@ -379,6 +396,9 @@ export function CatalogProvider({
           cachedSnapshot ||
           snapshotRef.current
         ) {
+          setRefreshErrorIsOffline(
+            isOfflineError(loadError),
+          );
           setRefreshError(message);
         } else {
           setError(message);
@@ -463,6 +483,7 @@ export function CatalogProvider({
     isRefreshing,
     error,
     refreshError,
+    refreshErrorIsOffline,
     reload,
   };
 

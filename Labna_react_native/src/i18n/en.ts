@@ -1,5 +1,44 @@
 export const en = {
-
+  image: {
+    loading: 'Loading image',
+    unavailable: 'Image unavailable',
+  },
+  
+  favorites: {
+    add: 'Add to favorites',
+    remove: 'Remove from favorites',
+    persistenceError:
+      'Could not save the latest favorites change on this device.',
+  },
+  
+  price: {
+    from: 'From',
+  },
+  action: {
+    close: 'Close',
+  },
+  
+  search: {
+    prompt:
+      'What are you looking for?',
+    clear: 'Clear search',
+    results: 'Search results',
+  
+    empty: {
+      title: 'No matching products',
+      message:
+        'Try another term or clear the current filters.',
+    },
+  },
+  home: {
+    categories: 'Categories',
+    featured: 'Featured products',
+  },
+  product: {
+    add: 'Add',
+    open: 'Open product details',
+    unavailable: 'Unavailable',
+  },
   brand: {
   name: 'Labna',
   tagline: 'Fresh every day',

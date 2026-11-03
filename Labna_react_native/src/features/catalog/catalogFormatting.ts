@@ -43,7 +43,94 @@ export function formatPrice(
     return `${amount.toFixed(2)} ${currencyCode}`;
   }
 }
+export function normalizeSearchText(
+  value: string,
+  language: AppLanguage,
+): string {
+  return value
+    .trim()
+    .normalize('NFD')
+    .replace(
+      /[\u0300-\u036f\u064B-\u065F\u0670]/g,
+      '',
+    )
+    .toLocaleLowerCase(language);
+}
 
+export function searchProducts(
+  products: Product[],
+  searchText: string,
+  language: AppLanguage,
+): Product[] {
+  const query = normalizeSearchText(
+    searchText,
+    language,
+  );
+
+  if (!query) {
+    return products;
+  }
+
+  return products.filter(product => {
+    const searchableText = [
+      localizedText(
+        product.name,
+        language,
+      ),
+      localizedText(
+        product.description,
+        language,
+      ),
+      localizedText(
+        product.ingredients,
+        language,
+      ),
+    ].join(' ');
+
+    return normalizeSearchText(
+      searchableText,
+      language,
+    ).includes(query);
+  });
+}
+
+export function sortProductsByFeatured(
+  products: Product[],
+  language: AppLanguage,
+): Product[] {
+  return [...products].sort(
+    (first, second) => {
+      if (
+        first.isFeatured !==
+        second.isFeatured
+      ) {
+        return first.isFeatured
+          ? -1
+          : 1;
+      }
+
+      const firstName =
+        localizedText(
+          first.name,
+          language,
+        );
+
+      const secondName =
+        localizedText(
+          second.name,
+          language,
+        );
+
+      return firstName.localeCompare(
+        secondName,
+        language,
+        {
+          sensitivity: 'base',
+        },
+      );
+    },
+  );
+}
 export function getAvailableVariants(
   product: Product,
 ) {
